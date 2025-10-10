@@ -1,0 +1,68 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# Firebase debug logs
+*-debug.log
+ui-debug.log
+database-debug.log
+firestore-debug.log
+firebase-debug.log
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+.vscode/
+
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Sensitive data and secrets
+.env
+.env.*
+firebase_secrets.json
+secrets.*
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+node_modules
+
+# Ignore native platform scaffolding and local files for a web-only repo
+android/
+ios/
+local.properties
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Temporary tools and generated icon artifacts used during experiments
+tools/
