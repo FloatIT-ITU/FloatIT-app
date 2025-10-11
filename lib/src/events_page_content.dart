@@ -12,17 +12,14 @@ import 'theme_colors.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
 
 class EventsPageContent extends StatefulWidget {
-  final String eventTypeFilter;
-
-  const EventsPageContent({super.key, this.eventTypeFilter = 'all'});
+  const EventsPageContent({super.key});
 
   @override
   State<EventsPageContent> createState() => _EventsPageContentState();
 }
 
 class _EventsPageContentState extends State<EventsPageContent> {
-  // type filter is provided by the parent widget through the constructor
-  // use widget.eventTypeFilter inside build
+  String _selectedEventType = 'all';
 
   // Example join/leave logic for first-come-first-serve
   Future<void> joinEvent(
@@ -52,7 +49,7 @@ class _EventsPageContentState extends State<EventsPageContent> {
             final endTime = DateTime.tryParse(endTimeStr);
             return endTime == null || endTime.isAfter(now);
           });
-          final typeFilter = widget.eventTypeFilter;
+          final typeFilter = _selectedEventType;
           if (typeFilter != 'all') {
             events = events.where((doc) {
               final data = doc.data() as Map<String, dynamic>?;
@@ -65,16 +62,49 @@ class _EventsPageContentState extends State<EventsPageContent> {
             return const Center(child: Text('No upcoming events!'));
           }
           return ConstrainedContent(
-            child: ListView.builder(
-              itemCount: eventsList.length,
-              itemBuilder: (context, i) {
-                final doc = eventsList[i];
-                final eventId = doc.id;
-                return _EventCard(
-                  key: ValueKey(eventId),
-                  eventId: eventId,
-                );
-              },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Filter at the top right
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const Text('Filter: ', style: TextStyle(fontSize: 14)),
+                      const SizedBox(width: 8),
+                      DropdownButton<String>(
+                        value: _selectedEventType,
+                        underline: const SizedBox.shrink(),
+                        items: const [
+                          DropdownMenuItem(value: 'all', child: Text('All')),
+                          DropdownMenuItem(value: 'practice', child: Text('Practice')),
+                          DropdownMenuItem(value: 'competition', child: Text('Competition')),
+                          DropdownMenuItem(value: 'other', child: Text('Other')),
+                        ],
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() => _selectedEventType = v);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                // Event list
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: eventsList.length,
+                    itemBuilder: (context, i) {
+                      final doc = eventsList[i];
+                      final eventId = doc.id;
+                      return _EventCard(
+                        key: ValueKey(eventId),
+                        eventId: eventId,
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           );
         },
