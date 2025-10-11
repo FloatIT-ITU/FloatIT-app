@@ -14,9 +14,12 @@ void main() async {
   // Initialize dependency injection container
   await DependencyInjection.instance.initialize();
 
-  // Initialize push notifications
+  // Initialize push notifications (non-blocking)
+  // This runs in the background and won't prevent the app from loading
   final pushService = PushService();
-  await pushService.initForCurrentUser();
+  pushService.initForCurrentUser().catchError((error) {
+    // Silently handle any initialization errors
+  });
 
   runApp(const FloatITApp());
 }

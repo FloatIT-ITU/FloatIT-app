@@ -7,19 +7,33 @@ class PushService {
 
   Future<void> initForCurrentUser() async {
     if (kIsWeb) {
-      // Request permission for web push notifications
-      final settings = await _firebaseMessaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      try {
+        // Request permission for web push notifications with timeout
+        // This prevents blocking the app if the browser doesn't support notifications
+        // or if there's any issue with the permission request
+        final settings = await _firebaseMessaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        ).timeout(
+          const Duration(seconds: 5),
+        );
 
-      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        // User granted permission
-      } else {
-        // User declined or has not accepted permission
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          // User granted permission - set up message handlers
+          _setupMessageHandlers();
+        }
+        // If permission not granted or initialization fails,
+        // app continues to work normally without push notifications
+      } catch (e) {
+        // If notification setup fails (timeout, unsupported, etc.), 
+        // app continues to work normally without push notifications
       }
+    }
+  }
 
+  void _setupMessageHandlers() {
+    try {
       // Handle background messages
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
@@ -27,6 +41,8 @@ class PushService {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         // Handle foreground message
       });
+    } catch (e) {
+      // Message handler setup failed, notifications won't work
     }
   }
 
