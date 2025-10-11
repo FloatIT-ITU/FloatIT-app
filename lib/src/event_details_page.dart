@@ -982,6 +982,22 @@ class _AddUserDialogState extends State<_AddUserDialog> {
     });
   }
 
+  /// Convert color value from dynamic (int or hex string) to Color
+  Color _colorFromDynamic(dynamic colorValue) {
+    if (colorValue is int) {
+      return Color(colorValue);
+    }
+    if (colorValue is String) {
+      final hexValue = colorValue.replaceFirst('#', '');
+      if (hexValue.length == 6) {
+        return Color(int.parse('FF$hexValue', radix: 16));
+      } else if (hexValue.length == 8) {
+        return Color(int.parse(hexValue, radix: 16));
+      }
+    }
+    return Colors.blue; // Default color
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -1010,7 +1026,7 @@ class _AddUserDialogState extends State<_AddUserDialog> {
                             final user = _filteredUsers[index];
                             return ListTile(
                               leading: SwimmerIconPicker.buildIcon(
-                                Color(user['color'] ?? Colors.blue.value),
+                                _colorFromDynamic(user['color']),
                                 radius: 16,
                               ),
                               title: Text(user['name']),
