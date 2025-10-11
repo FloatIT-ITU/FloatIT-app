@@ -2,6 +2,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, TargetPlatform, kIsWeb;
 
+/// Firebase configuration for FloatIT app
+/// 
+/// NOTE: Firebase API keys are safe to include in client code.
+/// They are not secret keys - they just identify your Firebase project.
+/// Security is enforced by Firestore Security Rules, not by hiding these keys.
+/// See: https://firebase.google.com/docs/projects/api-keys
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {

@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:floatit/src/widgets/attendee_list.dart';
-import 'package:floatit/src/services/firebase_service.dart';
 import 'package:floatit/src/constants/firestore_constants.dart';
 import 'package:floatit/src/theme_colors.dart';
 
@@ -31,57 +30,110 @@ class AttendeeListBuilder extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return FutureBuilder<QuerySnapshot>(
-      future: FirebaseService.publicUsers
-          .where(FieldPath.documentId, whereIn: attendeeUids)
-          .get(),
-      builder: (context, userSnap) {
-        if (userSnap.connectionState == ConnectionState.waiting) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _fetchAttendeeData(attendeeUids),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (!userSnap.hasData || userSnap.data!.docs.isEmpty) {
+        if (snapshot.hasError) {
+          return Text('Error loading attendees: ${snapshot.error}');
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return Text(title.isEmpty ? 'No attendees found.' : 'No $title found.');
         }
-        final users = userSnap.data!.docs;
-        final userMap = {for (var doc in users) doc.id: doc};
-        return FutureBuilder<List<DocumentSnapshot>>(
-          future: Future.wait(attendeeUids.map((uid) =>
-              FirebaseService.userDoc(uid).get())),
-          builder: (context, adminSnap) {
-            if (adminSnap.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final attendees = <Attendee>[];
-            for (int i = 0; i < attendeeUids.length; i++) {
-              final uid = attendeeUids[i];
-              final userDoc = userMap[uid];
-              if (userDoc == null) continue;
-              final data = userDoc.data() as Map<String, dynamic>;
-              final name = data[FirestoreConstants.displayName] ?? 'Unknown';
-              final occupation = data[FirestoreConstants.occupation] ?? '';
-              final color = _colorFromDynamic(data[FirestoreConstants.iconColor]);
-              final adminData = adminSnap.data?[i].data() as Map<String, dynamic>?;
-              final isAdmin = adminData?[FirestoreConstants.admin] == true;
-              attendees.add(Attendee(
-                  uid: uid,
-                  name: name,
-                  occupation: occupation,
-                  avatarUrl: null,
-                  color: color,
-                  isAdmin: isAdmin));
-            }
-            return AttendeeList(
-              title: title,
-              attendees: attendees,
-              showCount: showCount,
-              isAdmin: isAdmin,
-              eventId: eventId,
-              onAttendeeRemoved: onAttendeeRemoved,
-            );
-          },
+        
+        final data = snapshot.data!;
+        final publicUsers = data['publicUsers'] as Map<String, DocumentSnapshot>;
+        final privateUsers = data['privateUsers'] as Map<String, DocumentSnapshot>;
+        
+        final attendees = <Attendee>[];
+        for (final uid in attendeeUids) {
+          final userDoc = publicUsers[uid];
+          if (userDoc == null || !userDoc.exists) continue;
+          
+          final userData = userDoc.data() as Map<String, dynamic>;
+          final name = userData[FirestoreConstants.displayName] ?? 'Unknown';
+          final occupation = userData[FirestoreConstants.occupation] ?? '';
+          final color = _colorFromDynamic(userData[FirestoreConstants.iconColor]);
+          
+          final privateDoc = privateUsers[uid];
+          final adminData = privateDoc?.data() as Map<String, dynamic>?;
+          final isAdmin = adminData?[FirestoreConstants.admin] == true;
+          
+          attendees.add(Attendee(
+              uid: uid,
+              name: name,
+              occupation: occupation,
+              avatarUrl: null,
+              color: color,
+              isAdmin: isAdmin));
+        }
+        
+        return AttendeeList(
+          title: title,
+          attendees: attendees,
+          showCount: showCount,
+          isAdmin: isAdmin,
+          eventId: eventId,
+          onAttendeeRemoved: onAttendeeRemoved,
         );
       },
     );
+  }
+  
+  /// Efficiently fetches both public and private user data in batched queries
+  /// to avoid N+1 query pattern
+  static Future<Map<String, dynamic>> _fetchAttendeeData(List<String> uids) async {
+    if (uids.isEmpty) {
+      return {
+        'publicUsers': <String, DocumentSnapshot>{},
+        'privateUsers': <String, DocumentSnapshot>{},
+      };
+    }
+    
+    // Firestore 'whereIn' has a limit of 10 items, so batch if needed
+    final List<Future<QuerySnapshot>> publicBatches = [];
+    final List<Future<QuerySnapshot>> privateBatches = [];
+    
+    for (int i = 0; i < uids.length; i += 10) {
+      final batch = uids.skip(i).take(10).toList();
+      publicBatches.add(
+        FirebaseFirestore.instance
+            .collection('public_users')
+            .where(FieldPath.documentId, whereIn: batch)
+            .get()
+      );
+      privateBatches.add(
+        FirebaseFirestore.instance
+            .collection('users')
+            .where(FieldPath.documentId, whereIn: batch)
+            .get()
+      );
+    }
+    
+    final publicResults = await Future.wait(publicBatches);
+    final privateResults = await Future.wait(privateBatches);
+    
+    final publicUsers = <String, DocumentSnapshot>{};
+    final privateUsers = <String, DocumentSnapshot>{};
+    
+    for (final result in publicResults) {
+      for (final doc in result.docs) {
+        publicUsers[doc.id] = doc;
+      }
+    }
+    
+    for (final result in privateResults) {
+      for (final doc in result.docs) {
+        privateUsers[doc.id] = doc;
+      }
+    }
+    
+    return {
+      'publicUsers': publicUsers,
+      'privateUsers': privateUsers,
+    };
   }
 
   Color _colorFromDynamic(dynamic colorValue) {

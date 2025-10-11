@@ -60,12 +60,14 @@ class AuthGate extends StatelessWidget {
     );
   }
 
+  /// Prepare user document on first login or update existing user
+  /// Runs cleanup for admin users
   static Future<void> _prepareUser(User user) async {
     try {
       final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
       final doc = await docRef.get();
       if (!doc.exists) {
-        // Create user doc
+        // Create user document with default values
         await docRef.set({
           'email': user.email,
           'admin': false,
@@ -76,32 +78,42 @@ class AuthGate extends StatelessWidget {
         // Check if admin and run cleanup
         final data = doc.data();
         if (data != null && data['admin'] == true) {
-          await _cleanupOldMessages();
+          // Fire-and-forget cleanup to avoid blocking login
+          _cleanupOldMessages();
         }
       }
-    } catch (_) {
-      // Ignore errors
+    } catch (e) {
+      // Silently ignore errors - user can still proceed with authentication
+      // Security is enforced by Firestore rules, not by this document
     }
   }
 
+  /// Cleanup old message threads (15+ days)
+  /// Only runs for admin users as a maintenance task
   static Future<void> _cleanupOldMessages() async {
     try {
       final cutoff = DateTime.now().subtract(const Duration(days: 15));
       final cutoffTimestamp = Timestamp.fromDate(cutoff);
       
-      // Query messages where lastMessageTime < cutoff
+      // Query messages where deleteAt timestamp has passed
+      // Note: This query requires an index in Firestore
       final query = FirebaseFirestore.instance
           .collection('messages')
-          .where('lastMessageTime', isLessThan: cutoffTimestamp);
+          .where('deleteAt', isLessThan: cutoffTimestamp)
+          .limit(50); // Limit batch size to avoid timeout
       
       final snapshot = await query.get();
       
-      // Delete old threads
-      for (final doc in snapshot.docs) {
-        await doc.reference.delete();
+      // Delete old threads in batch
+      if (snapshot.docs.isNotEmpty) {
+        final batch = FirebaseFirestore.instance.batch();
+        for (final doc in snapshot.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
       }
     } catch (e) {
-      // Ignore cleanup errors
+      // Silently ignore cleanup errors - this is a non-critical maintenance task
     }
   }
 }
