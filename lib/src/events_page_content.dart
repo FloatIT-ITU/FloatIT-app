@@ -12,14 +12,17 @@ import 'theme_colors.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
 
 class EventsPageContent extends StatefulWidget {
-  const EventsPageContent({super.key});
+  final String eventTypeFilter;
+
+  const EventsPageContent({super.key, this.eventTypeFilter = 'all'});
 
   @override
   State<EventsPageContent> createState() => _EventsPageContentState();
 }
 
 class _EventsPageContentState extends State<EventsPageContent> {
-  final String _typeFilter = 'all';
+  // type filter is provided by the parent widget through the constructor
+  // use widget.eventTypeFilter inside build
 
   // Example join/leave logic for first-come-first-serve
   Future<void> joinEvent(
@@ -49,8 +52,13 @@ class _EventsPageContentState extends State<EventsPageContent> {
             final endTime = DateTime.tryParse(endTimeStr);
             return endTime == null || endTime.isAfter(now);
           });
-          if (_typeFilter != 'all') {
-            events = events.where((doc) => doc['type'] == _typeFilter);
+          final typeFilter = widget.eventTypeFilter;
+          if (typeFilter != 'all') {
+            events = events.where((doc) {
+              final data = doc.data() as Map<String, dynamic>?;
+              final t = data != null && data.containsKey('type') ? data['type'] : (doc['type'] as String?);
+              return t == typeFilter;
+            });
           }
           final eventsList = events.toList();
           if (eventsList.isEmpty) {

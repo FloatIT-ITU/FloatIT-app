@@ -20,6 +20,7 @@ class MainAppView extends StatefulWidget {
 class _MainAppViewState extends State<MainAppView> {
   bool _isLoading = true;
   String _loadingMessage = 'Loading...';
+  String _selectedEventType = 'all';
   
   @override
   void initState() {
@@ -163,6 +164,22 @@ class _MainAppViewState extends State<MainAppView> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
+                            const SizedBox(width: 12),
+                            // Event type filter
+                            DropdownButton<String>(
+                              value: _selectedEventType,
+                              underline: const SizedBox.shrink(),
+                              items: const [
+                                DropdownMenuItem(value: 'all', child: Text('All')),
+                                DropdownMenuItem(value: 'practice', child: Text('Practice')),
+                                DropdownMenuItem(value: 'competition', child: Text('Competition')),
+                                DropdownMenuItem(value: 'other', child: Text('Other')),
+                              ],
+                              onChanged: (v) {
+                                if (v == null) return;
+                                setState(() => _selectedEventType = v);
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -179,7 +196,7 @@ class _MainAppViewState extends State<MainAppView> {
               // Global banners
               for (var w in bannerWidgets) w,
               // Main content - Events page (now fully loaded)
-              const Expanded(child: EventsPageContent()),
+              Expanded(child: EventsPageContent(eventTypeFilter: _selectedEventType)),
               // Pool status banner at the bottom
               // Don't use SafeArea here - let it extend to the very bottom
               const PoolStatusBanner(),
