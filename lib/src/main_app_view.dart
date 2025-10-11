@@ -151,7 +151,8 @@ class _MainAppViewState extends State<MainAppView> {
                 child: SafeArea(
                   child: Row(
                     children: [
-                      // Messages button on the left
+                      // Messages button on the left - positioned slightly right to avoid confusion with back button
+                      const SizedBox(width: 48), // Space for back button position
                       StreamBuilder<QuerySnapshot>(
                         stream: FirebaseAuth.instance.currentUser != null
                             ? FirebaseFirestore.instance
