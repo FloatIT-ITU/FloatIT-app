@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme_colors.dart';
 import '../constants/app_constants.dart';
 
 /// Common widget patterns and utilities to reduce repetitive code and widget nesting
@@ -130,6 +131,7 @@ class WidgetUtils {
   
   /// Create an info banner with icon and message
   static Widget infoBanner({
+    required BuildContext context,
     required String message,
     IconData icon = Icons.info_outline,
     Color? backgroundColor,
@@ -140,19 +142,19 @@ class WidgetUtils {
       margin: margin ?? const EdgeInsets.all(Paddings.md),
       padding: const EdgeInsets.all(Paddings.md),
       decoration: BoxDecoration(
-        color: backgroundColor ?? Colors.blue.shade50,
+        color: backgroundColor ?? AppThemeColors.primary(context).withOpacity(0.1),
         borderRadius: BorderRadius.circular(BorderRadii.md),
-        border: Border.all(color: Colors.blue.shade200),
+        border: Border.all(color: AppThemeColors.primary(context).withOpacity(0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: textColor ?? Colors.blue.shade700, size: IconSizes.md),
+          Icon(icon, color: textColor ?? AppThemeColors.primary(context), size: IconSizes.md),
           const SizedBox(width: Spacing.md),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(color: textColor ?? Colors.blue.shade700),
+              style: TextStyle(color: textColor ?? AppThemeColors.primary(context)),
             ),
           ),
         ],
@@ -169,26 +171,31 @@ class WidgetUtils {
     IconData? icon,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final defaultBgColor = isDark 
+        ? AppThemeColors.darkSurface 
+        : AppThemeColors.lightSurface;
+    final defaultTextColor = AppThemeColors.text(context);
+    
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: Paddings.sm,
         vertical: Paddings.xs,
       ),
       decoration: BoxDecoration(
-        color: backgroundColor ?? (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+        color: backgroundColor ?? defaultBgColor,
         borderRadius: BorderRadius.circular(BorderRadii.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: IconSizes.sm, color: textColor),
+            Icon(icon, size: IconSizes.sm, color: textColor ?? defaultTextColor),
             const SizedBox(width: Spacing.xs),
           ],
           Text(
             text,
             style: TextStyle(
-              color: textColor ?? (isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+              color: textColor ?? defaultTextColor,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),

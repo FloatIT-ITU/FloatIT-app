@@ -19,9 +19,8 @@ class PageBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     // Use theme-appropriate colors for transparent banners
-    final bannerTextColor = isDark ? Colors.white : Colors.black;
+    final bannerTextColor = AppThemeColors.text(context);
   // banner background colors intentionally unused; banners are transparent now
 
     // Use a mostly-invisible background so the top bar is subtle in both themes.
@@ -83,8 +82,7 @@ class StandardPageBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bannerTextColor = isDark ? Colors.white : Colors.black;
+    final bannerTextColor = AppThemeColors.text(context);
 
     return Container(
       height: kToolbarHeight,

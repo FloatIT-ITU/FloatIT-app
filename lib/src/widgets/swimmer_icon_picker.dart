@@ -11,7 +11,7 @@ class SwimmerIconPicker extends StatefulWidget {
   static const IconData _swimmerIcon = Icons.pool;
 
   /// Returns a swimmer icon avatar with the given color and radius.
-  static Widget buildIcon(Color color, {double radius = 32}) {
+  static Widget buildIcon(Color color, {double radius = 32, BuildContext? context}) {
     return CircleAvatar(
       backgroundColor: color,
       radius: radius,
@@ -26,7 +26,7 @@ class SwimmerIconPicker extends StatefulWidget {
           ],
         ),
         child: Icon(_swimmerIcon,
-            color: Colors.white, size: radius),
+            color: AppThemeColors.lightBadgeIcon, size: radius),
       ),
     );
   }

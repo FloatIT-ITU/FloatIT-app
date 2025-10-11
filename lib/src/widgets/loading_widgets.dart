@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme_colors.dart';
 
 /// Reusable loading widgets and state management patterns for async operations
 class LoadingWidgets {
@@ -50,7 +51,6 @@ class LoadingWidgets {
     VoidCallback? onRetry,
     String retryText = 'Retry',
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -60,7 +60,7 @@ class LoadingWidgets {
             Icon(
               Icons.error_outline, 
               size: 48, 
-              color: isDark ? Colors.grey.shade600 : Colors.grey.shade400
+              color: AppThemeColors.text(context).withOpacity(0.5)
             ),
             const SizedBox(height: 16),
             Text(
@@ -89,7 +89,6 @@ class LoadingWidgets {
     VoidCallback? onAction,
     String? actionText,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -99,7 +98,7 @@ class LoadingWidgets {
             Icon(
               icon, 
               size: 64, 
-              color: isDark ? Colors.grey.shade600 : Colors.grey.shade400
+              color: AppThemeColors.text(context).withOpacity(0.5)
             ),
             const SizedBox(height: 16),
             Text(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:floatit/src/styles.dart';
+import 'package:floatit/src/theme_colors.dart';
 
 /// Small badge showing user's attendance status for an event.
 ///
@@ -41,8 +42,8 @@ class AttendanceBadge extends StatelessWidget {
             label: 'Hosting',
             child: CircleAvatar(
               radius: 14,
-              backgroundColor: Colors.purple.shade600,
-              child: const Icon(Icons.star, size: 16, color: Colors.white),
+              backgroundColor: AppThemeColors.hostingBadge(context),
+              child: Icon(Icons.star, size: 16, color: AppThemeColors.badgeIcon(context)),
             ),
           ),
         );
@@ -54,8 +55,8 @@ class AttendanceBadge extends StatelessWidget {
             label: 'Attending',
             child: CircleAvatar(
               radius: 14,
-              backgroundColor: Colors.green.shade600,
-              child: const Icon(Icons.check, size: 16, color: Colors.white),
+              backgroundColor: AppThemeColors.attendingBadge(context),
+              child: Icon(Icons.check, size: 16, color: AppThemeColors.badgeIcon(context)),
             ),
           ),
         );
@@ -67,8 +68,8 @@ class AttendanceBadge extends StatelessWidget {
           label: 'Waiting list',
           child: CircleAvatar(
             radius: 14,
-            backgroundColor: Colors.orange.shade600,
-            child: const Icon(Icons.hourglass_bottom, size: 16, color: Colors.white),
+            backgroundColor: AppThemeColors.waitingBadge(context),
+            child: Icon(Icons.hourglass_bottom, size: 16, color: AppThemeColors.badgeIcon(context)),
           ),
         ),
       );
@@ -85,8 +86,8 @@ class AttendanceBadge extends StatelessWidget {
               label: 'Hosting',
               child: CircleAvatar(
                 radius: 14,
-                backgroundColor: Colors.purple.shade600,
-                child: const Icon(Icons.star, size: 16, color: Colors.white),
+                backgroundColor: AppThemeColors.hostingBadge(context),
+                child: Icon(Icons.star, size: 16, color: AppThemeColors.badgeIcon(context)),
               ),
             ),
           ),
@@ -106,8 +107,8 @@ class AttendanceBadge extends StatelessWidget {
               label: 'Attending',
               child: CircleAvatar(
                 radius: 14,
-                backgroundColor: Colors.green.shade600,
-                child: const Icon(Icons.check, size: 16, color: Colors.white),
+                backgroundColor: AppThemeColors.attendingBadge(context),
+                child: Icon(Icons.check, size: 16, color: AppThemeColors.badgeIcon(context)),
               ),
             ),
           ),
@@ -127,8 +128,8 @@ class AttendanceBadge extends StatelessWidget {
             label: 'Waiting list',
             child: CircleAvatar(
               radius: 14,
-              backgroundColor: Colors.orange.shade600,
-              child: const Icon(Icons.hourglass_bottom, size: 16, color: Colors.white),
+              backgroundColor: AppThemeColors.waitingBadge(context),
+              child: Icon(Icons.hourglass_bottom, size: 16, color: AppThemeColors.badgeIcon(context)),
             ),
           ),
         ),

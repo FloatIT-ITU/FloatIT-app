@@ -23,19 +23,20 @@ class PoolStatusBanner extends StatelessWidget {
         }
         
         final isNormal = provider.isNormalStatus;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         final backgroundColor = !isNormal
-            ? Colors.orange
-            : Theme.of(context).brightness == Brightness.dark
+            ? AppThemeColors.warning(context)
+            : isDark
                 ? AppThemeColors.bannerEventDark
                 : AppThemeColors.bannerEventLight;
         final textColor = !isNormal
-            ? Colors.white
-            : Theme.of(context).brightness == Brightness.dark
+            ? AppThemeColors.badgeIcon(context)
+            : isDark
                 ? AppThemeColors.bannerEventTextDark
                 : AppThemeColors.bannerEventTextLight;
         final iconColor = !isNormal
-            ? Colors.white
-            : Theme.of(context).brightness == Brightness.dark
+            ? AppThemeColors.badgeIcon(context)
+            : isDark
                 ? AppThemeColors.bannerEventTextDark
                 : AppThemeColors.bannerEventTextLight;
         
@@ -47,11 +48,7 @@ class PoolStatusBanner extends StatelessWidget {
               color: backgroundColor,
               border: Border(
                 top: BorderSide(
-                  color: !isNormal
-                      ? Colors.orange
-                      : Theme.of(context).brightness == Brightness.dark
-                          ? AppThemeColors.bannerEventDark
-                          : AppThemeColors.bannerEventLight,
+                  color: backgroundColor,
                   width: 2,
                 ),
               ),
