@@ -121,12 +121,21 @@ No environment variables needed for basic operation. All configuration is in:
 
 ## Contributing
 
-1. Create a feature branch from `dev`
+1. Create a feature branch from `main`
 2. Make your changes
 3. Run `flutter analyze` to ensure no issues
 4. Test locally
-5. Submit a pull request to `dev`
-6. After review, merge to `main` for deployment
+5. Submit a pull request to `main`
+6. After review and approval, your changes will be merged and deployed
+
+### Branch Previews
+
+When you create a pull request, GitHub Actions automatically builds a preview of your branch and publishes it to:
+```
+https://floatit-itu.github.io/FloatIT-app/previews/<branch-name>/
+```
+
+This allows you to test your changes in a live environment before merging. The preview is automatically cleaned up when the branch is deleted.
 
 ## Support
 
