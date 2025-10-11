@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:floatit/src/styles.dart';
 import 'package:floatit/src/widgets/swimmer_icon_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:floatit/src/services/firebase_service.dart';
+import 'package:floatit/src/event_service.dart';
 
 /// A modular attendee list for event attendees or waiting lists.
 class AttendeeList extends StatelessWidget {
@@ -160,6 +162,8 @@ class _AttendeeChip extends StatelessWidget {
     );
 
     if (confirmed == true && eventId != null) {
+      String? promotedUserId;
+      
       try {
         await FirebaseService.runTransaction((txn) async {
           final eventRef = FirebaseService.eventDoc(eventId!);
@@ -176,8 +180,8 @@ class _AttendeeChip extends StatelessWidget {
 
           // If there are people in waiting list, promote the first one
           if (waitingList.isNotEmpty) {
-            final promotedUser = waitingList.removeAt(0);
-            attendees.add(promotedUser);
+            promotedUserId = waitingList.removeAt(0);
+            attendees.add(promotedUserId!);
           }
 
           txn.update(eventRef, {
@@ -185,6 +189,23 @@ class _AttendeeChip extends StatelessWidget {
             'waitingListUids': waitingList,
           });
         });
+
+        // Send system message to promoted user
+        if (promotedUserId != null) {
+          try {
+            final eventSnap = await FirebaseFirestore.instance.collection('events').doc(eventId).get();
+            final eventData = eventSnap.data();
+            final eventName = eventData?['name'] ?? 'Event';
+            
+            await EventService.sendSystemMessage(
+              userId: promotedUserId!,
+              message: 'Great news! You\'ve been promoted from the waiting list to attendee for "$eventName".',
+              eventId: eventId!,
+            );
+          } catch (e) {
+            // Failed to send promotion notification - non-critical
+          }
+        }
 
         onAttendeeRemoved?.call();
         if (context.mounted) {

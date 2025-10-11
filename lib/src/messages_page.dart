@@ -443,6 +443,56 @@ class _ConversationPageState extends State<ConversationPage> {
                             final text = data['text'] as String;
                             final timestamp = data['timestamp'] as Timestamp?;
                             final isMe = senderId == currentUser.uid;
+                            final isSystem = senderId == 'system';
+
+                            // System messages are displayed centered without background
+                            if (isSystem) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Align(
+                                  alignment: Alignment.center,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    constraints: BoxConstraints(
+                                      maxWidth: MediaQuery.of(context).size.width * 0.8,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          text,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontStyle: FontStyle.italic,
+                                            color: Theme.of(context).colorScheme.primary,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        if (timestamp != null) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            DateFormat.Hm().format(timestamp.toDate()),
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8),

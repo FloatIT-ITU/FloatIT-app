@@ -3,6 +3,7 @@ import 'package:floatit/src/core/domain/entities/event.dart';
 import 'package:floatit/src/services/firebase_service.dart';
 import 'package:floatit/src/shared/errors/failures.dart';
 import 'package:floatit/src/shared/utils/either.dart';
+import 'package:floatit/src/event_service.dart';
 
 /// Firebase implementation of EventRepository
 class FirebaseEventRepository implements EventRepository {
@@ -135,7 +136,24 @@ class FirebaseEventRepository implements EventRepository {
         });
       });
 
-      // Waiting list promotions are now handled in-app only
+      // Send system message to promoted user
+      if (promotedUserId != null) {
+        try {
+          final eventSnap = await FirebaseService.eventDoc(eventId).get();
+          final eventData = eventSnap.data() as Map<String, dynamic>?;
+          final eventName = eventData?['name'] ?? 'Event';
+          
+          // Import the EventService to use sendSystemMessage
+          await EventService.sendSystemMessage(
+            userId: promotedUserId!,
+            message: 'Great news! You\'ve been promoted from the waiting list to attendee for "$eventName".',
+            eventId: eventId,
+          );
+        } catch (e) {
+          // Log error but don't fail the operation
+          // Failed to send promotion notification - non-critical
+        }
+      }
 
       return Result.right(null);
     } catch (e) {
