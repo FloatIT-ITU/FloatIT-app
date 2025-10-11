@@ -45,37 +45,37 @@ class FloatITApp extends StatelessWidget {
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppThemeColors.lightPrimary,
-                foregroundColor: AppThemeColors.lightOnPrimary,
+                foregroundColor: AppThemeColors.lightText, // Text on buttons
               ),
             ),
             outlinedButtonTheme: OutlinedButtonThemeData(
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppThemeColors.lightPrimary),
-                foregroundColor: AppThemeColors.lightOnPrimary,
+                foregroundColor: AppThemeColors.lightText, // Text on outlined buttons
               ),
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                   foregroundColor: AppThemeColors.lightPrimary),
             ),
-            appBarTheme: const AppBarTheme(
+            appBarTheme: AppBarTheme(
                 backgroundColor: AppThemeColors.lightPrimary,
-                foregroundColor: AppThemeColors.lightOnPrimary),
+                foregroundColor: AppThemeColors.lightText), // Text/icons on app bar
             inputDecorationTheme: InputDecorationTheme(
               filled: true,
               fillColor: AppThemeColors.lightSurface,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0)),
             ),
-            listTileTheme: const ListTileThemeData(
+            listTileTheme: ListTileThemeData(
               tileColor: AppThemeColors.cardLight,
-              iconColor: AppThemeColors.lightOnBackground,
-              textColor: AppThemeColors.lightOnBackground,
+              iconColor: AppThemeColors.lightText, // Icons in list tiles
+              textColor: AppThemeColors.lightText, // Text in list tiles
             ),
-            snackBarTheme: const SnackBarThemeData(
+            snackBarTheme: SnackBarThemeData(
                 backgroundColor: AppThemeColors.lightPrimary,
                 contentTextStyle:
-                    TextStyle(color: AppThemeColors.lightOnPrimary)),
+                    TextStyle(color: AppThemeColors.lightText)), // Text in snackbars
             cardTheme: CardTheme(
               color: AppThemeColors.cardLight,
               shape: RoundedRectangleBorder(
@@ -93,37 +93,37 @@ class FloatITApp extends StatelessWidget {
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppThemeColors.darkPrimary,
-                foregroundColor: AppThemeColors.darkOnPrimary,
+                foregroundColor: AppThemeColors.darkText,
               ),
             ),
             outlinedButtonTheme: OutlinedButtonThemeData(
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppThemeColors.darkPrimary),
-                foregroundColor: AppThemeColors.darkOnPrimary,
+                foregroundColor: AppThemeColors.darkText,
               ),
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                   foregroundColor: AppThemeColors.darkPrimary),
             ),
-            appBarTheme: const AppBarTheme(
+            appBarTheme: AppBarTheme(
                 backgroundColor: AppThemeColors.darkSurface,
-                foregroundColor: AppThemeColors.darkOnPrimary),
+                foregroundColor: AppThemeColors.darkText),
             inputDecorationTheme: InputDecorationTheme(
               filled: true,
               fillColor: AppThemeColors.darkSurface,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0)),
             ),
-            listTileTheme: const ListTileThemeData(
+            listTileTheme: ListTileThemeData(
               tileColor: AppThemeColors.cardDark,
-              iconColor: AppThemeColors.darkOnBackground,
-              textColor: AppThemeColors.darkOnBackground,
+              iconColor: AppThemeColors.darkText,
+              textColor: AppThemeColors.darkText,
             ),
-            snackBarTheme: const SnackBarThemeData(
+            snackBarTheme: SnackBarThemeData(
                 backgroundColor: AppThemeColors.darkSurface,
                 contentTextStyle:
-                    TextStyle(color: AppThemeColors.darkOnBackground)),
+                    TextStyle(color: AppThemeColors.darkText)),
             cardTheme: CardTheme(
               color: AppThemeColors.cardDark,
               shape: RoundedRectangleBorder(
