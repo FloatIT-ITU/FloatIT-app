@@ -102,7 +102,6 @@ class AuthGate extends StatelessWidget {
       }
     } catch (e) {
       // Ignore cleanup errors
-      print('Cleanup error: $e');
     }
   }
 }

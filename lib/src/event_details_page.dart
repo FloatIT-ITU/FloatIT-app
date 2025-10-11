@@ -6,7 +6,8 @@ import 'package:floatit/src/widgets/notification_banner.dart';
 import 'package:floatit/src/widgets/attendee_list_builder.dart';
 import 'package:floatit/src/widgets/event_details_display.dart';
 import 'package:floatit/src/services/firebase_service.dart';
-import 'messages_page.dart';
+import 'package:floatit/src/theme_colors.dart';
+import 'package:floatit/src/layout_widgets.dart';
 import 'user_profile_provider.dart';
 // import 'notification_provider.dart'; (removed, no longer needed)
 // import 'push_service.dart'; (removed, push notifications fully removed)
@@ -331,29 +332,6 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       return;
     }
 
-    // Create thread ID
-    final participants = [currentUser.uid, hostId]..sort();
-    final threadId = '${participants[0]}_${participants[1]}_${widget.eventId}';
-    final threadRef = FirebaseFirestore.instance.collection('messages').doc(threadId);
-    final threadDoc = await threadRef.get();
-
-    if (threadDoc.exists) {
-      // Open existing conversation
-      if (context.mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ConversationPage(
-              conversationId: threadId,
-              otherUserId: hostId,
-              otherUserName: _hostAttendee!.name,
-            ),
-          ),
-        );
-      }
-      return;
-    }
-
-    // No existing thread, show dialog to send first message
     final messageController = TextEditingController();
     
     final confirmed = await showDialog<bool>(
@@ -394,40 +372,49 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       try {
         final messageText = messageController.text.trim();
         
+        // Create or get thread ID (sorted user IDs to ensure consistency)
+        final participants = [currentUser.uid, hostId]..sort();
+        final threadId = '${participants[0]}_${participants[1]}_${widget.eventId}';
+        
+        final threadRef = FirebaseFirestore.instance.collection('messages').doc(threadId);
+        final threadDoc = await threadRef.get();
+        
         // Generate unique message ID
         final messageId = FirebaseFirestore.instance.collection('messages').doc().id;
         
-        // Create new thread with first message
-        await threadRef.set({
-          'participants': participants,
-          'eventId': widget.eventId,
-          'messages': {
-            messageId: {
+        if (!threadDoc.exists) {
+          // Create new thread with first message
+          await threadRef.set({
+            'participants': participants,
+            'eventId': widget.eventId,
+            'messages': {
+              messageId: {
+                'senderId': currentUser.uid,
+                'text': messageText,
+                'timestamp': FieldValue.serverTimestamp(),
+              }
+            },
+            'unreadCount': {
+              currentUser.uid: 0,
+              hostId: 1,
+            },
+            'lastMessage': messageText,
+            'lastMessageTime': FieldValue.serverTimestamp(),
+            'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+          });
+        } else {
+          // Update existing thread with new message
+          await threadRef.update({
+            'messages.$messageId': {
               'senderId': currentUser.uid,
               'text': messageText,
               'timestamp': FieldValue.serverTimestamp(),
-            }
-          },
-          'unreadCount': {
-            currentUser.uid: 0,
-            hostId: 1,
-          },
-          'lastMessage': messageText,
-          'lastMessageTime': FieldValue.serverTimestamp(),
-          'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
-        });
-
-        // Open the new conversation
-        if (context.mounted) {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => ConversationPage(
-                conversationId: threadId,
-                otherUserId: hostId,
-                otherUserName: _hostAttendee!.name,
-              ),
-            ),
-          );
+            },
+            'unreadCount.$hostId': FieldValue.increment(1),
+            'lastMessage': messageText,
+            'lastMessageTime': FieldValue.serverTimestamp(),
+            'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+          });
         }
         
         // Send push notification
@@ -440,12 +427,14 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         // );
         
         if (context.mounted) {
+          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Message sent to host')),
           );
         }
       } catch (e) {
         if (context.mounted) {
+          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to send message: $e')),
           );

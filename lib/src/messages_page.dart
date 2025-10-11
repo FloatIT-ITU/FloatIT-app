@@ -375,7 +375,7 @@ class _ConversationPageState extends State<ConversationPage> {
                           decoration: BoxDecoration(
                             color: isMe
                                 ? Theme.of(context).colorScheme.primaryContainer
-                                : Theme.of(context).colorScheme.surfaceVariant,
+                                : Theme.of(context).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           constraints: BoxConstraints(
