@@ -5,6 +5,8 @@ import 'package:floatit/src/services/firebase_service.dart';
 import 'package:floatit/src/layout_widgets.dart';
 import 'package:floatit/src/widgets/banners.dart';
 import 'package:intl/intl.dart';
+import 'package:floatit/src/theme_colors.dart';
+import 'package:floatit/src/widgets/swimmer_icon_picker.dart';
 
 class MessagesPage extends StatelessWidget {
   const MessagesPage({super.key});
@@ -107,9 +109,11 @@ class _ConversationTile extends StatelessWidget {
       future: FirebaseService.publicUserDoc(otherUserId).get(),
       builder: (context, userSnapshot) {
         String otherUserName = 'Unknown User';
+        Color iconColor = AppThemeColors.lightPrimary;
         if (userSnapshot.hasData && userSnapshot.data!.exists) {
           final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
           otherUserName = userData?['displayName'] ?? userData?['email'] ?? 'Unknown User';
+          iconColor = _colorFromDynamic(userData?['iconColor']);
         }
 
         return Padding(
@@ -117,9 +121,7 @@ class _ConversationTile extends StatelessWidget {
           child: Card(
             elevation: 1,
             child: ListTile(
-              leading: CircleAvatar(
-                child: Text(otherUserName[0].toUpperCase()),
-              ),
+              leading: SwimmerIconPicker.buildIcon(iconColor, radius: 20),
               title: Row(
                 children: [
                   Expanded(child: Text(otherUserName)),
@@ -206,6 +208,7 @@ class _ConversationTile extends StatelessWidget {
                       conversationId: conversationId,
                       otherUserId: otherUserId,
                       otherUserName: otherUserName,
+                      iconColor: iconColor,
                     ),
                   ),
                 );
@@ -231,18 +234,36 @@ class _ConversationTile extends StatelessWidget {
       return DateFormat.MMMd().format(time);
     }
   }
+
+  /// Convert color value from dynamic (int or hex string) to Color
+  Color _colorFromDynamic(dynamic colorValue) {
+    if (colorValue is int) {
+      return Color(colorValue);
+    }
+    if (colorValue is String) {
+      final hexValue = colorValue.replaceFirst('#', '');
+      if (hexValue.length == 6) {
+        return Color(int.parse('FF$hexValue', radix: 16));
+      } else if (hexValue.length == 8) {
+        return Color(int.parse(hexValue, radix: 16));
+      }
+    }
+    return AppThemeColors.lightPrimary; // Default color
+  }
 }
 
 class ConversationPage extends StatefulWidget {
   final String conversationId;
   final String otherUserId;
   final String otherUserName;
+  final Color iconColor;
 
   const ConversationPage({
     super.key,
     required this.conversationId,
     required this.otherUserId,
     required this.otherUserName,
+    required this.iconColor,
   });
 
   @override
@@ -338,6 +359,7 @@ class _ConversationPageState extends State<ConversationPage> {
           StandardPageBanner(
             title: widget.otherUserName,
             showBackArrow: true,
+            leading: SwimmerIconPicker.buildIcon(widget.iconColor, radius: 14),
           ),
           Expanded(
             child: StreamBuilder<DocumentSnapshot>(
