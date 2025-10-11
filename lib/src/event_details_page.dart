@@ -8,6 +8,7 @@ import 'package:floatit/src/widgets/event_details_display.dart';
 import 'package:floatit/src/services/firebase_service.dart';
 import 'package:floatit/src/event_service.dart';
 import 'package:floatit/src/theme_colors.dart';
+import 'package:floatit/src/user_statistics_service.dart';
 import 'package:floatit/src/layout_widgets.dart';
 import 'user_profile_provider.dart';
 // import 'notification_provider.dart'; (removed, no longer needed)
@@ -178,6 +179,27 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                       'waitingListUids': waitingList,
                     });
                   });
+                  
+                  // Record statistics for join/leave actions
+                  try {
+                    final eventData = await FirebaseService.eventDoc(widget.eventId).get();
+                    final eventMap = eventData.data() as Map<String, dynamic>?;
+                    final startTimeStr = eventMap?['startTime'] as String?;
+                    final eventDate = startTimeStr != null ? DateTime.tryParse(startTimeStr)?.toLocal() : null;
+                    
+                    if (eventDate != null) {
+                      if (actionType == RateLimitAction.leaveEvent) {
+                        // User left the event (either attendee or waiting list)
+                        await UserStatisticsService.removeEventJoin(uid, widget.eventId);
+                      } else if (actionType == RateLimitAction.joinEvent) {
+                        // User joined the event (either as attendee or waiting)
+                        await UserStatisticsService.recordEventJoin(uid, widget.eventId, eventDate);
+                      }
+                    }
+                  } catch (e) {
+                    // Statistics recording failed - non-critical, don't show error
+                  }
+                  
                   if (!mounted) return;
                   String actionMsg;
                   if (isAttendee) {

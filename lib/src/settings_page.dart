@@ -10,13 +10,12 @@ import 'package:floatit/src/widgets/profile_summary_card.dart';
 import 'package:floatit/src/widgets/change_password_dialog.dart';
 import 'package:floatit/src/privacy_policy_page.dart';
 import 'admin_page.dart';
+import 'statistics_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'styles.dart';
 import 'layout_widgets.dart';
 
 import 'theme_provider.dart';
-// Push notifications are disabled in the production branch; keep only
-// email notification preferences. PushService is intentionally omitted.
 import 'package:floatit/src/utils/navigation_utils.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -81,7 +80,30 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: ProfileSummaryCard(),
                       ),
                       const SizedBox(height: 24),
-                      // Account section
+                      // Admin section (only visible to admins)
+                      if (_isAdmin == true) ...[
+                        const SectionHeader(title: 'Admin'),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Card(
+                            elevation: 1,
+                            child: ListTile(
+                              leading: const Icon(Icons.admin_panel_settings),
+                              title: const Text('Admin Panel'),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () {
+                                NavigationUtils.pushWithoutAnimation(
+                                  context,
+                                  const AdminPage(),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                      // Account section - moved down
                       const SectionHeader(title: 'Account'),
                       const SizedBox(height: 8),
                       Padding(
@@ -201,29 +223,27 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      // Admin section (only visible to admins)
-                      if (_isAdmin == true) ...[
-                        const SectionHeader(title: 'Admin'),
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Card(
-                            elevation: 1,
-                            child: ListTile(
-                              leading: const Icon(Icons.admin_panel_settings),
-                              title: const Text('Admin Panel'),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () {
-                                NavigationUtils.pushWithoutAnimation(
-                                  context,
-                                  const AdminPage(),
-                                );
-                              },
-                            ),
+                      // Statistics section - new
+                      const SectionHeader(title: 'Statistics'),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Card(
+                          elevation: 1,
+                          child: ListTile(
+                            leading: const Icon(Icons.event_available),
+                            title: Text('Events Joined: ${profile.eventsJoinedCount}'),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () {
+                              NavigationUtils.pushWithoutAnimation(
+                                context,
+                                const StatisticsPage(),
+                              );
+                            },
                           ),
                         ),
-                        const SizedBox(height: 24),
-                      ],
+                      ),
+                      const SizedBox(height: 24),
                       // About section
                       const SectionHeader(title: 'About'),
                       const SizedBox(height: 8),

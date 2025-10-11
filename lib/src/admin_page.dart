@@ -76,8 +76,8 @@ class AdminPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    // Admin section
-                    const SectionHeader(title: 'Admin'),
+                    // Notifications section
+                    const SectionHeader(title: 'Notifications'),
                     const SizedBox(height: 8),
                     Card(
                       elevation: 1,

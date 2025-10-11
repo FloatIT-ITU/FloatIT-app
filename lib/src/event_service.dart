@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'user_statistics_service.dart';
 
 class EventService {
   EventService._();
@@ -13,6 +14,13 @@ class EventService {
   }) async {
     final fs = firestore ?? FirebaseFirestore.instance;
     final eventRef = fs.collection('events').doc(eventId);
+    
+    // Get event date before joining
+    final eventSnap = await fs.collection('events').doc(eventId).get();
+    final eventData = eventSnap.data();
+    final startTimeStr = eventData?['startTime'] as String?;
+    final eventDate = startTimeStr != null ? DateTime.tryParse(startTimeStr)?.toLocal() : null;
+    
     await fs.runTransaction((tx) async {
       final snap = await tx.get(eventRef);
       if (!snap.exists) throw Exception('Event not found');
@@ -36,6 +44,15 @@ class EventService {
         'editedAt': DateTime.now().toUtc().toIso8601String(),
       });
     });
+
+    // Update user statistics if we successfully joined as attendee
+    if (eventDate != null) {
+      try {
+        await UserStatisticsService.recordEventJoin(userId, eventId, eventDate);
+      } catch (e) {
+        // Statistics update failed - non-critical, don't throw
+      }
+    }
   }
 
   /// Atomically leave an event: removes the user from attendees/waiting list
@@ -47,6 +64,12 @@ class EventService {
   }) async {
     final fs = firestore ?? FirebaseFirestore.instance;
     final eventRef = fs.collection('events').doc(eventId);
+    
+    // Get event date before leaving
+    final eventSnap = await fs.collection('events').doc(eventId).get();
+    final eventData = eventSnap.data();
+    final startTimeStr = eventData?['startTime'] as String?;
+    final eventDate = startTimeStr != null ? DateTime.tryParse(startTimeStr)?.toLocal() : null;
     
     String? promotedUserId;
     
@@ -70,6 +93,15 @@ class EventService {
         'editedAt': DateTime.now().toUtc().toIso8601String(),
       });
     });
+
+    // Update user statistics if we successfully left as attendee
+    if (eventDate != null) {
+      try {
+        await UserStatisticsService.removeEventJoin(userId, eventId);
+      } catch (e) {
+        // Statistics update failed - non-critical, don't throw
+      }
+    }
 
     // Send system message to promoted user
     if (promotedUserId != null) {

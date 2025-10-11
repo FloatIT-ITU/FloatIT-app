@@ -4,6 +4,7 @@ import 'package:floatit/src/services/firebase_service.dart';
 import 'package:floatit/src/shared/errors/failures.dart';
 import 'package:floatit/src/shared/utils/either.dart';
 import 'package:floatit/src/event_service.dart';
+import 'package:floatit/src/user_statistics_service.dart';
 
 /// Firebase implementation of EventRepository
 class FirebaseEventRepository implements EventRepository {
@@ -96,6 +97,21 @@ class FirebaseEventRepository implements EventRepository {
           'waitingListUids': waitingList,
         });
       });
+
+      // Record statistics for joined event
+      try {
+        final eventSnap = await FirebaseService.eventDoc(eventId).get();
+        final eventData = eventSnap.data() as Map<String, dynamic>?;
+        final startTimeStr = eventData?['startTime'] as String?;
+        final eventDate = startTimeStr != null ? DateTime.tryParse(startTimeStr)?.toLocal() : null;
+
+        if (eventDate != null) {
+          await UserStatisticsService.recordEventJoin(userId, eventId, eventDate);
+        }
+      } catch (e) {
+        // Statistics recording failed - non-critical, don't throw
+      }
+
       return Result.right(null);
     } catch (e) {
       return Result.left(DatabaseFailure.unknown());
@@ -153,6 +169,13 @@ class FirebaseEventRepository implements EventRepository {
           // Log error but don't fail the operation
           // Failed to send promotion notification - non-critical
         }
+      }
+
+      // Remove statistics record for left event
+      try {
+        await UserStatisticsService.removeEventJoin(userId, eventId);
+      } catch (e) {
+        // Statistics removal failed - non-critical, don't throw
       }
 
       return Result.right(null);
