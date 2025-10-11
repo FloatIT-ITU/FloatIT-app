@@ -6,17 +6,31 @@ class EventService {
 
   /// Atomically join an event: if space available the user is added to
   /// `attendees`, otherwise appended to `waitingListUids`.
+  /// 
+  /// Throws ArgumentError if inputs are invalid
+  /// Throws Exception if event doesn't exist
   static Future<void> joinEvent({
     required String eventId,
     required String userId,
     required int attendeeLimit,
     FirebaseFirestore? firestore,
   }) async {
+    if (eventId.isEmpty) {
+      throw ArgumentError('eventId cannot be empty');
+    }
+    if (userId.isEmpty) {
+      throw ArgumentError('userId cannot be empty');
+    }
+    
     final fs = firestore ?? FirebaseFirestore.instance;
     final eventRef = fs.collection('events').doc(eventId);
     
     // Get event date before joining
     final eventSnap = await fs.collection('events').doc(eventId).get();
+    if (!eventSnap.exists) {
+      throw Exception('Event not found');
+    }
+    
     final eventData = eventSnap.data();
     final startTimeStr = eventData?['startTime'] as String?;
     final eventDate = startTimeStr != null ? DateTime.tryParse(startTimeStr)?.toLocal() : null;
@@ -57,16 +71,30 @@ class EventService {
 
   /// Atomically leave an event: removes the user from attendees/waiting list
   /// and promotes the first waiting user (FIFO) into attendees if applicable.
+  /// 
+  /// Throws ArgumentError if inputs are invalid
+  /// Throws Exception if event doesn't exist
   static Future<void> leaveEvent({
     required String eventId,
     required String userId,
     FirebaseFirestore? firestore,
   }) async {
+    if (eventId.isEmpty) {
+      throw ArgumentError('eventId cannot be empty');
+    }
+    if (userId.isEmpty) {
+      throw ArgumentError('userId cannot be empty');
+    }
+    
     final fs = firestore ?? FirebaseFirestore.instance;
     final eventRef = fs.collection('events').doc(eventId);
     
     // Get event date before leaving
     final eventSnap = await fs.collection('events').doc(eventId).get();
+    if (!eventSnap.exists) {
+      throw Exception('Event not found');
+    }
+    
     final eventData = eventSnap.data();
     final startTimeStr = eventData?['startTime'] as String?;
     final eventDate = startTimeStr != null ? DateTime.tryParse(startTimeStr)?.toLocal() : null;
@@ -123,12 +151,24 @@ class EventService {
   }
 
   /// Send a system message to a user (used for event notifications)
+  /// 
+  /// Throws ArgumentError if inputs are invalid
   static Future<void> sendSystemMessage({
     required String userId,
     required String message,
     required String eventId,
     FirebaseFirestore? firestore,
   }) async {
+    if (userId.isEmpty) {
+      throw ArgumentError('userId cannot be empty');
+    }
+    if (message.isEmpty) {
+      throw ArgumentError('message cannot be empty');
+    }
+    if (eventId.isEmpty) {
+      throw ArgumentError('eventId cannot be empty');
+    }
+    
     final fs = firestore ?? FirebaseFirestore.instance;
     
     // Create a unique conversation ID for system-user communication
