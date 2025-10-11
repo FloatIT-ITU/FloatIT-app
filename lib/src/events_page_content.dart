@@ -58,14 +58,12 @@ class _EventsPageContentState extends State<EventsPageContent> {
             });
           }
           final eventsList = events.toList();
-          if (eventsList.isEmpty) {
-            return const Center(child: Text('No upcoming events!'));
-          }
+          
           return ConstrainedContent(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Filter at the top right
+                // Filter at the top right - always visible
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Row(
@@ -90,19 +88,21 @@ class _EventsPageContentState extends State<EventsPageContent> {
                     ],
                   ),
                 ),
-                // Event list
+                // Event list or empty message
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: eventsList.length,
-                    itemBuilder: (context, i) {
-                      final doc = eventsList[i];
-                      final eventId = doc.id;
-                      return _EventCard(
-                        key: ValueKey(eventId),
-                        eventId: eventId,
-                      );
-                    },
-                  ),
+                  child: eventsList.isEmpty
+                      ? const Center(child: Text('No upcoming events!'))
+                      : ListView.builder(
+                          itemCount: eventsList.length,
+                          itemBuilder: (context, i) {
+                            final doc = eventsList[i];
+                            final eventId = doc.id;
+                            return _EventCard(
+                              key: ValueKey(eventId),
+                              eventId: eventId,
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
