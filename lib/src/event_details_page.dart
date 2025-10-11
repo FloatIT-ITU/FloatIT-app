@@ -6,6 +6,7 @@ import 'package:floatit/src/widgets/notification_banner.dart';
 import 'package:floatit/src/widgets/attendee_list_builder.dart';
 import 'package:floatit/src/widgets/event_details_display.dart';
 import 'package:floatit/src/services/firebase_service.dart';
+import 'package:floatit/src/event_service.dart';
 import 'package:floatit/src/theme_colors.dart';
 import 'package:floatit/src/layout_widgets.dart';
 import 'user_profile_provider.dart';
@@ -51,9 +52,29 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             alignment: Alignment.centerRight,
-            child: IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () => setState(() => _editing = true),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseService.eventBanner(widget.eventId).snapshots(),
+                  builder: (context, snap) {
+                    final hasBanner = snap.hasData && snap.data!.exists;
+                    return IconButton(
+                      icon: Icon(hasBanner ? Icons.notifications_off : Icons.notifications),
+                      tooltip: hasBanner ? 'Remove Notification' : 'Send Notification',
+                      onPressed: hasBanner
+                          ? () => _showRemoveNotificationDialog(context)
+                          : () => _showSendNotificationDialog(context),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Edit Event',
+                  onPressed: () => setState(() => _editing = true),
+                ),
+              ],
             ),
           ),
       ],
@@ -472,23 +493,6 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
     await _loadEvent();
   }
 
-  // Save or remove event-scoped banner
-  Future<void> _saveEventBanner(String? title, String? body) async {
-    final doc = FirebaseService.eventBanner(widget.eventId);
-    if (title == null || title.trim().isEmpty) {
-      // remove
-      await doc.delete().catchError((_) {});
-      return;
-    }
-    await doc.set({
-      'title': title,
-      'body': body ?? '',
-      'createdAt': DateTime.now().toUtc().toIso8601String(),
-    });
-
-    // Event banners are now handled in-app only
-  }
-
   @override
   Widget build(BuildContext context) {
     final isAdmin = context.watch<UserProfileProvider>().isAdmin;
@@ -661,8 +665,6 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
 
   Widget _buildEditForm(bool isAdmin) {
     final data = _eventData!;
-    String bannerTitle = '';
-    String bannerBody = '';
     return Form(
       key: _formKey,
       child: ListView(
@@ -676,53 +678,6 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
             onChanged: (v) => _eventData!['name'] = v,
           ),
           const SizedBox(height: 12),
-          if (isAdmin) ...[
-            const Divider(),
-            const SizedBox(height: 8),
-            Text('Event Notification (visible to attendees)',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            TextFormField(
-              decoration: const InputDecoration(
-                  labelText: 'Banner Title (leave empty to remove)'),
-              initialValue: bannerTitle,
-              onChanged: (v) => bannerTitle = v,
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              decoration: const InputDecoration(labelText: 'Banner Body'),
-              initialValue: bannerBody,
-              onChanged: (v) => bannerBody = v,
-              maxLines: 3,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    await _saveEventBanner(
-                        bannerTitle.trim().isEmpty ? null : bannerTitle.trim(),
-                        bannerBody.trim());
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Event notification updated')));
-                  },
-                  child: const Text('Save Event Notification'),
-                ),
-                const SizedBox(width: 12),
-                TextButton(
-                  onPressed: () async {
-                    await _saveEventBanner(null, null);
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Event notification removed')));
-                  },
-                  child: const Text('Remove'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
           EventLocationField(
             controller: TextEditingController(text: data['location'] ?? '')
               ..selection = TextSelection.collapsed(
@@ -913,6 +868,170 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         );
       }
     }
+  }
+
+  void _showSendNotificationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => _SendNotificationDialog(eventId: widget.eventId),
+    );
+  }
+
+  void _showRemoveNotificationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Event Notification'),
+        content: const Text('This will remove the current event notification. Are you sure?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+
+              try {
+                final doc = FirebaseService.eventBanner(widget.eventId);
+                await doc.delete();
+
+                if (!mounted) return;
+                navigator.pop();
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Event notification removed')),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Failed to remove notification')),
+                );
+              }
+            },
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SendNotificationDialog extends StatefulWidget {
+  final String eventId;
+
+  const _SendNotificationDialog({required this.eventId});
+
+  @override
+  State<_SendNotificationDialog> createState() => _SendNotificationDialogState();
+}
+
+class _SendNotificationDialogState extends State<_SendNotificationDialog> {
+  final _formKey = GlobalKey<FormState>();
+  String _title = '';
+  String _body = '';
+  bool _sendAsSystemMessage = true; // Pre-selected by default
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Send Event Notification'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              decoration: const InputDecoration(labelText: 'Title'),
+              onChanged: (v) => setState(() => _title = v),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Title is required'
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              decoration: const InputDecoration(labelText: 'Message'),
+              onChanged: (v) => setState(() => _body = v),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Message is required'
+                  : null,
+              maxLines: 3,
+            ),
+            const SizedBox(height: 12),
+            CheckboxListTile(
+              title: const Text('Also send as system message to attendees'),
+              subtitle: const Text('Send this notification as a personal message to all event attendees and waiting list members'),
+              value: _sendAsSystemMessage,
+              onChanged: (value) => setState(() => _sendAsSystemMessage = value ?? true),
+              dense: true,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            if (_formKey.currentState?.validate() != true) return;
+
+            final messenger = ScaffoldMessenger.of(context);
+            final navigator = Navigator.of(context);
+
+            try {
+              final doc = FirebaseService.eventBanner(widget.eventId);
+              await doc.set({
+                'title': _title.trim(),
+                'body': _body.trim(),
+                'createdAt': DateTime.now().toUtc().toIso8601String(),
+              });
+
+              // Send system messages to attendees if requested
+              if (_sendAsSystemMessage) {
+                try {
+                  final eventDoc = await FirebaseService.eventDoc(widget.eventId).get();
+                  if (eventDoc.exists) {
+                    final eventData = eventDoc.data() as Map<String, dynamic>;
+                    final attendees = List<String>.from(eventData['attendees'] ?? []);
+                    final waitingList = List<String>.from(eventData['waitingListUids'] ?? []);
+                    
+                    // Combine attendees and waiting list
+                    final allRecipients = {...attendees, ...waitingList}.toList();
+                    
+                    // Send system message to each recipient
+                    final message = 'Event Notification: ${_title.trim()}\n\n${_body.trim()}';
+                    for (final userId in allRecipients) {
+                      await EventService.sendSystemMessage(
+                        userId: userId,
+                        message: message,
+                        eventId: widget.eventId,
+                      );
+                    }
+                  }
+                } catch (e) {
+                  // Log error but don't fail the whole operation
+                  // System messages are not critical
+                }
+              }
+
+              if (!mounted) return;
+              navigator.pop();
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Event notification sent')),
+              );
+            } catch (e) {
+              if (!mounted) return;
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Failed to send notification')),
+              );
+            }
+          },
+          child: const Text('Send'),
+        ),
+      ],
+    );
   }
 }
 

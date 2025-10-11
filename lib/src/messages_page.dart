@@ -110,7 +110,12 @@ class _ConversationTile extends StatelessWidget {
       builder: (context, userSnapshot) {
         String otherUserName = 'Unknown User';
         Color iconColor = AppThemeColors.lightPrimary;
-        if (userSnapshot.hasData && userSnapshot.data!.exists) {
+        
+        // Special handling for system messages
+        if (otherUserId == 'system') {
+          otherUserName = 'System Message';
+          iconColor = AppThemeColors.systemMessageColor;
+        } else if (userSnapshot.hasData && userSnapshot.data!.exists) {
           final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
           otherUserName = userData?['displayName'] ?? userData?['email'] ?? 'Unknown User';
           iconColor = _colorFromDynamic(userData?['iconColor']);
