@@ -180,8 +180,11 @@ class _MainAppViewState extends State<MainAppView> {
               for (var w in bannerWidgets) w,
               // Main content - Events page (now fully loaded)
               const Expanded(child: EventsPageContent()),
-              // Pool status banner at the bottom
-              const PoolStatusBanner(),
+              // Pool status banner at the bottom - ensure it goes to the bottom edge
+              SafeArea(
+                top: false,
+                child: const PoolStatusBanner(),
+              ),
             ],
           );
         },

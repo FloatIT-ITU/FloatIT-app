@@ -18,6 +18,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="FloatIT - ITU event management app. Join practice sessions and stay updated with team events.">
 
   <!-- iOS meta tags & icons -->
@@ -46,6 +47,23 @@
 
   <title>FloatIT - ITU</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      /* Ensure body takes full viewport height on mobile */
+      height: 100vh;
+      height: 100dvh; /* Use dynamic viewport height if supported */
+      overflow: hidden;
+    }
+    
+    /* Ensure Flutter canvas fills the entire viewport */
+    flt-glass-pane {
+      height: 100vh !important;
+      height: 100dvh !important;
+    }
+  </style>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
