@@ -44,6 +44,12 @@ class AppThemeColors {
   static const Color lightSuccess = Color(0xFF22C55E); // Checkmarks, success states
   static const Color lightWarning = Color(0xFFF36F47); // Warnings, errors
   static const Color lightText = Color(0xFF0A1420); // Primary text color
+  
+  // Attendance badge colors for light mode
+  static const Color lightHostingBadge = Color(0xFF9C27B0); // Purple - Hosting badge
+  static const Color lightAttendingBadge = Color(0xFF22C55E); // Green - Attending badge
+  static const Color lightWaitingBadge = Color(0xFFF36F47); // Orange - Waiting list badge
+  static const Color lightBadgeIcon = Color(0xFFFFFFFF); // White - Icon color on badges
 
   // -----------------------------------------------------------------------
   // Dark theme palette - Dark blue theme (maintain contrast)
@@ -60,6 +66,12 @@ class AppThemeColors {
   static const Color darkSuccess = Color(0xFF22C55E); // Checkmarks, success states
   static const Color darkWarning = Color(0xFFF36F47); // Warnings, errors
   static const Color darkText = Color(0xFFE0E1DD); // Primary text color
+  
+  // Attendance badge colors for dark mode
+  static const Color darkHostingBadge = Color(0xFFCE93D8); // Lighter purple - Hosting badge
+  static const Color darkAttendingBadge = Color(0xFF22C55E); // Green - Attending badge
+  static const Color darkWaitingBadge = Color(0xFFF36F47); // Orange - Waiting list badge
+  static const Color darkBadgeIcon = Color(0xFF0A1420); // Dark - Icon color on badges
 
   // -----------------------------------------------------------------------
   // Banners and special-purpose colors
@@ -126,5 +138,33 @@ class AppThemeColors {
     return Theme.of(context).brightness == Brightness.light
         ? lightText
         : darkText;
+  }
+  
+  /// Get the hosting badge color based on current theme brightness
+  static Color hostingBadge(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? lightHostingBadge
+        : darkHostingBadge;
+  }
+  
+  /// Get the attending badge color based on current theme brightness
+  static Color attendingBadge(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? lightAttendingBadge
+        : darkAttendingBadge;
+  }
+  
+  /// Get the waiting list badge color based on current theme brightness
+  static Color waitingBadge(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? lightWaitingBadge
+        : darkWaitingBadge;
+  }
+  
+  /// Get the badge icon color based on current theme brightness
+  static Color badgeIcon(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.light
+        ? lightBadgeIcon
+        : darkBadgeIcon;
   }
 }

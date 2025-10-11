@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:floatit/src/widgets/attendee_list.dart';
 import 'package:floatit/src/services/firebase_service.dart';
 import 'package:floatit/src/constants/firestore_constants.dart';
+import 'package:floatit/src/theme_colors.dart';
 
 /// A widget that builds an attendee list from a list of user IDs.
 /// Handles fetching user data from both public_users and users collections.
@@ -95,6 +96,6 @@ class AttendeeListBuilder extends StatelessWidget {
         return Color(int.parse(hexValue, radix: 16));
       }
     }
-    return Colors.blue; // Default color
+    return AppThemeColors.lightPrimary; // Default color
   }
 }
