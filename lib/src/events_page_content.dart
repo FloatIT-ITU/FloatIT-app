@@ -76,11 +76,8 @@ class _EventsPageContentState extends State<EventsPageContent> {
                           value: _selectedEventType,
                           decoration: InputDecoration(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Theme.of(context).colorScheme.surface,
+                            border: InputBorder.none,
+                            filled: false,
                           ),
                           items: const [
                             DropdownMenuItem(value: 'all', child: Text('All')),
