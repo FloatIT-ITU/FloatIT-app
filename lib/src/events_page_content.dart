@@ -69,21 +69,30 @@ class _EventsPageContentState extends State<EventsPageContent> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const Text('Filter: ', style: TextStyle(fontSize: 14)),
                       const SizedBox(width: 8),
-                      DropdownButton<String>(
-                        value: _selectedEventType,
-                        underline: const SizedBox.shrink(),
-                        items: const [
-                          DropdownMenuItem(value: 'all', child: Text('All')),
-                          DropdownMenuItem(value: 'practice', child: Text('Practice')),
-                          DropdownMenuItem(value: 'competition', child: Text('Competition')),
-                          DropdownMenuItem(value: 'other', child: Text('Other')),
-                        ],
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setState(() => _selectedEventType = v);
-                        },
+                      SizedBox(
+                        width: 150,
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedEventType,
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Theme.of(context).colorScheme.surface,
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'all', child: Text('All')),
+                            DropdownMenuItem(value: 'practice', child: Text('Practice')),
+                            DropdownMenuItem(value: 'competition', child: Text('Competition')),
+                            DropdownMenuItem(value: 'other', child: Text('Other')),
+                          ],
+                          onChanged: (v) {
+                            if (v == null) return;
+                            setState(() => _selectedEventType = v);
+                          },
+                        ),
                       ),
                     ],
                   ),
