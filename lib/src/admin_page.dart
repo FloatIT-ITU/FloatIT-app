@@ -7,6 +7,7 @@ import 'package:floatit/src/create_event_page.dart';
 import 'admin_send_notification_page.dart';
 import 'user_management_page.dart';
 import 'admin_event_management_page.dart';
+import 'admin_feedback_page.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
 
 class AdminPage extends StatelessWidget {
@@ -92,6 +93,17 @@ class AdminPage extends StatelessWidget {
                               NavigationUtils.pushWithoutAnimation(
                                 context,
                                 const AdminSendNotificationPage(),
+                              );
+                            },
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            leading: const Icon(Icons.feedback_outlined),
+                            title: const Text('Feedback Messages'),
+                            onTap: () {
+                              NavigationUtils.pushWithoutAnimation(
+                                context,
+                                const AdminFeedbackPage(),
                               );
                             },
                           ),

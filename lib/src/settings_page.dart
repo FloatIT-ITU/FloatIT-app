@@ -56,6 +56,111 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  void _showFeedbackDialog(BuildContext context) {
+    final TextEditingController feedbackController = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Send Feedback'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'We appreciate your feedback! Please share your thoughts, suggestions, or report any issues.',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: feedbackController,
+                    maxLines: 5,
+                    maxLength: 500,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your feedback here...',
+                      border: OutlineInputBorder(),
+                      counterText: '',
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final feedback = feedbackController.text.trim();
+                          if (feedback.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter your feedback')),
+                            );
+                            return;
+                          }
+
+                          setState(() => isSubmitting = true);
+                          bool submitSuccess = false;
+
+                          try {
+                            await _submitFeedback(feedback);
+                            submitSuccess = true;
+                          } catch (e) {
+                            // Error handled below
+                          }
+
+                          if (!mounted) return;
+                          setState(() => isSubmitting = false);
+
+                          if (submitSuccess) {
+                            // ignore: use_build_context_synchronously
+                            Navigator.of(context).pop();
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Thank you for your feedback!')),
+                            );
+                          } else {
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Failed to send feedback. Please try again.')),
+                            );
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Send'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _submitFeedback(String feedback) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not authenticated');
+
+    final fs = FirebaseFirestore.instance;
+    await fs.collection('feedback').add({
+      'userId': user.uid,
+      'userEmail': user.email,
+      'message': feedback,
+      'timestamp': FieldValue.serverTimestamp(),
+      'status': 'unread', // unread, read, responded
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -272,6 +377,14 @@ class _SettingsPageState extends State<SettingsPage> {
                                   if (await canLaunchUrl(url)) {
                                     await launchUrl(url, mode: LaunchMode.externalApplication);
                                   }
+                                },
+                              ),
+                              const Divider(height: 1),
+                              ListTile(
+                                leading: const Icon(Icons.feedback_outlined),
+                                title: const Text('Send Feedback'),
+                                onTap: () {
+                                  _showFeedbackDialog(context);
                                 },
                               ),
                             ],

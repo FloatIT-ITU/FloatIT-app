@@ -189,6 +189,24 @@ service cloud.firestore {
         request.resource.data.userId == request.auth.uid;
     }
 
+    // ===== FEEDBACK COLLECTION =====
+    // User feedback messages for admins
+
+    match /feedback/{document} {
+      // All authenticated users can create feedback
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Only admins can read feedback messages
+      allow read: if isAdmin();
+
+      // Only admins can update feedback (mark as read/responded)
+      allow update: if isAdmin();
+
+      // Only admins can delete feedback
+      allow delete: if isAdmin();
+    }
+
     // ===== DENY ALL OTHER ACCESS =====
     // Explicitly deny access to any collections not defined above
 
