@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:floatit/src/pool_status_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:floatit/src/services/rate_limit_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// A persistent banner that displays the pool status at the bottom of the screen
 class PoolStatusBanner extends StatelessWidget {
@@ -53,12 +54,37 @@ class PoolStatusBanner extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    'Sundby Bad Status: $status',
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                  child: RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Sundby Bad '),
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.baseline,
+                          baseline: TextBaseline.alphabetic,
+                          child: GestureDetector(
+                            onTap: () {
+                              // Open the Sundby Bad website
+                              final uri = Uri.parse('https://svoemkbh.kk.dk/svoemmeanlaeg/svoemmehaller/sundby-bad');
+                              launchUrl(uri, mode: LaunchMode.externalApplication);
+                            },
+                            child: Text(
+                              'Status',
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+                        TextSpan(text: ': $status'),
+                      ],
                     ),
                   ),
                 ),

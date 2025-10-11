@@ -49,19 +49,54 @@
   <link rel="manifest" href="manifest.json">
 
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
+      width: 100%;
       /* Ensure body takes full viewport height on mobile */
-      height: 100vh;
-      height: 100dvh; /* Use dynamic viewport height if supported */
+      height: 100%;
+      min-height: 100vh;
+      min-height: 100dvh; /* Use dynamic viewport height if supported */
+      min-height: -webkit-fill-available; /* iOS Safari fallback */
       overflow: hidden;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
     }
     
     /* Ensure Flutter canvas fills the entire viewport */
     flt-glass-pane {
-      height: 100vh !important;
-      height: 100dvh !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100vh !important;
+      min-height: 100dvh !important;
+      min-height: -webkit-fill-available !important;
+    }
+    
+    /* Android Chrome address bar fix */
+    @supports (-webkit-touch-callout: none) {
+      body {
+        min-height: -webkit-fill-available;
+      }
+    }
+    
+    /* Target all Flutter canvas and container elements */
+    flt-scene-host, flt-semantics-host, flt-glass-pane, 
+    #flutterTarget, flutter-view, .flutter-view {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
     }
   </style>
 </head>
