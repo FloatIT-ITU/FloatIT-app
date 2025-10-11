@@ -38,14 +38,19 @@ class FloatITApp extends StatelessWidget {
           theme: ThemeData(
             fontFamily: 'Inter',
             colorScheme: ColorScheme.fromSeed(
-                seedColor: AppThemeColors.lightPrimary),
+                seedColor: AppThemeColors.lightPrimary,
+                brightness: Brightness.light,
+            ).copyWith(
+                primary: AppThemeColors.darkPrimary, // Light blue - used for buttons
+                onPrimary: AppThemeColors.darkOnPrimary, // Dark text on buttons
+            ),
             useMaterial3: true,
             brightness: Brightness.light,
             scaffoldBackgroundColor: AppThemeColors.lightBackground,
             elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppThemeColors.lightPrimary,
-                foregroundColor: AppThemeColors.lightText, // Text on buttons
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all(AppThemeColors.darkPrimary), // Light blue button in LIGHT mode
+                foregroundColor: WidgetStateProperty.all(AppThemeColors.darkOnPrimary), // Dark text in LIGHT mode
               ),
             ),
             outlinedButtonTheme: OutlinedButtonThemeData(
@@ -87,13 +92,17 @@ class FloatITApp extends StatelessWidget {
             fontFamily: 'Inter',
             colorScheme: ColorScheme.fromSeed(
                 seedColor: AppThemeColors.darkPrimary,
-                brightness: Brightness.dark),
+                brightness: Brightness.dark,
+            ).copyWith(
+                primary: AppThemeColors.lightSecondary, // Dark blue - used for buttons
+                onPrimary: AppThemeColors.lightOnPrimary, // White text on buttons
+            ),
             useMaterial3: true,
             brightness: Brightness.dark,
             elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppThemeColors.darkPrimary,
-                foregroundColor: AppThemeColors.darkText,
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all(AppThemeColors.lightSecondary), // Dark blue button in DARK mode
+                foregroundColor: WidgetStateProperty.all(AppThemeColors.lightOnPrimary), // White text in DARK mode
               ),
             ),
             outlinedButtonTheme: OutlinedButtonThemeData(
