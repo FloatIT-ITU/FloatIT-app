@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'settings_page.dart';
+import 'messages_page.dart';
 import 'notification_provider.dart';
 import 'pending_requests_provider.dart';
 import 'user_profile_provider.dart';
@@ -9,6 +10,8 @@ import 'package:floatit/src/widgets/notification_banner.dart';
 import 'package:floatit/src/widgets/pool_status_banner.dart';
 import 'events_page_content.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MainAppView extends StatefulWidget {
   const MainAppView({super.key});
@@ -65,6 +68,13 @@ class _MainAppViewState extends State<MainAppView> {
     NavigationUtils.pushWithoutAnimation(
       context,
       const SettingsPage(),
+    );
+  }
+
+  void _openMessages() {
+    NavigationUtils.pushWithoutAnimation(
+      context,
+      const MessagesPage(),
     );
   }
 
@@ -141,8 +151,59 @@ class _MainAppViewState extends State<MainAppView> {
                 child: SafeArea(
                   child: Row(
                     children: [
-                      // Back arrow placeholder (invisible but maintains layout)
-                      const SizedBox(width: 48),
+                      // Messages button on the left
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseAuth.instance.currentUser != null
+                            ? FirebaseFirestore.instance
+                                .collection('messages')
+                                .where('participants', arrayContains: FirebaseAuth.instance.currentUser!.uid)
+                                .snapshots()
+                            : null,
+                        builder: (context, snapshot) {
+                          int totalUnread = 0;
+                          if (snapshot.hasData) {
+                            for (var doc in snapshot.data!.docs) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              final unreadCount = (data['unreadCount'] as Map<String, dynamic>?)?[FirebaseAuth.instance.currentUser!.uid] as int? ?? 0;
+                              totalUnread += unreadCount;
+                            }
+                          }
+                          return Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.mail_outline),
+                                onPressed: _openMessages,
+                                tooltip: 'Messages',
+                              ),
+                              if (totalUnread > 0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      totalUnread > 99 ? '99+' : '$totalUnread',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
                       // Centered title with icon (like StandardPageBanner)
                       Expanded(
                         child: Row(

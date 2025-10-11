@@ -9,7 +9,6 @@ import 'pending_requests_provider.dart';
 import 'microsoft_auth_service.dart';
 import 'widgets/microsoft_sign_in_button.dart';
 import 'widgets/background_image.dart';
-import 'push_service.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -26,8 +25,8 @@ class AuthGate extends StatelessWidget {
           return const EmailPasswordLoginScreen();
         }
         final user = snapshot.data!;
-        return FutureBuilder<bool>(
-          future: AuthGate._userDocExists(user),
+        return FutureBuilder<void>(
+          future: AuthGate._prepareUser(user),
           builder: (context, docSnapshot) {
             if (docSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
@@ -36,17 +35,6 @@ class AuthGate extends StatelessWidget {
             if (docSnapshot.hasError) {
               FirebaseAuth.instance.signOut();
               return const EmailPasswordLoginScreen();
-            }
-            final exists = docSnapshot.data ?? false;
-            // If doc missing, create a safe default users doc
-            // Microsoft accounts are automatically verified, so no verification check needed
-            if (!exists) {
-              FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-                'email': user.email,
-                'admin': false,
-                'createdAt': FieldValue.serverTimestamp(),
-                'lastLogin': FieldValue.serverTimestamp(),
-              }, SetOptions(merge: true)).catchError((_) {});
             }
             // Ensure user profile is loaded and lastLogin is updated after successful login.
             // Schedule loadUserProfile to run after this build frame to avoid
@@ -62,18 +50,6 @@ class AuthGate extends StatelessWidget {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               pending.loadForCurrentUser();
             });
-            // Initialize FCM token for push notifications
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
-              final pushService = PushService();
-              final token = await pushService.getToken();
-              if (token != null) {
-                // Store FCM token in user's document for targeted notifications
-                FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-                  'fcmToken': token,
-                  'lastTokenUpdate': FieldValue.serverTimestamp(),
-                }, SetOptions(merge: true)).catchError((_) {});
-              }
-            });
             FirebaseFirestore.instance.collection('users').doc(user.uid).set({
               'lastLogin': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true)).catchError((_) {});
@@ -84,15 +60,49 @@ class AuthGate extends StatelessWidget {
     );
   }
 
-  static Future<bool> _userDocExists(User user) async {
+  static Future<void> _prepareUser(User user) async {
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      return doc.exists;
+      final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final doc = await docRef.get();
+      if (!doc.exists) {
+        // Create user doc
+        await docRef.set({
+          'email': user.email,
+          'admin': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastLogin': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } else {
+        // Check if admin and run cleanup
+        final data = doc.data();
+        if (data != null && data['admin'] == true) {
+          await _cleanupOldMessages();
+        }
+      }
     } catch (_) {
-      return false;
+      // Ignore errors
+    }
+  }
+
+  static Future<void> _cleanupOldMessages() async {
+    try {
+      final cutoff = DateTime.now().subtract(const Duration(days: 15));
+      final cutoffTimestamp = Timestamp.fromDate(cutoff);
+      
+      // Query messages where lastMessageTime < cutoff
+      final query = FirebaseFirestore.instance
+          .collection('messages')
+          .where('lastMessageTime', isLessThan: cutoffTimestamp);
+      
+      final snapshot = await query.get();
+      
+      // Delete old threads
+      for (final doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+    } catch (e) {
+      // Ignore cleanup errors
+      print('Cleanup error: $e');
     }
   }
 }

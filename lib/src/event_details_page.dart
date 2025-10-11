@@ -6,11 +6,10 @@ import 'package:floatit/src/widgets/notification_banner.dart';
 import 'package:floatit/src/widgets/attendee_list_builder.dart';
 import 'package:floatit/src/widgets/event_details_display.dart';
 import 'package:floatit/src/services/firebase_service.dart';
-import 'theme_colors.dart';
-import 'layout_widgets.dart';
+import 'messages_page.dart';
 import 'user_profile_provider.dart';
 // import 'notification_provider.dart'; (removed, no longer needed)
-import 'push_service.dart';
+// import 'push_service.dart'; (removed, push notifications fully removed)
 import 'package:floatit/src/widgets/event_name_field.dart';
 import 'package:floatit/src/widgets/event_description_field.dart';
 import 'package:floatit/src/widgets/event_location_field.dart';
@@ -316,6 +315,147 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
     });
   }
 
+  Future<void> _contactHost() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null || _hostAttendee == null) return;
+
+    final hostId = _hostAttendee!.uid;
+
+    // Prevent messaging yourself
+    if (currentUser.uid == hostId) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You cannot message yourself')),
+        );
+      }
+      return;
+    }
+
+    // Create thread ID
+    final participants = [currentUser.uid, hostId]..sort();
+    final threadId = '${participants[0]}_${participants[1]}_${widget.eventId}';
+    final threadRef = FirebaseFirestore.instance.collection('messages').doc(threadId);
+    final threadDoc = await threadRef.get();
+
+    if (threadDoc.exists) {
+      // Open existing conversation
+      if (context.mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => ConversationPage(
+              conversationId: threadId,
+              otherUserId: hostId,
+              otherUserName: _hostAttendee!.name,
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    // No existing thread, show dialog to send first message
+    final messageController = TextEditingController();
+    
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Contact host'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Send a message to ${_hostAttendee!.name}:'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: messageController,
+              decoration: const InputDecoration(
+                hintText: 'Type your message...',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && messageController.text.trim().isNotEmpty) {
+      try {
+        final messageText = messageController.text.trim();
+        
+        // Generate unique message ID
+        final messageId = FirebaseFirestore.instance.collection('messages').doc().id;
+        
+        // Create new thread with first message
+        await threadRef.set({
+          'participants': participants,
+          'eventId': widget.eventId,
+          'messages': {
+            messageId: {
+              'senderId': currentUser.uid,
+              'text': messageText,
+              'timestamp': FieldValue.serverTimestamp(),
+            }
+          },
+          'unreadCount': {
+            currentUser.uid: 0,
+            hostId: 1,
+          },
+          'lastMessage': messageText,
+          'lastMessageTime': FieldValue.serverTimestamp(),
+          'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+        });
+
+        // Open the new conversation
+        if (context.mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ConversationPage(
+                conversationId: threadId,
+                otherUserId: hostId,
+                otherUserName: _hostAttendee!.name,
+              ),
+            ),
+          );
+        }
+        
+        // Send push notification
+        // final pushService = PushService();
+        // await pushService.sendNotificationToUsers(
+        //   userIds: [hostId],
+        //   title: 'Message from $userName',
+        //   body: messageText,
+        //   eventId: widget.eventId,
+        // );
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Message sent to host')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to send message: $e')),
+          );
+        }
+      }
+    }
+    
+    messageController.dispose();
+  }
+
   Future<void> _saveEvent() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
@@ -357,15 +497,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       'createdAt': DateTime.now().toUtc().toIso8601String(),
     });
 
-    // Send push notifications to attendees and waiting list users
-    if (title.trim().isNotEmpty) {
-      final pushService = PushService();
-      await pushService.sendEventNotification(
-        eventId: widget.eventId,
-        title: title,
-        body: body ?? '',
-      );
-    }
+    // Event banners are now handled in-app only
   }
 
   @override
@@ -472,10 +604,22 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                       _hostAttendee != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
-                      child: AttendeeList(
-                        title: 'Host',
-                        attendees: [_hostAttendee!],
-                        showCount: false,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: AttendeeList(
+                              title: 'Host',
+                              attendees: [_hostAttendee!],
+                              showCount: false,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          ElevatedButton.icon(
+                            onPressed: _contactHost,
+                            icon: const Icon(Icons.mail),
+                            label: const Text('Contact host'),
+                          ),
+                        ],
                       ),
                     ),
                   Row(

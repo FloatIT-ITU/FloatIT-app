@@ -3,7 +3,6 @@ import 'package:floatit/src/core/domain/entities/event.dart';
 import 'package:floatit/src/services/firebase_service.dart';
 import 'package:floatit/src/shared/errors/failures.dart';
 import 'package:floatit/src/shared/utils/either.dart';
-import 'package:floatit/src/push_service.dart';
 
 /// Firebase implementation of EventRepository
 class FirebaseEventRepository implements EventRepository {
@@ -106,7 +105,6 @@ class FirebaseEventRepository implements EventRepository {
   Future<Result<void>> leaveEvent(String eventId, String userId) async {
     try {
       String? promotedUserId;
-      String? eventName;
 
       await FirebaseService.runTransaction((transaction) async {
         final eventRef = FirebaseService.eventDoc(eventId);
@@ -120,8 +118,6 @@ class FirebaseEventRepository implements EventRepository {
         final attendees = List<String>.from(eventData['attendees'] ?? []);
         final waitingList = List<String>.from(eventData['waitingListUids'] ?? []);
         final attendeeLimit = eventData['attendeeLimit'] as int? ?? 0;
-
-        eventName = eventData['name'] as String?;
 
         // Remove from both lists
         attendees.remove(userId);
@@ -139,15 +135,7 @@ class FirebaseEventRepository implements EventRepository {
         });
       });
 
-      // Send notification to promoted user if any
-      if (promotedUserId != null && eventName != null) {
-        final pushService = PushService();
-        await pushService.sendWaitingListPromotionNotification(
-          userId: promotedUserId!,
-          eventId: eventId,
-          eventName: eventName!,
-        );
-      }
+      // Waiting list promotions are now handled in-app only
 
       return Result.right(null);
     } catch (e) {
