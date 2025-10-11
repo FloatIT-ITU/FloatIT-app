@@ -152,8 +152,23 @@ class _ConversationTile extends StatelessWidget {
                         if (eventSnapshot.hasData && eventSnapshot.data!.exists) {
                           final eventData = eventSnapshot.data!.data() as Map<String, dynamic>?;
                           final eventName = eventData?['name'] ?? 'Event';
+                          final eventDate = eventData?['startTime'];
+                          String dateString = '';
+                          if (eventDate != null) {
+                            try {
+                              final dateTime = eventDate is String 
+                                ? DateTime.parse(eventDate) 
+                                : (eventDate as Timestamp).toDate();
+                              dateString = DateFormat('MMMM d, y').format(dateTime.toLocal());
+                            } catch (_) {
+                              // Ignore date parsing errors
+                            }
+                          }
+                          final displayText = dateString.isNotEmpty 
+                            ? 'Re: $eventName - $dateString'
+                            : 'Re: $eventName';
                           return Text(
-                            'Re: $eventName',
+                            displayText,
                             style: TextStyle(
                               fontSize: 12,
                               fontStyle: FontStyle.italic,
@@ -350,100 +365,150 @@ class _ConversationPageState extends State<ConversationPage> {
                   return bTime.compareTo(aTime);
                 });
 
-                return ListView.builder(
-                  controller: _scrollController,
-                  reverse: true,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final message = messages[index];
-                    final data = message;
-                    final senderId = data['senderId'] as String;
-                    final text = data['text'] as String;
-                    final timestamp = data['timestamp'] as Timestamp?;
-                    final isMe = senderId == currentUser.uid;
+                final eventId = data['eventId'] as String?;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Align(
-                        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isMe
-                                ? Theme.of(context).colorScheme.primaryContainer
-                                : Theme.of(context).colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.7,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(text),
-                              if (timestamp != null) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  DateFormat.Hm().format(timestamp.toDate()),
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
+                return Column(
+                  children: [
+                    if (eventId != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: FutureBuilder<DocumentSnapshot>(
+                          future: FirebaseService.eventDoc(eventId).get(),
+                          builder: (context, eventSnapshot) {
+                            if (eventSnapshot.hasData && eventSnapshot.data!.exists) {
+                              final eventData = eventSnapshot.data!.data() as Map<String, dynamic>?;
+                              final eventName = eventData?['name'] ?? 'Event';
+                              final eventDate = eventData?['startTime'];
+                              String dateString = '';
+                              if (eventDate != null) {
+                                try {
+                                  final dateTime = eventDate is String 
+                                    ? DateTime.parse(eventDate) 
+                                    : (eventDate as Timestamp).toDate();
+                                  dateString = DateFormat('MMMM d, y').format(dateTime.toLocal());
+                                } catch (_) {
+                                  // Ignore date parsing errors
+                                }
+                              }
+                              final displayText = dateString.isNotEmpty 
+                                ? 'Re: $eventName - $dateString'
+                                : 'Re: $eventName';
+                              return Text(
+                                displayText,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontStyle: FontStyle.italic,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
-                              ],
-                            ],
-                          ),
+                                textAlign: TextAlign.center,
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
                         ),
                       ),
-                    );
-                  },
+                    Expanded(
+                      child: ConstrainedContent(
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          reverse: true,
+                          padding: const EdgeInsets.all(16),
+                          itemCount: messages.length,
+                          itemBuilder: (context, index) {
+                            final message = messages[index];
+                            final data = message;
+                            final senderId = data['senderId'] as String;
+                            final text = data['text'] as String;
+                            final timestamp = data['timestamp'] as Timestamp?;
+                            final isMe = senderId == currentUser.uid;
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Align(
+                                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isMe
+                                        ? Theme.of(context).colorScheme.primaryContainer
+                                        : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  constraints: BoxConstraints(
+                                    maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(text),
+                                      if (timestamp != null) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          DateFormat.Hm().format(timestamp.toDate()),
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: 'Type a message...',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                    maxLines: null,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _sendMessage(),
+          ConstrainedContent(
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
                   ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: _sendMessage,
-                  icon: const Icon(Icons.send),
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ],
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _messageController,
+                      decoration: const InputDecoration(
+                        hintText: 'Type a message...',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      maxLines: null,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _sendMessage(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: _sendMessage,
+                    icon: const Icon(Icons.send),
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
