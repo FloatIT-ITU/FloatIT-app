@@ -21,7 +21,21 @@ class EventsPageContent extends StatefulWidget {
 
 class _EventsPageContentState extends State<EventsPageContent> {
   String _selectedEventType = 'all';
-  Timer? _timer;
+  late StreamController<List<DocumentSnapshot>> _eventsController;
+  late Stream<List<DocumentSnapshot>> _filteredEventsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _eventsController = StreamController<List<DocumentSnapshot>>.broadcast();
+    _setupFilteredEventsStream();
+  }
+
+  @override
+  void dispose() {
+    _eventsController.close();
+    super.dispose();
+  }
 
   // Example join/leave logic for first-come-first-serve
   Future<void> joinEvent(
@@ -33,50 +47,66 @@ class _EventsPageContentState extends State<EventsPageContent> {
     await JoinRequestService.requestLeave(eventId: eventId, uid: userId);
   }
 
-  @override
-  void initState() {
-    super.initState();
-    // Set up a timer to periodically refresh the UI to check for ended events
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) {
-        setState(() {});
-      }
+  void _setupFilteredEventsStream() {
+    // Create a stream that emits every minute for time-based filtering
+    final timerStream = Stream.periodic(const Duration(minutes: 1));
+
+    // Listen to Firestore events stream and emit filtered docs when data changes
+    FirebaseService.events
+        .orderBy('startTime')
+        .snapshots()
+        .map((snapshot) => snapshot.docs)
+        .listen((docs) {
+      _eventsController.add(_filterEvents(docs));
     });
+
+    // Also emit filtered docs when timer fires (for time-based filtering)
+    timerStream.listen((_) {
+      FirebaseService.events
+          .orderBy('startTime')
+          .get()
+          .then((snapshot) {
+            final docs = snapshot.docs;
+            _eventsController.add(_filterEvents(docs));
+          });
+    });
+
+    _filteredEventsStream = _eventsController.stream;
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  List<DocumentSnapshot> _filterEvents(List<DocumentSnapshot> docs) {
+    final now = DateTime.now().toUtc();
+    var events = docs.where((doc) {
+      final endTimeStr = doc['endTime'] as String?;
+      if (endTimeStr == null) return true;
+      final endTime = DateTime.tryParse(endTimeStr);
+      return endTime == null || endTime.isAfter(now);
+    });
+
+    final typeFilter = _selectedEventType;
+    if (typeFilter != 'all') {
+      events = events.where((doc) {
+        final data = doc.data() as Map<String, dynamic>?;
+        final t = data != null && data.containsKey('type') ? data['type'] : (doc['type'] as String?);
+        return t == typeFilter;
+      });
+    }
+
+    return events.toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-        stream: FirebaseService.events.orderBy('startTime').snapshots(),
+    return StreamBuilder<List<DocumentSnapshot>>(
+        stream: _filteredEventsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('No events yet!'));
           }
-          final now = DateTime.now().toUtc();
-          var events = snapshot.data!.docs.where((doc) {
-            final endTimeStr = doc['endTime'] as String?;
-            if (endTimeStr == null) return true;
-            final endTime = DateTime.tryParse(endTimeStr);
-            return endTime == null || endTime.isAfter(now);
-          });
-          final typeFilter = _selectedEventType;
-          if (typeFilter != 'all') {
-            events = events.where((doc) {
-              final data = doc.data() as Map<String, dynamic>?;
-              final t = data != null && data.containsKey('type') ? data['type'] : (doc['type'] as String?);
-              return t == typeFilter;
-            });
-          }
-          final eventsList = events.toList();
+          final eventsList = snapshot.data!;
           
           return ConstrainedContent(
             child: Column(
@@ -106,7 +136,17 @@ class _EventsPageContentState extends State<EventsPageContent> {
                           ],
                           onChanged: (v) {
                             if (v == null) return;
-                            setState(() => _selectedEventType = v);
+                            setState(() {
+                              _selectedEventType = v;
+                            });
+                            // Emit new filtered data immediately when filter changes
+                            FirebaseService.events
+                                .orderBy('startTime')
+                                .get()
+                                .then((snapshot) {
+                                  final docs = snapshot.docs;
+                                  _eventsController.add(_filterEvents(docs));
+                                });
                           },
                         ),
                       ),
