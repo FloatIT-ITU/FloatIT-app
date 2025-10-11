@@ -1,63 +1,65 @@
-# Privacy Policy for FloatIT
+# Privacy Policy - FloatIT
 
-**Effective Date:** 17 September 2025
+**Effective date:** 17 September 2025
 
-## 1. Who We Are
+This Privacy Policy explains how FloatIT ("we", "us", "our") collects, uses and discloses personal data when you use the FloatIT app and related services. FloatIT is run by students at the IT University of Copenhagen. This policy is written to be GDPR‑compatible.
 
-FloatIT (“we”, “us”, or “our”) is a student-run event and community at IT University of Copenhagen. We are committed to protecting your privacy and handling your data in accordance with GDPR and Danish law.
+## 1. Data controller
 
-## 2. What Data We Collect
+FloatIT (student group) - IT University of Copenhagen
 
-- **Account Information:** ITU email address, app password (securely managed by Firebase).
-- **Profile Data:** Name and occupation at ITU.
-- **Event Data:** Events you attend.
+For requests about personal data, please open an issue in the FloatIT GitHub repository or contact the team via the FloatIT Facebook Group: https://www.facebook.com/groups/floatit.itucph/
 
-## 3. How We Use Your Data
+## 2. Personal data we collect
 
-- To provide and improve FloatIT’s event and community features.
-- To manage event participation and waiting lists.
-- To display relevant notifications and banners.
-- To ensure account security and prevent unauthorized access.
+- Account information (primary email address provided via Microsoft/Firebase authentication).
+- Public profile data: display name, occupation, icon color (if provided by you).
+- Event-related data: events you create, join, or attend; waiting list status.
+- Usage data: basic analytics about app usage (minimal and anonymized), and push notification tokens if you opt in.
 
-## 4. Data Sharing
+We do not collect payment information or health data.
 
-- **We do not sell or share your personal data with third parties.**
-- Data is stored securely in Google Firebase (EU servers).
-- Admins may access user data only for app management purposes.
+## 3. Legal basis for processing
 
-## 5. Data Retention
+- Authentication and account management: necessary to provide the service and fulfil the user contract.
+- Profile and event management: performance of a service you requested (managing events you join/create).
+- Legal compliance and security: to prevent abuse and protect accounts.
 
-- Your data is retained as long as your account is active.
-- You may delete your account at any time, which will erase all your data from our systems.
+## 4. How we use and share data
 
-## 6. Your Rights
+- We use data to operate the app (authenticate users, create and manage events, notify participants).
+- We do not sell personal data to third parties.
+- We may share limited data with service providers (Firebase/Google) as data processors; their use is governed by their privacy policies and our configuration.
+- Admins (trustworthy student maintainers) may view user data only to operate and moderate the service.
 
-Under GDPR, you have the right to:
-- Access your data.
-- Correct inaccurate data.
-- Request deletion of your data.
-- Object to or restrict processing.
-- Data portability.
+## 5. Data storage and transfers
 
-To exercise your rights, contact us via our [FloatIT Facebook Group](https://www.facebook.com/groups/floatit.itucph/).
+- Data is stored in Firebase (Firestore) under the FloatIT project. Where possible we rely on EU region settings for Firebase.
+- If a processor stores data outside the EU, data transfer safeguards (standard contractual clauses) apply - see the Firebase/Google documentation for details.
 
-## 7. Cookies and Analytics
+## 6. Data retention and deletion
 
-- The app uses cookies or similar technologies only for authentication and session management.
-- No third-party advertising or tracking cookies are used.
+- Your account and associated data are retained while your account exists.
+- You can delete your account from within the app (Settings → Delete Account). Deletion removes your data from our production Firestore database; backups may persist for a short period depending on Google retention policies.
 
-## 8. Children’s Privacy
+## 7. Your rights
 
-- FloatIT is intended for ITU students and staff (17+).
-- We do not knowingly collect data from children under 17.
+Under GDPR you have rights including access, rectification, deletion, restriction of processing and portability. To exercise these rights, create an issue in `FloatIT-app` or contact us via the FloatIT Facebook Group. We will respond within a reasonable timeframe.
 
-## 9. Changes to This Policy
+## 8. Security
 
-We may update this policy. Changes will be posted in the app and take effect immediately.
+- We use Firebase security rules to protect access to Firestore data.
+- Access to admin functionality requires documented admin accounts and protections.
 
-## 10. Contact
+## 9. Cookies and tracking
 
-For questions or requests regarding your data, contact:
-FloatIT Team, IT University of Copenhagen
+- The app uses cookies / local storage only as necessary for authentication and session management in the web client.
+- We do not use advertising trackers or third‑party analytics beyond minimal, privacy‑minded telemetry.
 
-**Facebook Group:** [floatit.itucph](https://www.facebook.com/groups/floatit.itucph/)
+## 10. Changes to this policy
+
+We may update this policy over time. Significant changes will be posted in the app and in this document with an updated effective date.
+
+## 11. Contact
+
+If you have questions about this policy or want to exercise your rights, please open an issue in the `FloatIT-app` repository or use our Facebook Group: https://www.facebook.com/groups/floatit.itucph/
