@@ -17,7 +17,6 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
   final _formKey = GlobalKey<FormState>();
   String _title = '';
   String _body = '';
-  final bool _sendPushNotification = false;
   bool _sendAsSystemMessage = true; // Pre-selected by default
 
   @override
@@ -153,12 +152,6 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                       maxLines: 4,
                     ),
                     const SizedBox(height: 12),
-                    CheckboxListTile(
-                      title: const Text('Also send push notification'),
-                      subtitle: const Text('Note: Push notifications require server-side setup for sending'),
-                      value: _sendPushNotification,
-                      onChanged: null, // Disabled until server-side sending is implemented
-                    ),
                     CheckboxListTile(
                       title: const Text('Also send as system message to all users'),
                       subtitle: const Text('Send this notification as a personal message to all app users'),
