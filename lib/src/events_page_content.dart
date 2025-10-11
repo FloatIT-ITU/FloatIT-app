@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'event_details_page.dart';
 import 'join_request_service.dart';
+import 'messages_page.dart';
 import 'package:floatit/src/widgets/attendance_badge.dart';
 import 'package:floatit/src/services/firebase_service.dart';
 import 'layout_widgets.dart';
@@ -45,6 +46,13 @@ class _EventsPageContentState extends State<EventsPageContent> {
 
   Future<void> leaveEvent(String eventId, String userId) async {
     await JoinRequestService.requestLeave(eventId: eventId, uid: userId);
+  }
+
+  void _openMessages() {
+    NavigationUtils.pushWithoutAnimation(
+      context,
+      const MessagesPage(),
+    );
   }
 
   void _setupFilteredEventsStream() {
@@ -112,13 +120,67 @@ class _EventsPageContentState extends State<EventsPageContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Filter at the top right - always visible
+                // Filter and messages buttons at the top
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const SizedBox(width: 8),
+                      // Messages button on the left (same position as back button)
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseAuth.instance.currentUser != null
+                            ? FirebaseFirestore.instance
+                                .collection('messages')
+                                .where('participants', arrayContains: FirebaseAuth.instance.currentUser!.uid)
+                                .snapshots()
+                            : null,
+                        builder: (context, snapshot) {
+                          int totalUnread = 0;
+                          if (snapshot.hasData) {
+                            for (var doc in snapshot.data!.docs) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              final unreadCount = (data['unreadCount'] as Map<String, dynamic>?)?[FirebaseAuth.instance.currentUser!.uid] as int? ?? 0;
+                              totalUnread += unreadCount;
+                            }
+                          }
+                          return Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.mail_outline),
+                                onPressed: _openMessages,
+                                tooltip: 'Messages',
+                              ),
+                              if (totalUnread > 0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      totalUnread > 99 ? '99+' : '$totalUnread',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                      // Spacer to push filter dropdown to the right
+                      const Expanded(child: SizedBox()),
+                      // Filter dropdown on the right
                       SizedBox(
                         width: 150,
                         child: DropdownButtonFormField<String>(
