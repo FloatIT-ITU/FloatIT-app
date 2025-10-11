@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'layout_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:floatit/src/widgets/banners.dart';
 import 'styles.dart';
 import 'package:provider/provider.dart';
@@ -198,6 +199,12 @@ class _UserCard extends StatelessWidget {
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      IconButton(
+                        icon: const Icon(Icons.message, size: 20),
+                        onPressed: () => _sendMessageToUser(context),
+                        tooltip: 'Send message',
+                      ),
+                      const SizedBox(width: 8),
                       if (isAdmin)
                         Text('Admin',
                             style: AppTextStyles.body()
@@ -363,5 +370,136 @@ class _UserCard extends StatelessWidget {
         }
       }
     }
+  }
+
+  void _sendMessageToUser(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => _SendMessageDialog(
+        recipientName: data['displayName'] ?? 'Unknown User',
+        recipientId: userId,
+      ),
+    );
+  }
+}
+
+class _SendMessageDialog extends StatefulWidget {
+  final String recipientName;
+  final String recipientId;
+
+  const _SendMessageDialog({
+    required this.recipientName,
+    required this.recipientId,
+  });
+
+  @override
+  State<_SendMessageDialog> createState() => _SendMessageDialogState();
+}
+
+class _SendMessageDialogState extends State<_SendMessageDialog> {
+  final _formKey = GlobalKey<FormState>();
+  String _message = '';
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Send Message to ${widget.recipientName}'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              decoration: const InputDecoration(labelText: 'Message'),
+              onChanged: (v) => setState(() => _message = v),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Message is required'
+                  : null,
+              maxLines: 3,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            if (_formKey.currentState?.validate() != true) return;
+
+            final messenger = ScaffoldMessenger.of(context);
+            final navigator = Navigator.of(context);
+            final currentUser = FirebaseAuth.instance.currentUser;
+
+            if (currentUser == null) {
+              messenger.showSnackBar(
+                const SnackBar(content: Text('You must be logged in to send messages')),
+              );
+              return;
+            }
+
+            try {
+              final firestore = FirebaseFirestore.instance;
+              
+              // Generate conversation ID (sorted to ensure consistency)
+              final participants = [currentUser.uid, widget.recipientId]..sort();
+              final conversationId = participants.join('_');
+              
+              // Check if conversation exists
+              final conversationDoc = await firestore.collection('messages').doc(conversationId).get();
+              
+              final messageId = firestore.collection('messages').doc().id;
+              
+              if (conversationDoc.exists) {
+                // Update existing conversation
+                await firestore.collection('messages').doc(conversationId).update({
+                  'messages.$messageId': {
+                    'senderId': currentUser.uid,
+                    'text': _message.trim(),
+                    'timestamp': FieldValue.serverTimestamp(),
+                  },
+                  'lastMessage': _message.trim(),
+                  'lastMessageTime': FieldValue.serverTimestamp(),
+                  'unreadCount.${widget.recipientId}': FieldValue.increment(1),
+                  'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+                });
+              } else {
+                // Create new conversation
+                await firestore.collection('messages').doc(conversationId).set({
+                  'participants': participants,
+                  'eventId': null, // Regular user conversation, not event-related
+                  'lastMessage': _message.trim(),
+                  'lastMessageTime': FieldValue.serverTimestamp(),
+                  'unreadCount': {widget.recipientId: 1},
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+                  'messages': {
+                    messageId: {
+                      'senderId': currentUser.uid,
+                      'text': _message.trim(),
+                      'timestamp': FieldValue.serverTimestamp(),
+                    }
+                  }
+                });
+              }
+
+              if (!mounted) return;
+              navigator.pop();
+              messenger.showSnackBar(
+                SnackBar(content: Text('Message sent to ${widget.recipientName}')),
+              );
+            } catch (e) {
+              if (!mounted) return;
+              messenger.showSnackBar(
+                const SnackBar(content: Text('Failed to send message')),
+              );
+            }
+          },
+          child: const Text('Send'),
+        ),
+      ],
+    );
   }
 }
