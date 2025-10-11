@@ -495,16 +495,6 @@ class _ConversationPageState extends State<ConversationPage> {
           ConstrainedContent(
             child: Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
               child: Row(
                 children: [
                   Expanded(
