@@ -17,6 +17,7 @@ import 'layout_widgets.dart';
 
 import 'theme_provider.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
+import 'admin_feedback_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -27,11 +28,20 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool? _isAdmin;
+  bool _hasUnreadFeedback = false;
 
   @override
   void initState() {
     super.initState();
     _checkAdmin();
+    _checkUnreadFeedback();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Recheck when returning to this page
+    _checkUnreadFeedback();
   }
 
   Future<void> _checkAdmin() async {
@@ -52,6 +62,15 @@ class _SettingsPageState extends State<SettingsPage> {
     } catch (e) {
       setState(() {
         _isAdmin = false;
+      });
+    }
+  }
+
+  Future<void> _checkUnreadFeedback() async {
+    final hasUnread = await AdminFeedbackPage.hasUnreadFeedback();
+    if (mounted) {
+      setState(() {
+        _hasUnreadFeedback = hasUnread;
       });
     }
   }
@@ -163,8 +182,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final email = user?.email ?? '';
     return Consumer<UserProfileProvider>(
       builder: (context, profile, _) {
         return Scaffold(
@@ -196,12 +213,21 @@ class _SettingsPageState extends State<SettingsPage> {
                             child: ListTile(
                               leading: const Icon(Icons.admin_panel_settings),
                               title: const Text('Admin Panel'),
-                              trailing: const Icon(Icons.chevron_right),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (_hasUnreadFeedback) const UnreadIndicator(),
+                                  const Icon(Icons.chevron_right),
+                                ],
+                              ),
                               onTap: () {
                                 NavigationUtils.pushWithoutAnimation(
                                   context,
                                   const AdminPage(),
-                                );
+                                ).then((_) {
+                                  // Refresh unread status when returning from admin page
+                                  _checkUnreadFeedback();
+                                });
                               },
                             ),
                           ),
@@ -229,12 +255,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                   ),
                                 ),
                               ),
-                              const Divider(height: 1),
-                              ListTile(
-                                leading: const Icon(Icons.email_outlined),
-                                title: Text(email),
-                              ),
-                              const Divider(height: 1),
                               ListTile(
                                 leading: const Icon(Icons.lock_outline),
                                 title: const Text('Change Password'),
@@ -275,8 +295,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                   }
                                 },
                               ),
-                              const Divider(height: 1),
-                              // Push token debug UI removed for production branch
                               const Divider(height: 1),
                               ListTile(
                                 leading: Icon(Icons.delete_forever, color: Theme.of(context).colorScheme.error),

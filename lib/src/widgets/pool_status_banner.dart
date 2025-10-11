@@ -4,6 +4,8 @@ import 'package:floatit/src/pool_status_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:floatit/src/services/rate_limit_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:floatit/src/theme_colors.dart';
+import 'package:floatit/src/layout_widgets.dart';
 
 /// A persistent banner that displays the pool status at the bottom of the screen
 class PoolStatusBanner extends StatelessWidget {
@@ -21,99 +23,111 @@ class PoolStatusBanner extends StatelessWidget {
         }
         
         final isNormal = provider.isNormalStatus;
-        final backgroundColor = isNormal 
-          ? Colors.green.shade100 
-          : Colors.orange.shade100;
-        final textColor = isNormal 
-          ? Colors.green.shade900 
-          : Colors.orange.shade900;
-        final iconColor = isNormal 
-          ? Colors.green.shade700 
-          : Colors.orange.shade700;
+        final backgroundColor = !isNormal
+            ? Colors.orange
+            : Theme.of(context).brightness == Brightness.dark
+                ? AppThemeColors.bannerEventDark
+                : AppThemeColors.bannerEventLight;
+        final textColor = !isNormal
+            ? Colors.white
+            : Theme.of(context).brightness == Brightness.dark
+                ? AppThemeColors.bannerEventTextDark
+                : AppThemeColors.bannerEventTextLight;
+        final iconColor = !isNormal
+            ? Colors.white
+            : Theme.of(context).brightness == Brightness.dark
+                ? AppThemeColors.bannerEventTextDark
+                : AppThemeColors.bannerEventTextLight;
         
         return Material(
           elevation: 4,
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: backgroundColor,
               border: Border(
                 top: BorderSide(
-                  color: isNormal ? Colors.green : Colors.orange,
+                  color: !isNormal
+                      ? Colors.orange
+                      : Theme.of(context).brightness == Brightness.dark
+                          ? AppThemeColors.bannerEventDark
+                          : AppThemeColors.bannerEventLight,
                   width: 2,
                 ),
               ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  isNormal ? Icons.check_circle : Icons.warning,
-                  color: iconColor,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      children: [
-                        const TextSpan(text: 'Sundby Bad '),
-                        WidgetSpan(
-                          alignment: PlaceholderAlignment.baseline,
-                          baseline: TextBaseline.alphabetic,
-                          child: GestureDetector(
-                            onTap: () {
-                              // Open the Sundby Bad website
-                              final uri = Uri.parse('https://svoemkbh.kk.dk/svoemmeanlaeg/svoemmehaller/sundby-bad');
-                              launchUrl(uri, mode: LaunchMode.externalApplication);
-                            },
-                            child: Text(
-                              'Status',
-                              style: TextStyle(
-                                color: textColor,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                        ),
-                        TextSpan(text: ': $status'),
-                      ],
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.refresh,
+            child: ConstrainedContent(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    isNormal ? Icons.check_circle : Icons.warning,
                     color: iconColor,
                     size: 20,
                   ),
-                  onPressed: provider.isLoading ? null : () {
-                    final user = FirebaseAuth.instance.currentUser;
-                    if (user == null) return;
-                    
-                    final rateLimitService = RateLimitService.instance;
-                    if (!rateLimitService.isActionAllowed(user.uid, RateLimitAction.poolRefresh)) {
-                      return;
-                    }
-                    
-                    rateLimitService.recordAction(user.uid, RateLimitAction.poolRefresh);
-                    provider.forceRefresh(user.uid);
-                  },
-                  tooltip: 'Refresh status',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        children: [
+                          const TextSpan(text: 'Sundby Bad '),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.baseline,
+                            baseline: TextBaseline.alphabetic,
+                            child: GestureDetector(
+                              onTap: () {
+                                // Open the Sundby Bad website
+                                final uri = Uri.parse('https://svoemkbh.kk.dk/svoemmeanlaeg/svoemmehaller/sundby-bad');
+                                launchUrl(uri, mode: LaunchMode.externalApplication);
+                              },
+                              child: Text(
+                                'Status',
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                          TextSpan(text: ': $status'),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  IconButton(
+                    icon: Icon(
+                      Icons.refresh,
+                      color: iconColor,
+                      size: 20,
+                    ),
+                    onPressed: provider.isLoading ? null : () {
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user == null) return;
+                      
+                      final rateLimitService = RateLimitService.instance;
+                      if (!rateLimitService.isActionAllowed(user.uid, RateLimitAction.poolRefresh)) {
+                        return;
+                      }
+                      
+                      rateLimitService.recordAction(user.uid, RateLimitAction.poolRefresh);
+                      provider.forceRefresh(user.uid);
+                    },
+                    tooltip: 'Refresh status',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

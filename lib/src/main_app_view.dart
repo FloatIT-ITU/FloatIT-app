@@ -12,6 +12,7 @@ import 'events_page_content.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'admin_feedback_page.dart';
 
 class MainAppView extends StatefulWidget {
   const MainAppView({super.key});
@@ -23,6 +24,8 @@ class MainAppView extends StatefulWidget {
 class _MainAppViewState extends State<MainAppView> {
   bool _isLoading = true;
   String _loadingMessage = 'Loading...';
+  bool _isAdmin = false;
+  bool _hasUnreadFeedback = false;
   
   @override
   void initState() {
@@ -58,6 +61,10 @@ class _MainAppViewState extends State<MainAppView> {
     } catch (e) {
       // Continue even if some data fails to load
     } finally {
+      // Check admin status and unread feedback before completing loading
+      await _checkAdminStatus();
+      await _checkUnreadFeedback();
+      
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -76,6 +83,30 @@ class _MainAppViewState extends State<MainAppView> {
       context,
       const MessagesPage(),
     );
+  }
+
+  Future<void> _checkAdminStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        _isAdmin = data['admin'] == true;
+      }
+    } catch (e) {
+      _isAdmin = false;
+    }
+  }
+
+  Future<void> _checkUnreadFeedback() async {
+    if (!_isAdmin) return; // Only check for admins
+    
+    _hasUnreadFeedback = await AdminFeedbackPage.hasUnreadFeedback();
   }
 
   @override
@@ -230,7 +261,24 @@ class _MainAppViewState extends State<MainAppView> {
                       ),
                       // Settings button on the right
                       IconButton(
-                        icon: const Icon(Icons.settings),
+                        icon: Stack(
+                          children: [
+                            const Icon(Icons.settings),
+                            if (_isAdmin && _hasUnreadFeedback)
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                         onPressed: _openSettings,
                         tooltip: 'Settings',
                       ),

@@ -4,8 +4,40 @@ import 'package:intl/intl.dart';
 import 'package:floatit/src/widgets/banners.dart';
 import 'package:floatit/src/layout_widgets.dart';
 
+/// A small red circle indicator for unread items
+class UnreadIndicator extends StatelessWidget {
+  const UnreadIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: const BoxDecoration(
+        color: Colors.red,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+}
+
 class AdminFeedbackPage extends StatefulWidget {
   const AdminFeedbackPage({super.key});
+
+  /// Check if there are any unread feedback messages
+  static Future<bool> hasUnreadFeedback() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('feedback')
+          .where('status', isEqualTo: 'unread')
+          .limit(1)
+          .get();
+
+      return snapshot.docs.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
 
   @override
   State<AdminFeedbackPage> createState() => _AdminFeedbackPageState();
