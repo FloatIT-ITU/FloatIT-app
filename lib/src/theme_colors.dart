@@ -36,6 +36,8 @@ class AppThemeColors {
   static const Color bannerEventLight = Color(0xFF64B5F6); // Lighter blue
   static const Color bannerEventDark = Color(0xFF64B5F6);
 
+  static const Color systemMessageColor = Color(0xFFFFFFFF); // White for system messages
+
   static const Color bannerMainPagesLight = Color(0xFF1976D2); // Medium blue
   static const Color bannerMainPagesDark = Color(0xFF1976D2);
 

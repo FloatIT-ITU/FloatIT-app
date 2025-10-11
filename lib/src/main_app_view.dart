@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'settings_page.dart';
+import 'messages_page.dart';
 import 'notification_provider.dart';
 import 'pending_requests_provider.dart';
 import 'user_profile_provider.dart';
@@ -9,6 +10,9 @@ import 'package:floatit/src/widgets/notification_banner.dart';
 import 'package:floatit/src/widgets/pool_status_banner.dart';
 import 'events_page_content.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'admin_feedback_page.dart';
 
 class MainAppView extends StatefulWidget {
   const MainAppView({super.key});
@@ -20,6 +24,8 @@ class MainAppView extends StatefulWidget {
 class _MainAppViewState extends State<MainAppView> {
   bool _isLoading = true;
   String _loadingMessage = 'Loading...';
+  bool _isAdmin = false;
+  bool _hasUnreadFeedback = false;
   
   @override
   void initState() {
@@ -55,6 +61,10 @@ class _MainAppViewState extends State<MainAppView> {
     } catch (e) {
       // Continue even if some data fails to load
     } finally {
+      // Check admin status and unread feedback before completing loading
+      await _checkAdminStatus();
+      await _checkUnreadFeedback();
+      
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -66,6 +76,37 @@ class _MainAppViewState extends State<MainAppView> {
       context,
       const SettingsPage(),
     );
+  }
+
+  void _openMessages() {
+    NavigationUtils.pushWithoutAnimation(
+      context,
+      const MessagesPage(),
+    );
+  }
+
+  Future<void> _checkAdminStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        _isAdmin = data['admin'] == true;
+      }
+    } catch (e) {
+      _isAdmin = false;
+    }
+  }
+
+  Future<void> _checkUnreadFeedback() async {
+    if (!_isAdmin) return; // Only check for admins
+    
+    _hasUnreadFeedback = await AdminFeedbackPage.hasUnreadFeedback();
   }
 
   @override
@@ -141,8 +182,60 @@ class _MainAppViewState extends State<MainAppView> {
                 child: SafeArea(
                   child: Row(
                     children: [
-                      // Back arrow placeholder (invisible but maintains layout)
-                      const SizedBox(width: 48),
+                      // Messages button on the left - positioned slightly right to avoid confusion with back button
+                      const SizedBox(width: 48), // Space for back button position
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseAuth.instance.currentUser != null
+                            ? FirebaseFirestore.instance
+                                .collection('messages')
+                                .where('participants', arrayContains: FirebaseAuth.instance.currentUser!.uid)
+                                .snapshots()
+                            : null,
+                        builder: (context, snapshot) {
+                          int totalUnread = 0;
+                          if (snapshot.hasData) {
+                            for (var doc in snapshot.data!.docs) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              final unreadCount = (data['unreadCount'] as Map<String, dynamic>?)?[FirebaseAuth.instance.currentUser!.uid] as int? ?? 0;
+                              totalUnread += unreadCount;
+                            }
+                          }
+                          return Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.mail_outline),
+                                onPressed: _openMessages,
+                                tooltip: 'Messages',
+                              ),
+                              if (totalUnread > 0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      totalUnread > 99 ? '99+' : '$totalUnread',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
                       // Centered title with icon (like StandardPageBanner)
                       Expanded(
                         child: Row(
@@ -168,7 +261,24 @@ class _MainAppViewState extends State<MainAppView> {
                       ),
                       // Settings button on the right
                       IconButton(
-                        icon: const Icon(Icons.settings),
+                        icon: Stack(
+                          children: [
+                            const Icon(Icons.settings),
+                            if (_isAdmin && _hasUnreadFeedback)
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                         onPressed: _openSettings,
                         tooltip: 'Settings',
                       ),

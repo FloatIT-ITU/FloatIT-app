@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'services/rate_limit_service.dart';
+import 'user_statistics_service.dart';
 
 // For testability this provider accepts optional injected Firebase
 // instances. In production these default to the global singletons.
@@ -11,6 +12,7 @@ class UserProfileProvider extends ChangeNotifier {
   String? occupation;
   Color? iconColor;
   bool isAdmin = false;
+  int eventsJoinedCount = 0;
   bool _loading = false;
   bool get loading => _loading;
   DateTime? _lastLoadStarted;
@@ -63,6 +65,9 @@ class UserProfileProvider extends ChangeNotifier {
           await _firestore.collection('users').doc(user.uid).get();
       final privateData = privateDoc.data();
       isAdmin = privateData?['admin'] == true;
+
+      // Load statistics
+      await _loadUserStatistics(user.uid);
     } catch (e) {
       // Optionally handle error
     } finally {
@@ -179,5 +184,15 @@ class UserProfileProvider extends ChangeNotifier {
     
     occupation = newOccupation;
     notifyListeners();
+  }
+
+  Future<void> _loadUserStatistics(String userId) async {
+    try {
+      // Get events joined count from event history (only past events)
+      eventsJoinedCount = await UserStatisticsService.getUserEventsJoinedCount(userId);
+    } catch (e) {
+      // If statistics loading fails, keep defaults (0)
+      eventsJoinedCount = 0;
+    }
   }
 }

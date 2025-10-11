@@ -73,12 +73,14 @@ class StandardPageBanner extends StatelessWidget {
   final String title;
   final bool showBackArrow;
   final VoidCallback? onBack;
+  final Widget? leading;
 
   const StandardPageBanner({
     super.key,
     required this.title,
     this.showBackArrow = false,
     this.onBack,
+    this.leading,
   });
 
   @override
@@ -112,8 +114,8 @@ class StandardPageBanner extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // App icon/logo
-                  Image.asset(
+                  // Custom leading widget or app icon/logo
+                  leading ?? Image.asset(
                     'assets/icon.png',
                     width: 28,
                     height: 28,

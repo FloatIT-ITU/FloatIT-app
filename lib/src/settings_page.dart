@@ -10,14 +10,14 @@ import 'package:floatit/src/widgets/profile_summary_card.dart';
 import 'package:floatit/src/widgets/change_password_dialog.dart';
 import 'package:floatit/src/privacy_policy_page.dart';
 import 'admin_page.dart';
+import 'statistics_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'styles.dart';
 import 'layout_widgets.dart';
 
 import 'theme_provider.dart';
-// Push notifications are disabled in the production branch; keep only
-// email notification preferences. PushService is intentionally omitted.
 import 'package:floatit/src/utils/navigation_utils.dart';
+import 'admin_feedback_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -28,11 +28,20 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool? _isAdmin;
+  bool _hasUnreadFeedback = false;
 
   @override
   void initState() {
     super.initState();
     _checkAdmin();
+    _checkUnreadFeedback();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Recheck when returning to this page
+    _checkUnreadFeedback();
   }
 
   Future<void> _checkAdmin() async {
@@ -57,10 +66,122 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Future<void> _checkUnreadFeedback() async {
+    final hasUnread = await AdminFeedbackPage.hasUnreadFeedback();
+    if (mounted) {
+      setState(() {
+        _hasUnreadFeedback = hasUnread;
+      });
+    }
+  }
+
+  void _showFeedbackDialog(BuildContext context) {
+    final TextEditingController feedbackController = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Send Feedback'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'We appreciate your feedback! Please share your thoughts, suggestions, or report any issues.',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: feedbackController,
+                    maxLines: 5,
+                    maxLength: 500,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your feedback here...',
+                      border: OutlineInputBorder(),
+                      counterText: '',
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final feedback = feedbackController.text.trim();
+                          if (feedback.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter your feedback')),
+                            );
+                            return;
+                          }
+
+                          setState(() => isSubmitting = true);
+                          bool submitSuccess = false;
+
+                          try {
+                            await _submitFeedback(feedback);
+                            submitSuccess = true;
+                          } catch (e) {
+                            // Error handled below
+                          }
+
+                          if (!mounted) return;
+                          setState(() => isSubmitting = false);
+
+                          if (submitSuccess) {
+                            // ignore: use_build_context_synchronously
+                            Navigator.of(context).pop();
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Thank you for your feedback!')),
+                            );
+                          } else {
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Failed to send feedback. Please try again.')),
+                            );
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Send'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _submitFeedback(String feedback) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not authenticated');
+
+    final fs = FirebaseFirestore.instance;
+    await fs.collection('feedback').add({
+      'userId': user.uid,
+      'userEmail': user.email,
+      'message': feedback,
+      'timestamp': FieldValue.serverTimestamp(),
+      'status': 'unread', // unread, read, responded
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final email = user?.email ?? '';
     return Consumer<UserProfileProvider>(
       builder: (context, profile, _) {
         return Scaffold(
@@ -81,7 +202,39 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: ProfileSummaryCard(),
                       ),
                       const SizedBox(height: 24),
-                      // Account section
+                      // Admin section (only visible to admins)
+                      if (_isAdmin == true) ...[
+                        const SectionHeader(title: 'Admin'),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Card(
+                            elevation: 1,
+                            child: ListTile(
+                              leading: const Icon(Icons.admin_panel_settings),
+                              title: const Text('Admin Panel'),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (_hasUnreadFeedback) const UnreadIndicator(),
+                                  const Icon(Icons.chevron_right),
+                                ],
+                              ),
+                              onTap: () {
+                                NavigationUtils.pushWithoutAnimation(
+                                  context,
+                                  const AdminPage(),
+                                ).then((_) {
+                                  // Refresh unread status when returning from admin page
+                                  _checkUnreadFeedback();
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                      // Account section - moved down
                       const SectionHeader(title: 'Account'),
                       const SizedBox(height: 8),
                       Padding(
@@ -102,12 +255,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                   ),
                                 ),
                               ),
-                              const Divider(height: 1),
-                              ListTile(
-                                leading: const Icon(Icons.email_outlined),
-                                title: Text(email),
-                              ),
-                              const Divider(height: 1),
                               ListTile(
                                 leading: const Icon(Icons.lock_outline),
                                 title: const Text('Change Password'),
@@ -148,8 +295,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                   }
                                 },
                               ),
-                              const Divider(height: 1),
-                              // Push token debug UI removed for production branch
                               const Divider(height: 1),
                               ListTile(
                                 leading: Icon(Icons.delete_forever, color: Theme.of(context).colorScheme.error),
@@ -201,29 +346,27 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      // Admin section (only visible to admins)
-                      if (_isAdmin == true) ...[
-                        const SectionHeader(title: 'Admin'),
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Card(
-                            elevation: 1,
-                            child: ListTile(
-                              leading: const Icon(Icons.admin_panel_settings),
-                              title: const Text('Admin Panel'),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () {
-                                NavigationUtils.pushWithoutAnimation(
-                                  context,
-                                  const AdminPage(),
-                                );
-                              },
-                            ),
+                      // Statistics section - new
+                      const SectionHeader(title: 'Statistics'),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Card(
+                          elevation: 1,
+                          child: ListTile(
+                            leading: const Icon(Icons.event_available),
+                            title: Text('Events Joined: ${profile.eventsJoinedCount}'),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () {
+                              NavigationUtils.pushWithoutAnimation(
+                                context,
+                                const StatisticsPage(),
+                              );
+                            },
                           ),
                         ),
-                        const SizedBox(height: 24),
-                      ],
+                      ),
+                      const SizedBox(height: 24),
                       // About section
                       const SectionHeader(title: 'About'),
                       const SizedBox(height: 8),
@@ -252,6 +395,14 @@ class _SettingsPageState extends State<SettingsPage> {
                                   if (await canLaunchUrl(url)) {
                                     await launchUrl(url, mode: LaunchMode.externalApplication);
                                   }
+                                },
+                              ),
+                              const Divider(height: 1),
+                              ListTile(
+                                leading: const Icon(Icons.feedback_outlined),
+                                title: const Text('Send Feedback'),
+                                onTap: () {
+                                  _showFeedbackDialog(context);
                                 },
                               ),
                             ],

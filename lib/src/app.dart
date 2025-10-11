@@ -123,7 +123,7 @@ class FloatITApp extends StatelessWidget {
             snackBarTheme: const SnackBarThemeData(
                 backgroundColor: AppThemeColors.darkSurface,
                 contentTextStyle:
-                    TextStyle(color: AppThemeColors.darkOnPrimary)),
+                    TextStyle(color: AppThemeColors.darkOnBackground)),
             cardTheme: CardTheme(
               color: AppThemeColors.cardDark,
               shape: RoundedRectangleBorder(

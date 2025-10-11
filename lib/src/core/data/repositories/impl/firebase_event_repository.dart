@@ -3,7 +3,8 @@ import 'package:floatit/src/core/domain/entities/event.dart';
 import 'package:floatit/src/services/firebase_service.dart';
 import 'package:floatit/src/shared/errors/failures.dart';
 import 'package:floatit/src/shared/utils/either.dart';
-import 'package:floatit/src/push_service.dart';
+import 'package:floatit/src/event_service.dart';
+import 'package:floatit/src/user_statistics_service.dart';
 
 /// Firebase implementation of EventRepository
 class FirebaseEventRepository implements EventRepository {
@@ -96,6 +97,21 @@ class FirebaseEventRepository implements EventRepository {
           'waitingListUids': waitingList,
         });
       });
+
+      // Record statistics for joined event
+      try {
+        final eventSnap = await FirebaseService.eventDoc(eventId).get();
+        final eventData = eventSnap.data() as Map<String, dynamic>?;
+        final startTimeStr = eventData?['startTime'] as String?;
+        final eventDate = startTimeStr != null ? DateTime.tryParse(startTimeStr)?.toLocal() : null;
+
+        if (eventDate != null) {
+          await UserStatisticsService.recordEventJoin(userId, eventId, eventDate);
+        }
+      } catch (e) {
+        // Statistics recording failed - non-critical, don't throw
+      }
+
       return Result.right(null);
     } catch (e) {
       return Result.left(DatabaseFailure.unknown());
@@ -106,7 +122,6 @@ class FirebaseEventRepository implements EventRepository {
   Future<Result<void>> leaveEvent(String eventId, String userId) async {
     try {
       String? promotedUserId;
-      String? eventName;
 
       await FirebaseService.runTransaction((transaction) async {
         final eventRef = FirebaseService.eventDoc(eventId);
@@ -120,8 +135,6 @@ class FirebaseEventRepository implements EventRepository {
         final attendees = List<String>.from(eventData['attendees'] ?? []);
         final waitingList = List<String>.from(eventData['waitingListUids'] ?? []);
         final attendeeLimit = eventData['attendeeLimit'] as int? ?? 0;
-
-        eventName = eventData['name'] as String?;
 
         // Remove from both lists
         attendees.remove(userId);
@@ -139,14 +152,30 @@ class FirebaseEventRepository implements EventRepository {
         });
       });
 
-      // Send notification to promoted user if any
-      if (promotedUserId != null && eventName != null) {
-        final pushService = PushService();
-        await pushService.sendWaitingListPromotionNotification(
-          userId: promotedUserId!,
-          eventId: eventId,
-          eventName: eventName!,
-        );
+      // Send system message to promoted user
+      if (promotedUserId != null) {
+        try {
+          final eventSnap = await FirebaseService.eventDoc(eventId).get();
+          final eventData = eventSnap.data() as Map<String, dynamic>?;
+          final eventName = eventData?['name'] ?? 'Event';
+          
+          // Import the EventService to use sendSystemMessage
+          await EventService.sendSystemMessage(
+            userId: promotedUserId!,
+            message: 'Great news! You\'ve been promoted from the waiting list to attendee for "$eventName".',
+            eventId: eventId,
+          );
+        } catch (e) {
+          // Log error but don't fail the operation
+          // Failed to send promotion notification - non-critical
+        }
+      }
+
+      // Remove statistics record for left event
+      try {
+        await UserStatisticsService.removeEventJoin(userId, eventId);
+      } catch (e) {
+        // Statistics removal failed - non-critical, don't throw
       }
 
       return Result.right(null);

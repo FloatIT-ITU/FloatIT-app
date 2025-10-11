@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:floatit/src/widgets/banners.dart';
 
 import 'layout_widgets.dart';
+import 'event_service.dart';
 
 class AdminSendNotificationPage extends StatefulWidget {
   const AdminSendNotificationPage({super.key});
@@ -16,7 +17,7 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
   final _formKey = GlobalKey<FormState>();
   String _title = '';
   String _body = '';
-  final bool _sendPushNotification = false;
+  bool _sendAsSystemMessage = true; // Pre-selected by default
 
   @override
   Widget build(BuildContext context) {
@@ -152,10 +153,10 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                     ),
                     const SizedBox(height: 12),
                     CheckboxListTile(
-                      title: const Text('Also send push notification'),
-                      subtitle: const Text('Note: Push notifications require server-side setup for sending'),
-                      value: _sendPushNotification,
-                      onChanged: null, // Disabled until server-side sending is implemented
+                      title: const Text('Also send as system message to all users'),
+                      subtitle: const Text('Send this notification as a personal message to all app users'),
+                      value: _sendAsSystemMessage,
+                      onChanged: (value) => setState(() => _sendAsSystemMessage = value ?? true),
                     ),
                     // Live preview
                     Card(
@@ -196,6 +197,28 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                           'createdAt':
                               DateTime.now().toUtc().toIso8601String(),
                         });
+
+                        // Send system messages to all users if requested
+                        if (_sendAsSystemMessage) {
+                          try {
+                            final usersSnapshot = await FirebaseFirestore.instance
+                                .collection('public_users')
+                                .get();
+                            
+                            final message = 'Global Notification: ${_title.trim()}\n\n${_body.trim()}';
+                            for (final userDoc in usersSnapshot.docs) {
+                              final userId = userDoc.id;
+                              await EventService.sendSystemMessage(
+                                userId: userId,
+                                message: message,
+                                eventId: 'global', // Use 'global' as eventId for global notifications
+                              );
+                            }
+                          } catch (e) {
+                            // Log error but don't fail the whole operation
+                            // System messages are not critical
+                          }
+                        }
 
                         // Note: Push notifications would be sent server-side in production
                         // For now, only banner notifications are sent

@@ -57,6 +57,8 @@ class Attendee {
       final hexValue = colorValue.replaceFirst('#', '');
       if (hexValue.length == 6) {
         return Color(int.parse('FF$hexValue', radix: 16));
+      } else if (hexValue.length == 8) {
+        return Color(int.parse(hexValue, radix: 16));
       }
     }
     return Colors.blue; // Default color

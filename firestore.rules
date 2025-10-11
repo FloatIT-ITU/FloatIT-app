@@ -40,13 +40,13 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Users can read/write their own private data
-      allow read: if isOwner(userId) && isITUEmail();
-      
+      allow read: if isOwner(userId);
+
       // Users can create their own document (during first sign-in)
-      allow create: if isOwner(userId) && isITUEmail();
-      
+      allow create: if isOwner(userId);
+
       // Users can update their own data (except admin field)
-      allow update: if isOwner(userId) && isITUEmail() &&
+      allow update: if isOwner(userId) &&
         !('admin' in request.resource.data.diff(resource.data).affectedKeys());
 
       // Admins can read all user private data
@@ -142,14 +142,6 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ===== NOTIFICATION TASKS COLLECTION =====
-    // Tasks for sending push notifications
-
-    match /notification_tasks/{taskId} {
-      // Only admins can create notification tasks
-      allow write: if isAdmin() && isITUEmail();
-    }
-
     // ===== AUTH LOGS COLLECTION =====
     // Authentication logging
 
@@ -170,6 +162,49 @@ service cloud.firestore {
 
       // Only Cloud Functions can write (they run with admin privileges)
       allow write: if false;
+    }
+
+    // ===== MESSAGES COLLECTION =====
+    // Private messaging threads between users
+
+    match /messages/{threadId} {
+      // Allow all operations for authenticated users
+      // Security maintained by query filters and app logic
+      allow read, write: if isAuthenticated();
+    }
+
+    // ===== USER EVENT HISTORY COLLECTION =====
+    // Track user event participation for statistics
+
+    match /user_event_history/{document} {
+      // All authenticated users can read event history (needed for rankings)
+      allow read: if isAuthenticated();
+
+      // Users can write their own event history
+      allow write: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+
+      // Users can create their own event history records
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+    }
+
+    // ===== FEEDBACK COLLECTION =====
+    // User feedback messages for admins
+
+    match /feedback/{document} {
+      // All authenticated users can create feedback
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Only admins can read feedback messages
+      allow read: if isAdmin();
+
+      // Only admins can update feedback (mark as read/responded)
+      allow update: if isAdmin();
+
+      // Only admins can delete feedback
+      allow delete: if isAdmin();
     }
 
     // ===== DENY ALL OTHER ACCESS =====

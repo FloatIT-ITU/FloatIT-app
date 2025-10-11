@@ -7,10 +7,40 @@ import 'package:floatit/src/create_event_page.dart';
 import 'admin_send_notification_page.dart';
 import 'user_management_page.dart';
 import 'admin_event_management_page.dart';
+import 'admin_feedback_page.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
 
-class AdminPage extends StatelessWidget {
+class AdminPage extends StatefulWidget {
   const AdminPage({super.key});
+
+  @override
+  State<AdminPage> createState() => _AdminPageState();
+}
+
+class _AdminPageState extends State<AdminPage> {
+  bool _hasUnreadFeedback = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUnreadFeedback();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Recheck when returning to this page
+    _checkUnreadFeedback();
+  }
+
+  Future<void> _checkUnreadFeedback() async {
+    final hasUnread = await AdminFeedbackPage.hasUnreadFeedback();
+    if (mounted) {
+      setState(() {
+        _hasUnreadFeedback = hasUnread;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,8 +106,8 @@ class AdminPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    // Admin section
-                    const SectionHeader(title: 'Admin'),
+                    // Notifications section
+                    const SectionHeader(title: 'Notifications'),
                     const SizedBox(height: 8),
                     Card(
                       elevation: 1,
@@ -93,6 +123,21 @@ class AdminPage extends StatelessWidget {
                                 context,
                                 const AdminSendNotificationPage(),
                               );
+                            },
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            leading: const Icon(Icons.feedback_outlined),
+                            title: const Text('Feedback Messages'),
+                            trailing: _hasUnreadFeedback ? const UnreadIndicator() : null,
+                            onTap: () {
+                              NavigationUtils.pushWithoutAnimation(
+                                context,
+                                const AdminFeedbackPage(),
+                              ).then((_) {
+                                // Refresh unread status when returning from feedback page
+                                _checkUnreadFeedback();
+                              });
                             },
                           ),
                           // Guidance moved to the Notifications page itself.
