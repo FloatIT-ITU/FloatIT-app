@@ -254,28 +254,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                   }
                                 },
                               ),
-                              const Divider(height: 1),
-                              ListTile(
-                                leading: const Icon(Icons.mail_outline),
-                                title: const Text('Contact'),
-                                onTap: () async {
-                                  final url = Uri.parse('https://www.facebook.com/groups/floatit.itucph/');
-                                  if (await canLaunchUrl(url)) {
-                                    await launchUrl(url, mode: LaunchMode.externalApplication);
-                                  }
-                                },
-                              ),
-                              const Divider(height: 1),
-                              ListTile(
-                                leading: const Icon(Icons.people_outline),
-                                title: const Text('Credits'),
-                                onTap: () async {
-                                  final url = Uri.parse('https://www.facebook.com/groups/floatit.itucph/');
-                                  if (await canLaunchUrl(url)) {
-                                    await launchUrl(url, mode: LaunchMode.externalApplication);
-                                  }
-                                },
-                              ),
                             ],
                           ),
                         ),
