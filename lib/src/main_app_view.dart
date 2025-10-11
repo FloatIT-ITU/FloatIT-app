@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'settings_page.dart';
@@ -11,7 +12,6 @@ import 'events_page_content.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'admin_feedback_page.dart';
 
 class MainAppView extends StatefulWidget {
   const MainAppView({super.key});
@@ -25,6 +25,7 @@ class _MainAppViewState extends State<MainAppView> {
   String _loadingMessage = 'Loading...';
   bool _isAdmin = false;
   bool _hasUnreadFeedback = false;
+  StreamSubscription<QuerySnapshot>? _feedbackSubscription;
   
   @override
   void initState() {
@@ -33,6 +34,12 @@ class _MainAppViewState extends State<MainAppView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _preloadData();
     });
+  }
+  
+  @override
+  void dispose() {
+    _feedbackSubscription?.cancel();
+    super.dispose();
   }
   
   Future<void> _preloadData() async {
@@ -60,9 +67,11 @@ class _MainAppViewState extends State<MainAppView> {
     } catch (e) {
       // Continue even if some data fails to load
     } finally {
-      // Check admin status and unread feedback before completing loading
+      // Check admin status and setup real-time feedback listener
       await _checkAdminStatus();
-      await _checkUnreadFeedback();
+      if (_isAdmin) {
+        _setupFeedbackListener();
+      }
       
       if (mounted) {
         setState(() => _isLoading = false);
@@ -95,10 +104,19 @@ class _MainAppViewState extends State<MainAppView> {
     }
   }
 
-  Future<void> _checkUnreadFeedback() async {
-    if (!_isAdmin) return; // Only check for admins
-    
-    _hasUnreadFeedback = await AdminFeedbackPage.hasUnreadFeedback();
+  /// Setup real-time listener for unread feedback (admins only)
+  void _setupFeedbackListener() {
+    _feedbackSubscription = FirebaseFirestore.instance
+        .collection('feedback')
+        .where('status', isEqualTo: 'unread')
+        .snapshots()
+        .listen((snapshot) {
+      if (mounted) {
+        setState(() {
+          _hasUnreadFeedback = snapshot.docs.isNotEmpty;
+        });
+      }
+    });
   }
 
   @override
