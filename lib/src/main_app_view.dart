@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'settings_page.dart';
-import 'messages_page.dart';
 import 'notification_provider.dart';
 import 'pending_requests_provider.dart';
 import 'user_profile_provider.dart';
@@ -75,13 +74,6 @@ class _MainAppViewState extends State<MainAppView> {
     NavigationUtils.pushWithoutAnimation(
       context,
       const SettingsPage(),
-    );
-  }
-
-  void _openMessages() {
-    NavigationUtils.pushWithoutAnimation(
-      context,
-      const MessagesPage(),
     );
   }
 
@@ -173,69 +165,17 @@ class _MainAppViewState extends State<MainAppView> {
           return Column(
             children: [
               // Custom top bar - transparent background
-              Container(
-                height: kToolbarHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                ),
-                child: SafeArea(
-                  child: Row(
+              Center(
+                child: Container(
+                  height: kToolbarHeight,
+                  width: 720, // kContentMaxWidth
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  child: SafeArea(
+                    child: Row(
                     children: [
-                      // Messages button on the left - positioned slightly right to avoid confusion with back button
-                      const SizedBox(width: 48), // Space for back button position
-                      StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseAuth.instance.currentUser != null
-                            ? FirebaseFirestore.instance
-                                .collection('messages')
-                                .where('participants', arrayContains: FirebaseAuth.instance.currentUser!.uid)
-                                .snapshots()
-                            : null,
-                        builder: (context, snapshot) {
-                          int totalUnread = 0;
-                          if (snapshot.hasData) {
-                            for (var doc in snapshot.data!.docs) {
-                              final data = doc.data() as Map<String, dynamic>;
-                              final unreadCount = (data['unreadCount'] as Map<String, dynamic>?)?[FirebaseAuth.instance.currentUser!.uid] as int? ?? 0;
-                              totalUnread += unreadCount;
-                            }
-                          }
-                          return Stack(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.mail_outline),
-                                onPressed: _openMessages,
-                                tooltip: 'Messages',
-                              ),
-                              if (totalUnread > 0)
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    constraints: const BoxConstraints(
-                                      minWidth: 16,
-                                      minHeight: 16,
-                                    ),
-                                    child: Text(
-                                      totalUnread > 99 ? '99+' : '$totalUnread',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
                       // Centered title with icon (like StandardPageBanner)
                       Expanded(
                         child: Row(
@@ -286,8 +226,9 @@ class _MainAppViewState extends State<MainAppView> {
                   ),
                 ),
               ),
+              ),
               // Global banners
-              for (var w in bannerWidgets) w,
+              ...bannerWidgets,
               // Main content - Events page (now fully loaded)
               const Expanded(child: EventsPageContent()),
               // Pool status banner at the bottom

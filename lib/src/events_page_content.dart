@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 
 import 'event_details_page.dart';
 import 'join_request_service.dart';
+import 'messages_page.dart';
 import 'package:floatit/src/widgets/attendance_badge.dart';
 import 'package:floatit/src/services/firebase_service.dart';
 import 'layout_widgets.dart';
@@ -20,6 +22,21 @@ class EventsPageContent extends StatefulWidget {
 
 class _EventsPageContentState extends State<EventsPageContent> {
   String _selectedEventType = 'all';
+  late StreamController<List<DocumentSnapshot>> _eventsController;
+  late Stream<List<DocumentSnapshot>> _filteredEventsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _eventsController = StreamController<List<DocumentSnapshot>>.broadcast();
+    _setupFilteredEventsStream();
+  }
+
+  @override
+  void dispose() {
+    _eventsController.close();
+    super.dispose();
+  }
 
   // Example join/leave logic for first-come-first-serve
   Future<void> joinEvent(
@@ -31,45 +48,139 @@ class _EventsPageContentState extends State<EventsPageContent> {
     await JoinRequestService.requestLeave(eventId: eventId, uid: userId);
   }
 
+  void _openMessages() {
+    NavigationUtils.pushWithoutAnimation(
+      context,
+      const MessagesPage(),
+    );
+  }
+
+  void _setupFilteredEventsStream() {
+    // Create a stream that emits every minute for time-based filtering
+    final timerStream = Stream.periodic(const Duration(minutes: 1));
+
+    // Listen to Firestore events stream and emit filtered docs when data changes
+    FirebaseService.events
+        .orderBy('startTime')
+        .snapshots()
+        .map((snapshot) => snapshot.docs)
+        .listen((docs) {
+      _eventsController.add(_filterEvents(docs));
+    });
+
+    // Also emit filtered docs when timer fires (for time-based filtering)
+    timerStream.listen((_) {
+      FirebaseService.events
+          .orderBy('startTime')
+          .get()
+          .then((snapshot) {
+            final docs = snapshot.docs;
+            _eventsController.add(_filterEvents(docs));
+          });
+    });
+
+    _filteredEventsStream = _eventsController.stream;
+  }
+
+  List<DocumentSnapshot> _filterEvents(List<DocumentSnapshot> docs) {
+    final now = DateTime.now().toUtc();
+    var events = docs.where((doc) {
+      final endTimeStr = doc['endTime'] as String?;
+      if (endTimeStr == null) return true;
+      final endTime = DateTime.tryParse(endTimeStr);
+      return endTime == null || endTime.isAfter(now);
+    });
+
+    final typeFilter = _selectedEventType;
+    if (typeFilter != 'all') {
+      events = events.where((doc) {
+        final data = doc.data() as Map<String, dynamic>?;
+        final t = data != null && data.containsKey('type') ? data['type'] : (doc['type'] as String?);
+        return t == typeFilter;
+      });
+    }
+
+    return events.toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-        stream: FirebaseService.events.orderBy('startTime').snapshots(),
+    return StreamBuilder<List<DocumentSnapshot>>(
+        stream: _filteredEventsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('No events yet!'));
           }
-          final now = DateTime.now().toUtc();
-          var events = snapshot.data!.docs.where((doc) {
-            final endTimeStr = doc['endTime'] as String?;
-            if (endTimeStr == null) return true;
-            final endTime = DateTime.tryParse(endTimeStr);
-            return endTime == null || endTime.isAfter(now);
-          });
-          final typeFilter = _selectedEventType;
-          if (typeFilter != 'all') {
-            events = events.where((doc) {
-              final data = doc.data() as Map<String, dynamic>?;
-              final t = data != null && data.containsKey('type') ? data['type'] : (doc['type'] as String?);
-              return t == typeFilter;
-            });
-          }
-          final eventsList = events.toList();
+          final eventsList = snapshot.data!;
           
           return ConstrainedContent(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Filter at the top right - always visible
+                // Filter and messages buttons at the top
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const SizedBox(width: 8),
+                      // Messages button on the left (same position as back button)
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseAuth.instance.currentUser != null
+                            ? FirebaseFirestore.instance
+                                .collection('messages')
+                                .where('participants', arrayContains: FirebaseAuth.instance.currentUser!.uid)
+                                .snapshots()
+                            : null,
+                        builder: (context, snapshot) {
+                          int totalUnread = 0;
+                          if (snapshot.hasData) {
+                            for (var doc in snapshot.data!.docs) {
+                              final data = doc.data() as Map<String, dynamic>;
+                              final unreadCount = (data['unreadCount'] as Map<String, dynamic>?)?[FirebaseAuth.instance.currentUser!.uid] as int? ?? 0;
+                              totalUnread += unreadCount;
+                            }
+                          }
+                          return Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.mail_outline),
+                                onPressed: _openMessages,
+                                tooltip: 'Messages',
+                              ),
+                              if (totalUnread > 0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      totalUnread > 99 ? '99+' : '$totalUnread',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                      // Spacer to push filter dropdown to the right
+                      const Expanded(child: SizedBox()),
+                      // Filter dropdown on the right
                       SizedBox(
                         width: 150,
                         child: DropdownButtonFormField<String>(
@@ -87,7 +198,17 @@ class _EventsPageContentState extends State<EventsPageContent> {
                           ],
                           onChanged: (v) {
                             if (v == null) return;
-                            setState(() => _selectedEventType = v);
+                            setState(() {
+                              _selectedEventType = v;
+                            });
+                            // Emit new filtered data immediately when filter changes
+                            FirebaseService.events
+                                .orderBy('startTime')
+                                .get()
+                                .then((snapshot) {
+                                  final docs = snapshot.docs;
+                                  _eventsController.add(_filterEvents(docs));
+                                });
                           },
                         ),
                       ),

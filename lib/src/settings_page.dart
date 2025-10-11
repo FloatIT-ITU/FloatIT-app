@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 
 import 'package:provider/provider.dart';
 import 'package:floatit/src/user_profile_provider.dart';
@@ -29,19 +30,25 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool? _isAdmin;
   bool _hasUnreadFeedback = false;
+  StreamSubscription<QuerySnapshot>? _feedbackSubscription;
 
   @override
   void initState() {
     super.initState();
     _checkAdmin();
-    _checkUnreadFeedback();
+    _setupFeedbackListener();
+  }
+
+  @override
+  void dispose() {
+    _feedbackSubscription?.cancel();
+    super.dispose();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Recheck when returning to this page
-    _checkUnreadFeedback();
+    // No need to recheck feedback - we have real-time updates
   }
 
   Future<void> _checkAdmin() async {
@@ -73,6 +80,20 @@ class _SettingsPageState extends State<SettingsPage> {
         _hasUnreadFeedback = hasUnread;
       });
     }
+  }
+
+  void _setupFeedbackListener() {
+    _feedbackSubscription = FirebaseFirestore.instance
+        .collection('feedback')
+        .where('status', isEqualTo: 'unread')
+        .snapshots()
+        .listen((snapshot) {
+      if (mounted) {
+        setState(() {
+          _hasUnreadFeedback = snapshot.docs.isNotEmpty;
+        });
+      }
+    });
   }
 
   void _showFeedbackDialog(BuildContext context) {

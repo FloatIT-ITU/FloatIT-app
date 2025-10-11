@@ -60,6 +60,7 @@ class PoolStatusBanner extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
+                  const SizedBox(width: 12),
                   Icon(
                     isNormal ? Icons.check_circle : Icons.warning,
                     color: iconColor,
