@@ -57,7 +57,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   Future<void> _showCopyFromEventDialog() async {
     final snap = await FirebaseService.events
         .orderBy('createdAt', descending: true)
-        .limit(50)
+        .limit(4)
         .get();
     final docs = snap.docs;
     await showDialog<void>(
@@ -285,9 +285,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
                               onChanged: (v) =>
                                   setState(() => attendeeLimit = int.tryParse(v) ?? 10),
                               validator: (v) =>
-                                  (int.tryParse(v ?? '') ?? 0) > 0
+                                  (int.tryParse(v ?? '') ?? 0) >= 0
                                       ? null
-                                      : 'Must be > 0',
+                                      : 'Must be >= 0',
                             ),
                             const SizedBox(height: 12),
                             SwitchListTile(

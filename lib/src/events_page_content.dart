@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 
 import 'event_details_page.dart';
 import 'join_request_service.dart';
@@ -20,6 +21,7 @@ class EventsPageContent extends StatefulWidget {
 
 class _EventsPageContentState extends State<EventsPageContent> {
   String _selectedEventType = 'all';
+  Timer? _timer;
 
   // Example join/leave logic for first-come-first-serve
   Future<void> joinEvent(
@@ -29,6 +31,23 @@ class _EventsPageContentState extends State<EventsPageContent> {
 
   Future<void> leaveEvent(String eventId, String userId) async {
     await JoinRequestService.requestLeave(eventId: eventId, uid: userId);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Set up a timer to periodically refresh the UI to check for ended events
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override

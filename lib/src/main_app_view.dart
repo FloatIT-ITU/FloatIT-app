@@ -173,14 +173,16 @@ class _MainAppViewState extends State<MainAppView> {
           return Column(
             children: [
               // Custom top bar - transparent background
-              Container(
-                height: kToolbarHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                ),
-                child: SafeArea(
-                  child: Row(
+              Center(
+                child: Container(
+                  height: kToolbarHeight,
+                  width: 720, // kContentMaxWidth
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  child: SafeArea(
+                    child: Row(
                     children: [
                       // Messages button on the left - positioned slightly right to avoid confusion with back button
                       const SizedBox(width: 48), // Space for back button position
@@ -286,8 +288,9 @@ class _MainAppViewState extends State<MainAppView> {
                   ),
                 ),
               ),
+              ),
               // Global banners
-              for (var w in bannerWidgets) w,
+              ...bannerWidgets,
               // Main content - Events page (now fully loaded)
               const Expanded(child: EventsPageContent()),
               // Pool status banner at the bottom

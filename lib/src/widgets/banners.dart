@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme_colors.dart';
+import '../layout_widgets.dart';
 // styles.dart is not required here; banners now inherit Theme's textTheme
 
 class PageBanner extends StatelessWidget {
@@ -30,14 +31,12 @@ class PageBanner extends StatelessWidget {
         color: AppThemeColors.transparent,
         child: SafeArea(
           top: true,
-          child: Container(
-            color: Colors.transparent,
+          child: ConstrainedContent(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: SizedBox(
               height: kToolbarHeight,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                child: Row(
-                  children: [
+              child: Row(
+                children: [
                     if (showBackArrow)
                       IconButton(
                         icon: Icon(Icons.arrow_back, color: bannerTextColor),
@@ -64,7 +63,6 @@ class PageBanner extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }
@@ -90,27 +88,28 @@ class StandardPageBanner extends StatelessWidget {
 
     return Container(
       height: kToolbarHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       decoration: const BoxDecoration(
         color: Colors.transparent,
       ),
       child: SafeArea(
         top: true,
-        child: Stack(
-          children: [
-            // Back arrow on the far left
-            if (showBackArrow)
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                child: IconButton(
-                  icon: Icon(Icons.arrow_back, color: bannerTextColor),
-                  onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+        child: ConstrainedContent(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          child: Stack(
+            children: [
+              // Back arrow on the far left
+              if (showBackArrow)
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: IconButton(
+                    icon: Icon(Icons.arrow_back, color: bannerTextColor),
+                    onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+                  ),
                 ),
-              ),
-            // Centered content (icon + title)
-            Center(
+              // Centered content (icon + title)
+              Center(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -136,6 +135,7 @@ class StandardPageBanner extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
