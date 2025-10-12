@@ -80,9 +80,9 @@ class AppThemeColors {
   static const Color bannerGlobalLight = Color(0xFF458FCD); // Primary 500
   static const Color bannerGlobalDark = Color(0xFF7AB8E8); // Primary 700 Dark
 
-  // Event-specific banners match event cards (less intrusive)
-  static const Color bannerEventLight = Color(0xFFBDD7FC); // Primary 200 - Matches cardLight
-  static const Color bannerEventDark = Color(0xFF1E3449); // Primary 200 Dark - Matches cardDark
+  // Event-specific banner
+  static const Color bannerEventLight = Color(0xFF458FCD); // matches bannerGlobalLight
+  static const Color bannerEventDark = Color(0xFF7AB8E8); // matches bannerGlobalDark
 
   static const Color systemMessageColor = Color(0xFFE0EDFE); // Primary 100 Light - System messages
 
@@ -100,8 +100,10 @@ class AppThemeColors {
   static const Color bannerGlobalTextLight = Color(0xFFFFFFFF); // White on primary
   static const Color bannerGlobalTextDark = Color(0xFF0A1420); // Dark on light primary
 
-  static const Color bannerEventTextLight = Color(0xFF183856); // Primary 900 - Dark text on light banner
-  static const Color bannerEventTextDark = Color(0xFFF0F6FF); // Primary 50 Light - Light text on dark banner
+  // Event banner text colors set to match global notification banner text
+  // colors by default, but kept as separate constants for future tweaks.
+  static const Color bannerEventTextLight = Color(0xFFFFFFFF); // matches bannerGlobalTextLight
+  static const Color bannerEventTextDark = Color(0xFF0A1420); // matches bannerGlobalTextDark
 
   // -----------------------------------------------------------------------
   // Utilities / overlay / shadows
