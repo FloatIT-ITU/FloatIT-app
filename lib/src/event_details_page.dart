@@ -300,30 +300,65 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       String name = 'Unknown';
       String occupation = '';
       Color color = AppThemeColors.lightOnBackground;
+      bool hostIsAdmin = false;
+
       if (publicData != null) {
+        // Public profile available -> use it
         name = publicData['displayName'] ?? (publicData['email'] ?? hostId);
         occupation = publicData['occupation'] ?? '';
         color = _colorFromDynamic(publicData['iconColor']);
       } else {
-        // Fallback to private user doc
-        final privateDoc = await FirebaseService.userDoc(hostId).get();
-        final privateData = privateDoc.data() as Map<String, dynamic>?;
-        if (privateData != null) {
-          name = privateData['displayName'] ?? privateData['email'] ?? hostId;
-          // private profile doesn't have occupation/iconColor necessarily
-        } else {
-          // Final fallback: if the host is the current user, use auth info
-          final authUser = FirebaseAuth.instance.currentUser;
-          if (authUser != null && authUser.uid == hostId) {
-            name = authUser.displayName ?? authUser.email ?? hostId;
+        // No public profile. Only attempt to read the private `users/{hostId}`
+        // document if the current user is the host themselves or an admin.
+        final authUser = FirebaseAuth.instance.currentUser;
+        bool canReadPrivateHost = false;
+
+        if (authUser != null) {
+          if (authUser.uid == hostId) {
+            // Owner may read their own private doc per rules
+            canReadPrivateHost = true;
+          } else {
+            // Check whether the current user is an admin by reading their own
+            // private doc (allowed since it's the owner's doc). If they're an
+            // admin, they may read other private user docs per rules.
+            try {
+              final myPrivate = await FirebaseService.userDoc(authUser.uid).get();
+              final myData = myPrivate.data() as Map<String, dynamic>?;
+              if (myData != null && myData['admin'] == true) {
+                canReadPrivateHost = true;
+              }
+            } catch (_) {
+              // If we can't read our own private doc for any reason, assume
+              // we are not admin and don't attempt to read the host's private doc.
+              canReadPrivateHost = false;
+            }
           }
         }
-      }
 
-      // Detect admin flag from private user doc if available
-      final privateDoc2 = await FirebaseService.userDoc(hostId).get();
-      final privateData2 = privateDoc2.data() as Map<String, dynamic>?;
-      final isAdmin = privateData2?['admin'] == true;
+        if (canReadPrivateHost) {
+          final privateDoc = await FirebaseService.userDoc(hostId).get();
+          final privateData = privateDoc.data() as Map<String, dynamic>?;
+          if (privateData != null) {
+            name = privateData['displayName'] ?? privateData['email'] ?? hostId;
+            occupation = privateData['occupation'] ?? '';
+            color = _colorFromDynamic(privateData['iconColor']);
+            hostIsAdmin = privateData['admin'] == true;
+          } else {
+            // If even the private doc doesn't exist, fallback to auth info
+            if (authUser != null && authUser.uid == hostId) {
+              name = authUser.displayName ?? authUser.email ?? hostId;
+            }
+          }
+        } else {
+          // Don't attempt to read other users' private docs — that will
+          // trigger permission-denied for normal users. Use a safe fallback
+          // to avoid errors and show minimal host info.
+          name = hostId;
+          occupation = '';
+          color = AppThemeColors.lightOnBackground;
+          hostIsAdmin = false;
+        }
+      }
 
       setState(() {
         _hostAttendee = Attendee(
@@ -332,7 +367,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
             occupation: occupation,
             avatarUrl: null,
             color: color,
-            isAdmin: isAdmin);
+            isAdmin: hostIsAdmin);
         _hostLoading = false;
         _loadedHostId = hostId;
       });
