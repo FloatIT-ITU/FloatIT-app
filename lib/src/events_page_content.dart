@@ -111,16 +111,13 @@ class _EventsPageContentState extends State<EventsPageContent> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No events yet!'));
-          }
-          final eventsList = snapshot.data!;
-          
+          final eventsList = snapshot.hasData ? snapshot.data! : <DocumentSnapshot>[];
+
           return ConstrainedContent(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Filter and messages buttons at the top
+                // Filter and messages buttons at the top — always render the row
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Row(
@@ -180,7 +177,7 @@ class _EventsPageContentState extends State<EventsPageContent> {
                       ),
                       // Spacer to push filter dropdown to the right
                       const Expanded(child: SizedBox()),
-                      // Filter dropdown on the right
+                      // Filter dropdown on the right — always visible
                       SizedBox(
                         width: 150,
                         child: DropdownButtonFormField<String>(
@@ -215,7 +212,7 @@ class _EventsPageContentState extends State<EventsPageContent> {
                     ],
                   ),
                 ),
-                // Event list or empty message
+                // Event list or empty message — keep filter visible above
                 Expanded(
                   child: eventsList.isEmpty
                       ? const Center(child: Text('No upcoming events!'))
