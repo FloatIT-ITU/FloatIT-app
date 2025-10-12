@@ -31,7 +31,7 @@ class AttendeeListBuilder extends StatelessWidget {
     }
 
     return FutureBuilder<Map<String, dynamic>>(
-      future: _fetchAttendeeData(attendeeUids),
+      future: _fetchAttendeeData(attendeeUids, isAdmin),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -84,7 +84,7 @@ class AttendeeListBuilder extends StatelessWidget {
   
   /// Efficiently fetches both public and private user data in batched queries
   /// to avoid N+1 query pattern
-  static Future<Map<String, dynamic>> _fetchAttendeeData(List<String> uids) async {
+  static Future<Map<String, dynamic>> _fetchAttendeeData(List<String> uids, bool includePrivate) async {
     if (uids.isEmpty) {
       return {
         'publicUsers': <String, DocumentSnapshot>{},
@@ -93,8 +93,8 @@ class AttendeeListBuilder extends StatelessWidget {
     }
     
     // Firestore 'whereIn' has a limit of 10 items, so batch if needed
-    final List<Future<QuerySnapshot>> publicBatches = [];
-    final List<Future<QuerySnapshot>> privateBatches = [];
+  final List<Future<QuerySnapshot>> publicBatches = [];
+  final List<Future<QuerySnapshot>> privateBatches = [];
     
     for (int i = 0; i < uids.length; i += 10) {
       final batch = uids.skip(i).take(10).toList();
@@ -104,16 +104,20 @@ class AttendeeListBuilder extends StatelessWidget {
             .where(FieldPath.documentId, whereIn: batch)
             .get()
       );
-      privateBatches.add(
-        FirebaseFirestore.instance
-            .collection('users')
-            .where(FieldPath.documentId, whereIn: batch)
-            .get()
-      );
+      if (includePrivate) {
+        privateBatches.add(
+          FirebaseFirestore.instance
+              .collection('users')
+              .where(FieldPath.documentId, whereIn: batch)
+              .get()
+        );
+      }
     }
     
     final publicResults = await Future.wait(publicBatches);
-    final privateResults = await Future.wait(privateBatches);
+  final privateResults = includePrivate && privateBatches.isNotEmpty
+    ? await Future.wait(privateBatches)
+    : <QuerySnapshot>[];
     
     final publicUsers = <String, DocumentSnapshot>{};
     final privateUsers = <String, DocumentSnapshot>{};

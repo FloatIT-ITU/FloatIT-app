@@ -45,8 +45,10 @@ class AttendeeList extends StatelessWidget {
                 if (showCount && !isHostSection) ...[
                   if (title.isNotEmpty) const SizedBox(width: 8),
                   Text('(${attendees.length})',
-                      style: AppTextStyles.caption(
-                          Theme.of(context).colorScheme.onSurfaceVariant)),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: Theme.of(context).textTheme.titleMedium?.fontWeight,
+                      ) ?? TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ],
               ],
             ),
