@@ -13,8 +13,8 @@ class ValidationUtils {
     if (name.isEmpty) return 'Name cannot be empty';
     if (name.length < 2) return 'Name too short (minimum 2 characters)';
     if (name.length > 30) return 'Name too long (maximum 30 characters)';
-    if (!RegExp(r'^[a-zA-Z0-9 ]+$').hasMatch(name)) {
-      return 'Only letters, numbers, and spaces allowed';
+    if (!RegExp(r'^[a-zA-Z0-9 -]+$').hasMatch(name)) {
+      return 'Only letters, numbers, spaces, and hyphens allowed';
     }
     if (AuthUtils.isForbiddenDisplayName(name)) {
       return 'This display name is not allowed';

@@ -262,9 +262,9 @@ class ProfileDetailsPage extends StatelessWidget {
                     setState(() => error = 'Name too long');
                     return;
                   }
-                  if (!RegExp(r'^[a-zA-Z0-9 ]+$').hasMatch(newName)) {
+                  if (!RegExp(r'^[a-zA-Z0-9 -]+$').hasMatch(newName)) {
                     setState(() =>
-                        error = 'Only letters, numbers, and spaces allowed');
+                        error = 'Only letters, numbers, spaces, and hyphens allowed');
                     return;
                   }
                   try {
