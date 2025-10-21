@@ -326,19 +326,40 @@ class _SettingsPageState extends State<SettingsPage> {
                                   builder: (context, profile, _) => Switch(
                                     value: profile.notificationsEnabled,
                                     onChanged: (v) async {
-                                      try {
-                                        await profile.setNotificationsEnabled(v);
-                                        if (v) {
-                                          // register token
-                                          await PushService.instance.registerTokenForCurrentUser();
-                                        } else {
-                                          await PushService.instance.unregisterAllTokensForCurrentUser();
+                                      final messenger = ScaffoldMessenger.of(context);
+                                      // Enabling: first ask for permission
+                                      if (v) {
+                                        try {
+                                          final granted = await PushService.instance.requestPermission();
+                                          if (!granted) {
+                                            messenger.showSnackBar(const SnackBar(content: Text('Notifications permission was not granted')));
+                                            // Ensure UI reflects actual state
+                                            await profile.setNotificationsEnabled(false);
+                                            return;
+                                          }
+
+                                          // Persist preference and register token
+                                          await profile.setNotificationsEnabled(true);
+                                          final registered = await PushService.instance.registerTokenForCurrentUser();
+                                          if (registered != true) {
+                                            messenger.showSnackBar(const SnackBar(content: Text('Failed to register for notifications')));
+                                            // Rollback preference in UI
+                                            await profile.setNotificationsEnabled(false);
+                                          }
+                                        } catch (e) {
+                                          messenger.showSnackBar(const SnackBar(content: Text('Failed to enable notifications')));
+                                          await profile.setNotificationsEnabled(false);
                                         }
-                                      } catch (_) {
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Failed to update notification preference')),
-                                        );
+                                      } else {
+                                        // Disabling: unregister tokens and persist opt-out
+                                        try {
+                                          await PushService.instance.unregisterAllTokensForCurrentUser();
+                                        } catch (_) {}
+                                        try {
+                                          await profile.setNotificationsEnabled(false);
+                                        } catch (_) {
+                                          messenger.showSnackBar(const SnackBar(content: Text('Failed to update notification preference')));
+                                        }
                                       }
                                     },
                                   ),
@@ -463,22 +484,23 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: Column(
                           children: [
                             const SizedBox(height: 8),
+                            // Center the app icon on its own row
+                            Center(
+                              child: ThemeAwareAppIcon(width: 40, height: 40),
+                            ),
+                            const SizedBox(height: 8),
+                            Text('Made by FloatIT', textAlign: TextAlign.center, style: AppTextStyles.body()),
+                            const SizedBox(height: 4),
+                            Text('IT University of Copenhagen', textAlign: TextAlign.center, style: AppTextStyles.body()),
+                            const SizedBox(height: 8),
                             Builder(builder: (context) {
                               final theme = Theme.of(context);
-                              final textColor = theme.textTheme.bodyMedium?.color ?? theme.colorScheme.onSurfaceVariant;
                               return RichText(
                                 textAlign: TextAlign.center,
                                 text: TextSpan(
-                                  style: AppTextStyles.body(textColor),
+                                  style: AppTextStyles.body(theme.colorScheme.onSurfaceVariant),
                                   children: [
-                                    WidgetSpan(
-                                      alignment: PlaceholderAlignment.middle,
-                                      child: ThemeAwareAppIcon(
-                                        width: 32,
-                                        height: 32,
-                                      ),
-                                    ),
-                                    const TextSpan(text: ' Made by FloatIT\nIT University of Copenhagen\n\nInspired by the '),
+                                    const TextSpan(text: '\nInspired by the '),
                                     WidgetSpan(
                                       alignment: PlaceholderAlignment.middle,
                                       child: GestureDetector(

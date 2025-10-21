@@ -191,6 +191,8 @@ class EventService {
             'lastMessageTime': FieldValue.serverTimestamp(),
             'unreadCount': {userId: 1},
             'createdAt': FieldValue.serverTimestamp(),
+            // System conversations should not be replyable by users
+            'replyable': false,
             'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
             'messages': {
               messageId: {
@@ -211,6 +213,8 @@ class EventService {
             'lastMessage': message,
             'lastMessageTime': FieldValue.serverTimestamp(),
             'unreadCount.$userId': FieldValue.increment(1),
+            // Ensure replyable stays false for system conversations
+            'replyable': false,
             'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
           });
         }
