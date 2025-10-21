@@ -1,9 +1,10 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:html' as html; // ignore: avoid_web_libraries_in_flutter
+import 'package:universal_html/html.dart' as html;
 
 class PushService {
   PushService._();
@@ -20,18 +21,18 @@ class PushService {
   Future<void> initialize() async {
     if (kIsWeb) {
       try {
-        print('[PushService] Registering service worker...');
+        debugPrint('[PushService] Registering service worker...');
         final worker = await html.window.navigator.serviceWorker
             ?.register('/firebase-messaging-sw.js');
         if (worker != null) {
-          print(
+          debugPrint(
               '[PushService] Service worker registered successfully: ${worker.scope}');
         } else {
-          print('[PushService] Service worker registration returned null.');
+          debugPrint('[PushService] Service worker registration returned null.');
         }
       } catch (e, s) {
-        print('[PushService] ERROR registering service worker: $e');
-        print('[PushService] Stacktrace: $s');
+        debugPrint('[PushService] ERROR registering service worker: $e');
+        debugPrint('[PushService] Stacktrace: $s');
       }
     }
     _startOnMessageListener();
@@ -56,19 +57,17 @@ class PushService {
     try {
       // Read VAPID public key from build-time define to avoid hardcoding.
       // Supply at build: flutter build web --dart-define=VAPID_KEY="<your_public_vapid_key>"
-  const vapidKey = String.fromEnvironment('VAPID_KEY');
-  final vapid = kIsWeb && vapidKey.isNotEmpty ? vapidKey : null;
+      const vapidKey = String.fromEnvironment('VAPID_KEY');
+      final vapid = kIsWeb && vapidKey.isNotEmpty ? vapidKey : null;
+      debugPrint('[PushService] Getting token with VAPID key: ${vapid != null}');
       // For web, FCM requires a VAPID key for push notifications. If vapid is null
       // getToken will try without it (may fail on web). See README in project for details.
       final token = await _messaging.getToken(vapidKey: vapid);
-      print('getToken() returned: $token'); // ignore: avoid_print
+      debugPrint('[PushService] getToken() returned: ${token ?? 'null'}');
       return token;
-    } catch (e) {
-      print('getToken() error: $e'); // ignore: avoid_print
-      print('If error mentions "messaging/unsupported-browser" or VAPID, you need to:'); // ignore: avoid_print
-      print('1. Go to Firebase Console > Project Settings > Cloud Messaging'); // ignore: avoid_print
-      print('2. Generate Web Push certificate (VAPID key)'); // ignore: avoid_print
-      print('3. Add the key to push_service.dart getToken() method'); // ignore: avoid_print
+    } catch (e, s) {
+      debugPrint('[PushService] ERROR getting token: $e');
+      debugPrint('[PushService] Stacktrace: $s');
       return null;
     }
   }
@@ -76,20 +75,20 @@ class PushService {
   Future<bool> registerTokenForCurrentUser() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      print('No user logged in'); // ignore: avoid_print
+      debugPrint('No user logged in');
       return false;
     }
-    print('Registering token for user ${user.uid}'); // ignore: avoid_print
+    debugPrint('Registering token for user ${user.uid}');
     final granted = await requestPermission();
     if (!granted) {
-      print('Permission not granted'); // ignore: avoid_print
+      debugPrint('Permission not granted');
       return false;
     }
-    print('Permission granted, getting token...'); // ignore: avoid_print
+    debugPrint('Permission granted, getting token...');
     final token = await getToken();
-    print('Got token: $token'); // ignore: avoid_print
+    debugPrint('Got token: $token');
     if (token == null) {
-      print('Token is null'); // ignore: avoid_print
+      debugPrint('Token is null');
       return false;
     }
 
@@ -101,16 +100,16 @@ class PushService {
         .collection('tokens')
         .doc(tokenId);
     try {
-      print('Saving token to Firestore...'); // ignore: avoid_print
+      debugPrint('Saving token to Firestore...');
       await tokenRef.set({
-      'token': token,
-      'platform': 'web',
-      'createdAt': FieldValue.serverTimestamp(),
-      'lastSeen': FieldValue.serverTimestamp(),
+        'token': token,
+        'platform': 'web',
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastSeen': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      print('Token saved successfully'); // ignore: avoid_print
+      debugPrint('Token saved successfully');
     } catch (e) {
-      print('Failed to save token to Firestore: $e'); // ignore: avoid_print
+      debugPrint('Failed to save token to Firestore: $e');
       return false;
     }
 
@@ -179,40 +178,40 @@ class PushService {
   }
 
   Future<bool> optIn() async {
-    print('[PushService] Opt-in process started.');
+    debugPrint('[PushService] Opt-in process started.');
     try {
-      print('[PushService] Requesting notification permission...');
+      debugPrint('[PushService] Requesting notification permission...');
       final settings = await _messaging.requestPermission();
-      print(
+      debugPrint(
           '[PushService] Permission settings status: ${settings.authorizationStatus}');
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        print('[PushService] Notification permission authorized.');
+        debugPrint('[PushService] Notification permission authorized.');
         try {
-          print('[PushService] Getting FCM token...');
+          debugPrint('[PushService] Getting FCM token...');
           final token = await getToken();
           if (token != null) {
-            print('[PushService] FCM token received: $token');
+            debugPrint('[PushService] FCM token received: $token');
             await _saveTokenToFirestore(token);
-            print('[PushService] FCM token saved to Firestore.');
+            debugPrint('[PushService] FCM token saved to Firestore.');
             return true;
           } else {
-            print('[PushService] Failed to get FCM token (token is null).');
+            debugPrint('[PushService] Failed to get FCM token (token is null).');
             return false;
           }
         } catch (e, s) {
-          print('[PushService] ERROR getting/saving FCM token: $e');
-          print('[PushService] Stacktrace: $s');
+          debugPrint('[PushService] ERROR getting/saving FCM token: $e');
+          debugPrint('[PushService] Stacktrace: $s');
           return false;
         }
       } else {
-        print(
+        debugPrint(
             '[PushService] Notification permission not granted. Status: ${settings.authorizationStatus}');
         return false;
       }
     } catch (e, s) {
-      print('[PushService] ERROR during opt-in process: $e');
-      print('[PushService] Stacktrace: $s');
+      debugPrint('[PushService] ERROR during opt-in process: $e');
+      debugPrint('[PushService] Stacktrace: $s');
       return false;
     }
   }
@@ -252,7 +251,7 @@ class PushService {
         'lastSeen': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
-      print('Failed to save token to Firestore: $e'); // ignore: avoid_print
+      debugPrint('Failed to save token to Firestore: $e');
     }
   }
 }
