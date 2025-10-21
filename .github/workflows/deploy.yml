@@ -43,7 +43,7 @@ jobs:
         run: flutter analyze
 
       - name: Build web
-        run: flutter build web --release --base-href="/${{ github.event.repository.name }}/"
+        run: flutter build web --release --base-href="/${{ github.event.repository.name }}/" --dart-define=VAPID_KEY="${{ secrets.VAPID_KEY }}"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

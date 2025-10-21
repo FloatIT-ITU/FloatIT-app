@@ -46,11 +46,21 @@ class PushService {
 
   Future<String?> getToken() async {
     try {
-      final token = await _messaging.getToken();
+      // Read VAPID public key from build-time define to avoid hardcoding.
+      // Supply at build: flutter build web --dart-define=VAPID_KEY="<your_public_vapid_key>"
+  const vapidKey = String.fromEnvironment('VAPID_KEY');
+  final vapid = kIsWeb && vapidKey.isNotEmpty ? vapidKey : null;
+      // For web, FCM requires a VAPID key for push notifications. If vapid is null
+      // getToken will try without it (may fail on web). See README in project for details.
+      final token = await _messaging.getToken(vapidKey: vapid);
       print('getToken() returned: $token'); // ignore: avoid_print
       return token;
     } catch (e) {
       print('getToken() error: $e'); // ignore: avoid_print
+      print('If error mentions "messaging/unsupported-browser" or VAPID, you need to:'); // ignore: avoid_print
+      print('1. Go to Firebase Console > Project Settings > Cloud Messaging'); // ignore: avoid_print
+      print('2. Generate Web Push certificate (VAPID key)'); // ignore: avoid_print
+      print('3. Add the key to push_service.dart getToken() method'); // ignore: avoid_print
       return null;
     }
   }
