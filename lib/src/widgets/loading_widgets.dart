@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme_colors.dart';
+import '../theme_provider.dart';
+import 'package:provider/provider.dart';
 
 /// Reusable loading widgets and state management patterns for async operations
 class LoadingWidgets {
@@ -332,11 +334,42 @@ class _AppLoadingIconState extends State<AppLoadingIcon> with SingleTickerProvid
     return RotationTransition(
       turns: _controller,
       child: Image.asset(
-        'assets/float_it.png',
+        'assets/float_it_no_text.png',
         width: widget.size,
         height: widget.size,
         fit: BoxFit.contain,
       ),
+    );
+  }
+}
+
+/// Theme-aware app icon that shows different icons for light and dark mode
+class ThemeAwareAppIcon extends StatelessWidget {
+  final double width;
+  final double height;
+  final BoxFit fit;
+
+  const ThemeAwareAppIcon({
+    super.key,
+    this.width = 28,
+    this.height = 28,
+    this.fit = BoxFit.contain,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        final isDark = themeProvider.isDark;
+        final iconPath = isDark ? 'assets/float_it_dark_mode.png' : 'assets/float_it.png';
+
+        return Image.asset(
+          iconPath,
+          width: width,
+          height: height,
+          fit: fit,
+        );
+      },
     );
   }
 }

@@ -193,11 +193,9 @@ class _MainAppViewState extends State<MainAppView> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Image.asset(
-                              'assets/float_it.png',
+                            ThemeAwareAppIcon(
                               width: 28,
                               height: 28,
-                              fit: BoxFit.contain,
                             ),
                             const SizedBox(width: 8),
                             const Text(

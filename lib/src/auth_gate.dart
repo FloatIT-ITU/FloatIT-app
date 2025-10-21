@@ -375,12 +375,9 @@ class _EmailPasswordLoginScreenState extends State<EmailPasswordLoginScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // App icon/logo
-                        Image.asset(
-                          'assets/float_it.png',
+                        ThemeAwareAppIcon(
                           width: 28,
                           height: 28,
-                          fit: BoxFit.contain,
                         ),
                         const SizedBox(width: 8),
                         // App title

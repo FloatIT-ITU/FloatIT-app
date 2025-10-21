@@ -18,6 +18,7 @@ import 'layout_widgets.dart';
 
 import 'theme_provider.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
+import 'package:floatit/src/widgets/loading_widgets.dart';
 import 'admin_feedback_page.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -444,12 +445,14 @@ class _SettingsPageState extends State<SettingsPage> {
                                 text: TextSpan(
                                   style: AppTextStyles.body(textColor),
                                   children: [
-                                    const TextSpan(text: 'Made by FloatIT '),
                                     WidgetSpan(
                                       alignment: PlaceholderAlignment.middle,
-                                      child: Icon(Icons.pool, size: 16, color: theme.colorScheme.primary),
+                                      child: ThemeAwareAppIcon(
+                                        width: 32,
+                                        height: 32,
+                                      ),
                                     ),
-                                    const TextSpan(text: '\nIT University of Copenhagen\n\nInspired by the '),
+                                    const TextSpan(text: ' Made by FloatIT\nIT University of Copenhagen\n\nInspired by the '),
                                     WidgetSpan(
                                       alignment: PlaceholderAlignment.middle,
                                       child: GestureDetector(
