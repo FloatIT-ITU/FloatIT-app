@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'layout_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:floatit/src/widgets/banners.dart';
 import 'styles.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +20,17 @@ class UserManagementPage extends StatefulWidget {
 class _UserManagementPageState extends State<UserManagementPage> {
   String _search = '';
   String _filterOccupation = 'All';
+  String _adminFilter = 'All';
+  String _sortBy = 'name';
+
+  Future<Map<String, Map<String, dynamic>?>> _fetchPrivateMap(List<String> ids) async {
+    final Map<String, Map<String, dynamic>?> result = {};
+    for (final id in ids) {
+      final snap = await FirebaseFirestore.instance.collection('users').doc(id).get();
+      result[id] = snap.data();
+    }
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +57,8 @@ class _UserManagementPageState extends State<UserManagementPage> {
                         if (occ.isNotEmpty) occupations.add(occ);
                       }
                       final occupationList = ['All', ...occupations.toList()..sort()];
-                      final users = docs.where((doc) {
+                      // Initial filter by search and occupation
+                      final baseFiltered = docs.where((doc) {
                         final data = doc.data() as Map<String, dynamic>;
                         final name = (data['displayName'] ?? '').toString().toLowerCase();
                         final email = (data['email'] ?? '').toString().toLowerCase();
@@ -54,51 +67,104 @@ class _UserManagementPageState extends State<UserManagementPage> {
                         final matchesFilter = _filterOccupation == 'All' || occupation == _filterOccupation;
                         return matchesSearch && matchesFilter;
                       }).toList();
-                      users.sort((a, b) {
-                        final nameA = ((a.data() as Map<String, dynamic>)['displayName'] ?? '').toString().toLowerCase();
-                        final nameB = ((b.data() as Map<String, dynamic>)['displayName'] ?? '').toString().toLowerCase();
-                        return nameA.compareTo(nameB);
-                      });
-                      return Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    decoration: const InputDecoration(
-                                      labelText: 'Search by name or email',
-                                      prefixIcon: Icon(Icons.search),
+
+                      // Fetch private user data for admin filtering / sorting
+                      final ids = baseFiltered.map((d) => d.id).toList();
+                      return FutureBuilder<Map<String, Map<String, dynamic>?>>(
+                        future: _fetchPrivateMap(ids),
+                        builder: (context, privateSnapshot) {
+                          if (!privateSnapshot.hasData) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+
+                          final privateMap = privateSnapshot.data!;
+
+                          // Apply admin filter
+                          final filtered = baseFiltered.where((doc) {
+                            final priv = privateMap[doc.id];
+                            final isAdmin = priv?['admin'] == true;
+                            if (_adminFilter == 'All') return true;
+                            if (_adminFilter == 'Admins') return isAdmin;
+                            return !isAdmin; // Users
+                          }).toList();
+
+                          // Sort
+                          if (_sortBy == 'name') {
+                            filtered.sort((a, b) {
+                              final nameA = ((a.data() as Map<String, dynamic>)['displayName'] ?? '').toString().toLowerCase();
+                              final nameB = ((b.data() as Map<String, dynamic>)['displayName'] ?? '').toString().toLowerCase();
+                              return nameA.compareTo(nameB);
+                            });
+                          } else if (_sortBy == 'lastLogin') {
+                            filtered.sort((a, b) {
+                              final pa = privateMap[a.id];
+                              final pb = privateMap[b.id];
+                              final da = pa?['lastLogin'];
+                              final db = pb?['lastLogin'];
+                              final ta = da is Timestamp ? da.toDate().millisecondsSinceEpoch : (da is DateTime ? da.millisecondsSinceEpoch : 0);
+                              final tb = db is Timestamp ? db.toDate().millisecondsSinceEpoch : (db is DateTime ? db.millisecondsSinceEpoch : 0);
+                              return tb.compareTo(ta); // most recent first
+                            });
+                          }
+
+                          return Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        decoration: const InputDecoration(
+                                          labelText: 'Search by name or email',
+                                          prefixIcon: Icon(Icons.search),
+                                        ),
+                                        onChanged: (value) => setState(() => _search = value.trim().toLowerCase()),
+                                      ),
                                     ),
-                                    onChanged: (value) => setState(() => _search = value.trim().toLowerCase()),
-                                  ),
+                                    const SizedBox(width: 8),
+                                    DropdownButton<String>(
+                                      value: _filterOccupation,
+                                      items: occupationList.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                                      onChanged: (value) => setState(() => _filterOccupation = value ?? 'All'),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    DropdownButton<String>(
+                                      value: _adminFilter,
+                                      items: ['All', 'Admins', 'Users'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                                      onChanged: (value) => setState(() => _adminFilter = value ?? 'All'),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    DropdownButton<String>(
+                                      value: _sortBy,
+                                      items: [
+                                        DropdownMenuItem(value: 'name', child: Text('Sort: A→Z')),
+                                        DropdownMenuItem(value: 'lastLogin', child: Text('Sort: Last login')),
+                                      ],
+                                      onChanged: (value) => setState(() => _sortBy = value ?? 'name'),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 8),
-                                DropdownButton<String>(
-                                  value: _filterOccupation,
-                                  items: occupationList.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                                  onChanged: (value) => setState(() => _filterOccupation = value ?? 'All'),
+                              ),
+                              Expanded(
+                                child: ListView.builder(
+                                  itemCount: filtered.length,
+                                  itemBuilder: (context, i) {
+                                    final data = filtered[i].data() as Map<String, dynamic>;
+                                    final userId = filtered[i].id;
+                                    return _UserCard(
+                                      userId: userId,
+                                      data: data,
+                                      currentUserIsAdmin: currentUserIsAdmin,
+                                    );
+                                  },
                                 ),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: ListView.builder(
-                              itemCount: users.length,
-                              itemBuilder: (context, i) {
-                                final data = users[i].data() as Map<String, dynamic>;
-                                final userId = users[i].id;
-                                return _UserCard(
-                                  userId: userId,
-                                  data: data,
-                                  currentUserIsAdmin: currentUserIsAdmin,
-                                );
-                              },
-                            ),
-                          ),
-                        ],
+                              ),
+                            ],
+                          );
+                        },
                       );
+                      // (old users list removed - replaced by filtered FutureBuilder above)
                     },
                   ),
                 ),
@@ -172,20 +238,28 @@ class _UserCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text('Occupation: ${data['occupation'] ?? 'Unknown'}'),
                     if (currentUserIsAdmin) ...[
-                      const SizedBox(width: 8),
                       IconButton(
                         icon: const Icon(Icons.edit_note, size: 16),
                         onPressed: () => _editOccupation(context),
                         tooltip: 'Edit occupation',
                       ),
+                      const SizedBox(width: 4),
                     ],
+                    Expanded(child: Text('Occupation: ${data['occupation'] ?? 'Unknown'}')),
                   ],
                 ),
                 Row(
                   children: [
-                    Expanded(child: Text('Email: $email')),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                          final uri = Uri(scheme: 'mailto', path: email.toString());
+                          if (await canLaunchUrl(uri)) await launchUrl(uri);
+                        },
+                        child: Text('Email: $email', style: TextStyle(decoration: TextDecoration.underline, color: Theme.of(context).colorScheme.primary)),
+                      ),
+                    ),
                   ],
                 ),
                 Row(
@@ -373,6 +447,14 @@ class _UserCard extends StatelessWidget {
   }
 
   void _sendMessageToUser(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null && currentUser.uid == userId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot send a message to yourself')),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) => _SendMessageDialog(

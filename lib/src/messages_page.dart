@@ -278,6 +278,7 @@ class ConversationPage extends StatefulWidget {
 
 class _ConversationPageState extends State<ConversationPage> {
   final TextEditingController _messageController = TextEditingController();
+  final FocusNode _messageFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -301,6 +302,7 @@ class _ConversationPageState extends State<ConversationPage> {
   @override
   void dispose() {
     _messageController.dispose();
+    _messageFocusNode.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -309,8 +311,20 @@ class _ConversationPageState extends State<ConversationPage> {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null || _messageController.text.trim().isEmpty) return;
 
+    // Prevent sending a message to yourself
+    if (widget.otherUserId == currentUser.uid) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot send a message to yourself')));
+      }
+      _messageController.clear();
+      _messageFocusNode.requestFocus();
+      return;
+    }
+
     final messageText = _messageController.text.trim();
     _messageController.clear();
+    // Keep focus in the message field so the user can continue typing
+    _messageFocusNode.requestFocus();
 
     try {
       // Generate unique message ID
@@ -332,18 +346,6 @@ class _ConversationPageState extends State<ConversationPage> {
         'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
       });
 
-      // Get sender name for notification
-      // final userDoc = await FirebaseService.userDoc(currentUser.uid).get();
-      // final userData = userDoc.data() as Map<String, dynamic>?;
-      // final userName = userData?['displayName'] ?? currentUser.email ?? 'Someone';
-
-      // Send push notification
-      // final pushService = PushService();
-      // await pushService.sendNotificationToUsers(
-      //   userIds: [widget.otherUserId],
-      //   title: 'Message from $userName',
-      //   body: messageText,
-      // );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -357,7 +359,6 @@ class _ConversationPageState extends State<ConversationPage> {
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return const SizedBox.shrink();
-
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -385,7 +386,7 @@ class _ConversationPageState extends State<ConversationPage> {
                 final data = snapshot.data!.data() as Map<String, dynamic>;
                 final messagesMap = data['messages'] as Map<String, dynamic>? ?? {};
                 final messages = messagesMap.values.map((msg) => msg as Map<String, dynamic>).toList();
-                
+
                 // Sort messages by timestamp descending (most recent first)
                 messages.sort((a, b) {
                   final aTime = (a['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
@@ -394,6 +395,7 @@ class _ConversationPageState extends State<ConversationPage> {
                 });
 
                 final eventId = data['eventId'] as String?;
+                final replyable = data['replyable'] as bool? ?? true;
 
                 return Column(
                   children: [
@@ -410,17 +412,17 @@ class _ConversationPageState extends State<ConversationPage> {
                               String dateString = '';
                               if (eventDate != null) {
                                 try {
-                                  final dateTime = eventDate is String 
-                                    ? DateTime.parse(eventDate) 
-                                    : (eventDate as Timestamp).toDate();
+                                  final dateTime = eventDate is String
+                                      ? DateTime.parse(eventDate)
+                                      : (eventDate as Timestamp).toDate();
                                   dateString = DateFormat('MMMM d, y').format(dateTime.toLocal());
                                 } catch (_) {
                                   // Ignore date parsing errors
                                 }
                               }
-                              final displayText = dateString.isNotEmpty 
-                                ? 'Re: $eventName - $dateString'
-                                : 'Re: $eventName';
+                              final displayText = dateString.isNotEmpty
+                                  ? 'Re: $eventName - $dateString'
+                                  : 'Re: $eventName';
                               return Text(
                                 displayText,
                                 style: TextStyle(
@@ -543,40 +545,52 @@ class _ConversationPageState extends State<ConversationPage> {
                         ),
                       ),
                     ),
+                    // Message input - only shown when conversation is replyable
+                    if (replyable)
+                      ConstrainedContent(
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  focusNode: _messageFocusNode,
+                                  controller: _messageController,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Type a message...',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                  maxLines: null,
+                                  textInputAction: TextInputAction.send,
+                                  onSubmitted: (_) => _sendMessage(),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                onPressed: _sendMessage,
+                                icon: const Icon(Icons.send),
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Text(
+                          'This conversation is read-only.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
+                      ),
                   ],
                 );
               },
-            ),
-          ),
-          ConstrainedContent(
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: const InputDecoration(
-                        hintText: 'Type a message...',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                      maxLines: null,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: _sendMessage,
-                    icon: const Icon(Icons.send),
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ],
-              ),
             ),
           ),
         ],

@@ -36,10 +36,25 @@ async function sendPending() {
       continue;
     }
 
+    // Respect user opt-out: check public_users.notificationsEnabled
+    try {
+      const publicDoc = await db.collection('public_users').doc(recipientUid).get();
+      const pu = publicDoc.exists ? publicDoc.data() : null;
+      if (pu && pu.notificationsEnabled === false) {
+        await doc.ref.update({ sent: true, sentAt: admin.firestore.FieldValue.serverTimestamp(), error: 'user-opted-out' });
+        console.log('Skipping notification - user opted out', recipientUid);
+        continue;
+      }
+    } catch (e) {
+      console.warn('Failed to read public_users for', recipientUid, e);
+    }
+
     const tokensSnap = await db.collection('fcm_tokens').doc(recipientUid).collection('tokens').get();
     const tokens = tokensSnap.docs.map(d => d.data().token).filter(Boolean);
+    // Record tokensCount for diagnostics
     if (!tokens.length) {
-      await doc.ref.update({ sent: true, sentAt: admin.firestore.FieldValue.serverTimestamp(), error: 'no-tokens' });
+      await doc.ref.update({ sent: true, sentAt: admin.firestore.FieldValue.serverTimestamp(), error: 'no-tokens', tokensCount: 0, lastAttemptAt: admin.firestore.FieldValue.serverTimestamp() });
+      console.log('No tokens for', recipientUid);
       continue;
     }
 
@@ -71,12 +86,12 @@ async function sendPending() {
           await db.collection('fcm_tokens').doc(recipientUid).collection('tokens').doc(tokenId).delete().catch(() => {});
         }
       }
-
-      await doc.ref.update({ sent: true, sentAt: admin.firestore.FieldValue.serverTimestamp() });
-      console.log('Sent notification', doc.id);
+      // Persist diagnostics on successful send
+      await doc.ref.update({ sent: true, sentAt: admin.firestore.FieldValue.serverTimestamp(), tokensCount: tokens.length, invalidTokensRemoved: invalidTokens.length });
+      console.log('Sent notification', doc.id, 'tokens:', tokens.length, 'invalidRemoved:', invalidTokens.length);
     } catch (e) {
       console.error('Send error', e);
-      await doc.ref.update({ error: String(e) }).catch(() => {});
+      await doc.ref.update({ error: String(e), tokensCount: tokens ? tokens.length : 0, lastAttemptAt: admin.firestore.FieldValue.serverTimestamp() }).catch(() => {});
     }
   }
 }

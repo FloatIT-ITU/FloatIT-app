@@ -450,6 +450,14 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       try {
         final messageText = messageController.text.trim();
         
+        // Prevent sending a message to yourself
+        if (hostId == currentUser.uid) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot send a message to yourself')));
+          }
+          return;
+        }
+
         // Create or get thread ID (sorted user IDs to ensure consistency)
         final participants = [currentUser.uid, hostId]..sort();
         final threadId = '${participants[0]}_${participants[1]}_${widget.eventId}';

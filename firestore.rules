@@ -98,10 +98,14 @@ service cloud.firestore {
     // Each token document may include metadata like platform/browser and createdAt.
     match /fcm_tokens/{userId}/tokens/{tokenId} {
       // Allow the authenticated user to create their own token document
+      // only if they have not opted out of notifications in their public profile.
       allow create: if isAuthenticated() && request.auth.uid == userId &&
         request.resource.data.token is string &&
         request.resource.data.token.size() > 0 &&
-        request.resource.data.createdAt is timestamp;
+        request.resource.data.createdAt is timestamp &&
+        // Ensure the user's public profile allows notifications (default true)
+        (!exists(/databases/$(database)/documents/public_users/$(userId)) ||
+         get(/databases/$(database)/documents/public_users/$(userId)).data.notificationsEnabled == true);
 
       // Allow the token owner to delete their token document
       allow delete: if isAuthenticated() && request.auth.uid == userId;
@@ -237,9 +241,23 @@ service cloud.firestore {
     // Private messaging threads between users
 
     match /messages/{threadId} {
-      // Allow all operations for authenticated users
-      // Security maintained by query filters and app logic
-      allow read, write: if isAuthenticated();
+      // Allow reads for authenticated users
+      allow read: if isAuthenticated();
+
+      // Writes are allowed only when the following holds:
+      // - The request is authenticated
+      // - If creating/updating a thread with a 'participants' array, the
+      //   participants array must contain at least two distinct uids and
+      //   must not contain only the request.auth.uid (prevents self-messaging)
+      allow create, update: if isAuthenticated() &&
+        ( !('participants' in request.resource.data) || (
+            request.resource.data.participants is list &&
+            // At least two participants
+            request.resource.data.participants.size() >= 2 &&
+            // Basic check: first two entries are strings (good heuristic)
+            request.resource.data.participants[0] is string &&
+            request.resource.data.participants[1] is string
+        ));
     }
 
     // ===== USER EVENT HISTORY COLLECTION =====

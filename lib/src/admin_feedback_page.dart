@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'messages_page.dart';
+import 'theme_colors.dart';
 import 'package:floatit/src/widgets/banners.dart';
 import 'package:floatit/src/layout_widgets.dart';
 
@@ -278,7 +281,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton.icon(
-                    onPressed: () => _respondToUser(userId, userEmail, message),
+                    onPressed: () => _respondToUser(doc.id, userId, userEmail, message),
                     icon: const Icon(Icons.reply, size: 16),
                     label: const Text('Respond'),
                     style: TextButton.styleFrom(
@@ -312,35 +315,89 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     );
   }
 
-  Future<void> _respondToUser(String? userId, String userEmail, String feedbackMessage) async {
+  Future<void> _respondToUser(String feedbackId, String? userId, String userEmail, String feedbackMessage) async {
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Cannot respond: user ID not found')),
       );
       return;
     }
-
-    // Create a new message in the messages collection
-    final messageContent = 'Regarding your feedback: "$feedbackMessage"\n\n[Admin Response]';
-
+    // Create (or update) a feedback-specific conversation document.
+    // Use a conversation id unique to the feedback item so that each feedback has its own thread.
     try {
-      await FirebaseFirestore.instance.collection('messages').add({
-        'senderId': 'admin', // Assuming admin sender
-        'receiverId': userId,
-        'content': messageContent,
-        'timestamp': FieldValue.serverTimestamp(),
-        'isRead': false,
-      });
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('You must be logged in as admin to respond')),
+          );
+        }
+        return;
+      }
+
+      final firestore = FirebaseFirestore.instance;
+      final conversationId = 'feedback_$feedbackId';
+      final conversationRef = firestore.collection('messages').doc(conversationId);
+      final messageId = firestore.collection('messages').doc().id;
+
+      final adminUid = currentUser.uid;
+      if (adminUid == userId) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot send a message to yourself')));
+        return;
+      }
+      final initialText = 'Regarding your feedback: "${feedbackMessage}"\n\n[Admin will respond]';
+
+      final conversationSnap = await conversationRef.get();
+      if (!conversationSnap.exists) {
+        // Create new feedback-scoped conversation
+        await conversationRef.set({
+          'participants': [adminUid, userId],
+          'eventId': null,
+          'feedbackId': feedbackId,
+          'lastMessage': initialText,
+          'lastMessageTime': FieldValue.serverTimestamp(),
+          'unreadCount': {userId: 1},
+          'createdAt': FieldValue.serverTimestamp(),
+          'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+          'messages': {
+            messageId: {
+              'senderId': adminUid,
+              'text': initialText,
+              'timestamp': FieldValue.serverTimestamp(),
+            }
+          }
+        });
+      } else {
+        // Append a stub admin message referencing the feedback (keeps thread linked to feedback)
+        await conversationRef.update({
+          'messages.$messageId': {
+            'senderId': adminUid,
+            'text': initialText,
+            'timestamp': FieldValue.serverTimestamp(),
+          },
+          'lastMessage': initialText,
+          'lastMessageTime': FieldValue.serverTimestamp(),
+          'unreadCount.$userId': FieldValue.increment(1),
+        });
+      }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Response sent to user')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ConversationPage(
+              conversationId: conversationId,
+              otherUserId: userId,
+              otherUserName: userEmail,
+              iconColor: AppThemeColors.lightPrimary,
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to send response')),
+          const SnackBar(content: Text('Failed to create conversation for feedback')),
         );
       }
     }

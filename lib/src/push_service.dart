@@ -38,13 +38,13 @@ class PushService {
     }
   }
 
-  Future<void> registerTokenForCurrentUser() async {
+  Future<bool> registerTokenForCurrentUser() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) return false;
     final granted = await requestPermission();
-    if (!granted) return;
+    if (!granted) return false;
     final token = await getToken();
-    if (token == null) return;
+    if (token == null) return false;
 
     // Save token as its own document under fcm_tokens/{uid}/tokens/{tokenId}
     final tokenId = token.replaceAll('/', '_');
@@ -53,16 +53,21 @@ class PushService {
         .doc(user.uid)
         .collection('tokens')
         .doc(tokenId);
-    await tokenRef.set({
+    try {
+      await tokenRef.set({
       'token': token,
       'platform': 'web',
       'createdAt': FieldValue.serverTimestamp(),
       'lastSeen': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+      }, SetOptions(merge: true));
+    } catch (e) {
+      return false;
+    }
 
     // Start listening for token refresh and foreground messages for this user
     _startTokenRefreshListener(user.uid);
     _startOnMessageListener();
+    return true;
   }
 
   Future<void> unregisterAllTokensForCurrentUser() async {
@@ -82,6 +87,7 @@ class PushService {
     // Stop listeners
     _stopListeners();
   }
+
 
   void _startTokenRefreshListener(String uid) {
     // Ensure previous subscription removed
