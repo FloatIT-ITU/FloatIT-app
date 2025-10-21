@@ -374,14 +374,14 @@ class _EmailPasswordLoginScreenState extends State<EmailPasswordLoginScreen> {
                   child: Center(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
+                      children: const [
                         ThemeAwareAppIcon(
                           width: 28,
                           height: 28,
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         // App title
-                        const Text(
+                        Text(
                           'FloatIT ITU',
                           style: TextStyle(
                             fontSize: 20,

@@ -192,13 +192,13 @@ class _MainAppViewState extends State<MainAppView> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
-                          children: [
+                          children: const [
                             ThemeAwareAppIcon(
                               width: 28,
                               height: 28,
                             ),
-                            const SizedBox(width: 8),
-                            const Text(
+                            SizedBox(width: 8),
+                            Text(
                               'Events',
                               style: TextStyle(
                                 fontSize: 20,
