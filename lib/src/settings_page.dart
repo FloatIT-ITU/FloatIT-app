@@ -484,12 +484,12 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: Column(
                           children: [
                             const SizedBox(height: 8),
+                            Text('Made by FloatIT', textAlign: TextAlign.center, style: AppTextStyles.body()),
+                            const SizedBox(height: 8),
                             // Center the app icon on its own row
                             Center(
                               child: ThemeAwareAppIcon(width: 40, height: 40),
                             ),
-                            const SizedBox(height: 8),
-                            Text('Made by FloatIT', textAlign: TextAlign.center, style: AppTextStyles.body()),
                             const SizedBox(height: 4),
                             Text('IT University of Copenhagen', textAlign: TextAlign.center, style: AppTextStyles.body()),
                             const SizedBox(height: 8),
