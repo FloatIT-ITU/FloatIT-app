@@ -44,6 +44,8 @@ flutter:
     - assets/login_bg.jpg
     - assets/signup_bg.jpg
     - assets/float_it.png
+    - assets/float_it_dark_mode.png
+    - assets/float_it_no_text.png
   fonts:
     - family: Inter
       fonts:
