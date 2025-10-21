@@ -20,10 +20,18 @@ class PushService {
   Future<void> initialize() async {
     if (kIsWeb) {
       try {
-        await html.window.navigator.serviceWorker!.register('/firebase-messaging-sw.js');
-        print('Service worker registered'); // ignore: avoid_print
-      } catch (e) {
-        print('Failed to register service worker: $e'); // ignore: avoid_print
+        print('[PushService] Registering service worker...');
+        final worker = await html.window.navigator.serviceWorker
+            ?.register('/firebase-messaging-sw.js');
+        if (worker != null) {
+          print(
+              '[PushService] Service worker registered successfully: ${worker.scope}');
+        } else {
+          print('[PushService] Service worker registration returned null.');
+        }
+      } catch (e, s) {
+        print('[PushService] ERROR registering service worker: $e');
+        print('[PushService] Stacktrace: $s');
       }
     }
     _startOnMessageListener();
@@ -168,5 +176,83 @@ class PushService {
   void dispose() {
     _stopListeners();
     _onMessageController.close();
+  }
+
+  Future<bool> optIn() async {
+    print('[PushService] Opt-in process started.');
+    try {
+      print('[PushService] Requesting notification permission...');
+      final settings = await _messaging.requestPermission();
+      print(
+          '[PushService] Permission settings status: ${settings.authorizationStatus}');
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        print('[PushService] Notification permission authorized.');
+        try {
+          print('[PushService] Getting FCM token...');
+          final token = await getToken();
+          if (token != null) {
+            print('[PushService] FCM token received: $token');
+            await _saveTokenToFirestore(token);
+            print('[PushService] FCM token saved to Firestore.');
+            return true;
+          } else {
+            print('[PushService] Failed to get FCM token (token is null).');
+            return false;
+          }
+        } catch (e, s) {
+          print('[PushService] ERROR getting/saving FCM token: $e');
+          print('[PushService] Stacktrace: $s');
+          return false;
+        }
+      } else {
+        print(
+            '[PushService] Notification permission not granted. Status: ${settings.authorizationStatus}');
+        return false;
+      }
+    } catch (e, s) {
+      print('[PushService] ERROR during opt-in process: $e');
+      print('[PushService] Stacktrace: $s');
+      return false;
+    }
+  }
+
+  Future<void> optOut() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      final token = await getToken();
+      if (token == null) return;
+      final tokenId = token.replaceAll('/', '_');
+      final tokenRef = FirebaseFirestore.instance
+        .collection('fcm_tokens')
+        .doc(user.uid)
+        .collection('tokens')
+        .doc(tokenId);
+      await tokenRef.delete();
+    } catch (_) {}
+    // Stop listeners
+    _stopListeners();
+  }
+
+  Future<void> _saveTokenToFirestore(String token) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final tokenId = token.replaceAll('/', '_');
+    final tokenRef = FirebaseFirestore.instance
+        .collection('fcm_tokens')
+        .doc(user.uid)
+        .collection('tokens')
+        .doc(tokenId);
+    try {
+      await tokenRef.set({
+        'token': token,
+        'platform': 'web',
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastSeen': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('Failed to save token to Firestore: $e'); // ignore: avoid_print
+    }
   }
 }
