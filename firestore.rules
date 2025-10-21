@@ -76,6 +76,7 @@ service cloud.firestore {
 
 
       // Users can update their own public profile with validation
+      // Allow updating displayName, occupation and notificationsEnabled flag
       allow update: if isOwner(userId) && isITUEmail() && (
         (!('displayName' in request.resource.data) || 
          (request.resource.data.displayName is string && 
@@ -83,7 +84,9 @@ service cloud.firestore {
           request.resource.data.displayName.size() > 0)) &&
         (!('occupation' in request.resource.data) || 
          (request.resource.data.occupation is string && 
-          request.resource.data.occupation.size() <= 100))
+          request.resource.data.occupation.size() <= 100)) &&
+        (!('notificationsEnabled' in request.resource.data) ||
+         (request.resource.data.notificationsEnabled is bool))
       );
 
       // Admins can also update public profiles

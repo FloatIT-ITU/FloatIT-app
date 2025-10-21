@@ -20,6 +20,7 @@ import 'theme_provider.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
 import 'package:floatit/src/widgets/loading_widgets.dart';
 import 'admin_feedback_page.dart';
+import 'push_service.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -318,6 +319,31 @@ class _SettingsPageState extends State<SettingsPage> {
                                 },
                               ),
                               const Divider(height: 1),
+                              ListTile(
+                                leading: const Icon(Icons.notifications),
+                                title: const Text('Enable notifications'),
+                                trailing: Consumer<UserProfileProvider>(
+                                  builder: (context, profile, _) => Switch(
+                                    value: profile.notificationsEnabled,
+                                    onChanged: (v) async {
+                                      try {
+                                        await profile.setNotificationsEnabled(v);
+                                        if (v) {
+                                          // register token
+                                          await PushService.instance.registerTokenForCurrentUser();
+                                        } else {
+                                          await PushService.instance.unregisterAllTokensForCurrentUser();
+                                        }
+                                      } catch (_) {
+                                        if (!context.mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Failed to update notification preference')),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
                               ListTile(
                                 leading: Icon(Icons.delete_forever, color: Theme.of(context).colorScheme.error),
                                 title: Text('Delete Account', style: TextStyle(color: Theme.of(context).colorScheme.error)),
