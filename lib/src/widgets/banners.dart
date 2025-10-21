@@ -113,7 +113,7 @@ class StandardPageBanner extends StatelessWidget {
                 children: [
                   // Custom leading widget or app icon/logo
                   leading ?? Image.asset(
-                    'assets/icon.png',
+                    'assets/float_it.png',
                     width: 28,
                     height: 28,
                     fit: BoxFit.contain,

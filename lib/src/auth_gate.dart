@@ -1,3 +1,5 @@
+import 'package:floatit/src/widgets/loading_widgets.dart';
+
 import 'package:flutter/material.dart';
 import 'main_app_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -29,8 +31,7 @@ class AuthGate extends StatelessWidget {
           future: AuthGate._prepareUser(user),
           builder: (context, docSnapshot) {
             if (docSnapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()));
+              return LoadingWidgets.loadingScaffold(message: 'Preparing user...');
             }
             if (docSnapshot.hasError) {
               FirebaseAuth.instance.signOut();
@@ -174,8 +175,7 @@ class _ProfileCompletionGateState extends State<_ProfileCompletionGate> {
               ),
             );
           }
-          return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
+      return LoadingWidgets.loadingScaffold(message: 'Loading profile...');
         }
         
         // Profile setup is now optional with auto-populated defaults
@@ -377,7 +377,7 @@ class _EmailPasswordLoginScreenState extends State<EmailPasswordLoginScreen> {
                       children: [
                         // App icon/logo
                         Image.asset(
-                          'assets/icon.png',
+                          'assets/float_it.png',
                           width: 28,
                           height: 28,
                           fit: BoxFit.contain,
@@ -407,9 +407,9 @@ class _EmailPasswordLoginScreenState extends State<EmailPasswordLoginScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             // Microsoft Sign-In button
-                            _microsoftLoading
-                                ? const CircularProgressIndicator()
-                                : MicrosoftSignInButton(
+              _microsoftLoading
+                ? LoadingWidgets.inlineLoading()
+                : MicrosoftSignInButton(
                                     onPressed: () => _signInWithMicrosoft(),
                                     isLoading: _microsoftLoading,
                                     text: 'ITU Login',

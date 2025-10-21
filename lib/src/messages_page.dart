@@ -6,6 +6,7 @@ import 'package:floatit/src/layout_widgets.dart';
 import 'package:floatit/src/widgets/banners.dart';
 import 'package:intl/intl.dart';
 import 'package:floatit/src/theme_colors.dart';
+import 'package:floatit/src/widgets/loading_widgets.dart';
 import 'package:floatit/src/widgets/swimmer_icon_picker.dart';
 
 class MessagesPage extends StatelessWidget {
@@ -37,7 +38,7 @@ class MessagesPage extends StatelessWidget {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return LoadingWidgets.loadingIndicator(message: 'Loading messages...');
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {

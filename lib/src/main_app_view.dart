@@ -12,6 +12,7 @@ import 'events_page_content.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:floatit/src/widgets/loading_widgets.dart';
 
 class MainAppView extends StatefulWidget {
   const MainAppView({super.key});
@@ -140,14 +141,14 @@ class _MainAppViewState extends State<MainAppView> {
               children: [
                 // App logo/icon
                 Image.asset(
-                  'assets/icon.png',
+                  'assets/float_it.png',
                   width: 64,
                   height: 64,
                   fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 24),
-                // Loading indicator
-                const CircularProgressIndicator(),
+                // Loading indicator (use app-branded loader)
+                SizedBox(width: 64, height: 64, child: LoadingWidgets.loadingIndicator()),
                 const SizedBox(height: 16),
                 // Loading message
                 Text(
@@ -201,7 +202,7 @@ class _MainAppViewState extends State<MainAppView> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Image.asset(
-                              'assets/icon.png',
+                              'assets/float_it.png',
                               width: 28,
                               height: 28,
                               fit: BoxFit.contain,
