@@ -46,8 +46,11 @@ class PushService {
 
   Future<String?> getToken() async {
     try {
-      return await _messaging.getToken();
+      final token = await _messaging.getToken();
+      print('getToken() returned: $token'); // ignore: avoid_print
+      return token;
     } catch (e) {
+      print('getToken() error: $e'); // ignore: avoid_print
       return null;
     }
   }
@@ -80,13 +83,16 @@ class PushService {
         .collection('tokens')
         .doc(tokenId);
     try {
+      print('Saving token to Firestore...'); // ignore: avoid_print
       await tokenRef.set({
       'token': token,
       'platform': 'web',
       'createdAt': FieldValue.serverTimestamp(),
       'lastSeen': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+      print('Token saved successfully'); // ignore: avoid_print
     } catch (e) {
+      print('Failed to save token to Firestore: $e'); // ignore: avoid_print
       return false;
     }
 
