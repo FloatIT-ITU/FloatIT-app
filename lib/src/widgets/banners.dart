@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme_colors.dart';
 import '../layout_widgets.dart';
+import 'loading_widgets.dart';
 // styles.dart is not required here; banners now inherit Theme's textTheme
 
 class PageBanner extends StatelessWidget {
@@ -112,11 +113,9 @@ class StandardPageBanner extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Custom leading widget or app icon/logo
-                  leading ?? Image.asset(
-                    'assets/float_it.png',
+                  leading ?? const ThemeAwareAppIcon(
                     width: 28,
                     height: 28,
-                    fit: BoxFit.contain,
                   ),
                   const SizedBox(width: 8),
                   // Page title

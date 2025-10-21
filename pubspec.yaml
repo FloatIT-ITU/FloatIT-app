@@ -35,6 +35,7 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   fake_cloud_firestore: ^4.0.0
   flutter_launcher_icons: ^0.13.1
+  image: ^4.0.17
 
 flutter:
   uses-material-design: true
@@ -43,6 +44,8 @@ flutter:
     - assets/login_bg.jpg
     - assets/signup_bg.jpg
     - assets/float_it.png
+    - assets/float_it_dark_mode.png
+    - assets/float_it_no_text.png
   fonts:
     - family: Inter
       fonts:
