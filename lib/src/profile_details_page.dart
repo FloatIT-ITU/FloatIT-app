@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'layout_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:floatit/src/user_profile_provider.dart';
+import 'package:floatit/src/widgets/loading_widgets.dart';
 import 'package:floatit/src/occupation_selection_page.dart';
 import 'package:floatit/src/widgets/banners.dart';
 import 'package:floatit/src/theme_colors.dart';
@@ -16,9 +17,7 @@ class ProfileDetailsPage extends StatelessWidget {
     return Consumer<UserProfileProvider>(
       builder: (context, profile, _) {
         if (profile.loading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return LoadingWidgets.loadingScaffold(message: 'Loading profile...');
         }
         return Scaffold(
           body: Column(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:floatit/src/widgets/loading_widgets.dart';
 
 /// ITU-styled sign-in button matching the app's theme
 class MicrosoftSignInButton extends StatelessWidget {
@@ -36,12 +37,7 @@ class MicrosoftSignInButton extends StatelessWidget {
             ? SizedBox(
                 height: 24,
                 width: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    theme.colorScheme.onPrimary,
-                  ),
-                ),
+                child: LoadingWidgets.inlineLoading(size: 20, color: theme.colorScheme.onPrimary),
               )
             : Row(
                 mainAxisSize: MainAxisSize.min,

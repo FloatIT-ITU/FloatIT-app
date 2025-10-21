@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:floatit/src/widgets/loading_widgets.dart';
 import 'package:floatit/src/widgets/attendee_list.dart';
 import 'package:floatit/src/constants/firestore_constants.dart';
 import 'package:floatit/src/theme_colors.dart';
@@ -34,7 +35,7 @@ class AttendeeListBuilder extends StatelessWidget {
       future: _fetchAttendeeData(attendeeUids, isAdmin),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return LoadingWidgets.loadingIndicator(message: 'Loading attendees...', size: 40);
         }
         if (snapshot.hasError) {
           return Text('Error loading attendees: ${snapshot.error}');

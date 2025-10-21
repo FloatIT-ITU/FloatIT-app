@@ -6,12 +6,12 @@ class LoadingWidgets {
   LoadingWidgets._();
   
   /// Standard loading indicator with optional message
-  static Widget loadingIndicator({String? message}) {
+  static Widget loadingIndicator({String? message, double size = 48}) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(),
+          AppLoadingIcon(size: size),
           if (message != null) ...[
             const SizedBox(height: 16),
             Text(message, textAlign: TextAlign.center),
@@ -26,10 +26,7 @@ class LoadingWidgets {
     return SizedBox(
       width: size,
       height: size,
-      child: CircularProgressIndicator(
-        strokeWidth: 2,
-        color: color,
-      ),
+      child: AppLoadingIcon(size: size),
     );
   }
   
@@ -300,6 +297,46 @@ class FutureBuilderWrapper<T> extends StatelessWidget {
         
         return builder(context, data);
       },
+    );
+  }
+}
+
+/// Small rotating app icon used as a loading indicator.
+class AppLoadingIcon extends StatefulWidget {
+  final double size;
+  final Duration duration;
+
+  const AppLoadingIcon({super.key, this.size = 48, this.duration = const Duration(milliseconds: 1200)});
+
+  @override
+  State<AppLoadingIcon> createState() => _AppLoadingIconState();
+}
+
+class _AppLoadingIconState extends State<AppLoadingIcon> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration)..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RotationTransition(
+      turns: _controller,
+      child: Image.asset(
+        'assets/float_it.png',
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.contain,
+      ),
     );
   }
 }
