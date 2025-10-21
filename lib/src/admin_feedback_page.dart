@@ -345,7 +345,7 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot send a message to yourself')));
         return;
       }
-      final initialText = 'Regarding your feedback: "${feedbackMessage}"\n\n[Admin will respond]';
+  final initialText = 'Regarding your feedback: "$feedbackMessage"\n\n[Admin will respond]';
 
       final conversationSnap = await conversationRef.get();
       if (!conversationSnap.exists) {

@@ -402,11 +402,10 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
 
     // Prevent messaging yourself
     if (currentUser.uid == hostId) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You cannot message yourself')),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You cannot message yourself')),
+      );
       return;
     }
 
@@ -452,7 +451,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         
         // Prevent sending a message to yourself
         if (hostId == currentUser.uid) {
-          if (context.mounted) {
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot send a message to yourself')));
           }
           return;
@@ -512,19 +511,15 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         //   eventId: widget.eventId,
         // );
         
-        if (context.mounted) {
-          // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Message sent to host')),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Message sent to host')),
+        );
       } catch (e) {
-        if (context.mounted) {
-          // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to send message: $e')),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send message: $e')),
+        );
       }
     }
     
@@ -955,20 +950,23 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              final navigator = Navigator.of(context);
-              final messenger = ScaffoldMessenger.of(context);
-
               try {
                 final doc = FirebaseService.eventBanner(widget.eventId);
                 await doc.delete();
 
                 if (!mounted) return;
+                // ignore: use_build_context_synchronously
+                final navigator = Navigator.of(context);
+                // ignore: use_build_context_synchronously
+                final messenger = ScaffoldMessenger.of(context);
                 navigator.pop();
                 messenger.showSnackBar(
                   const SnackBar(content: Text('Event notification removed')),
                 );
               } catch (e) {
                 if (!mounted) return;
+                // ignore: use_build_context_synchronously
+                final messenger = ScaffoldMessenger.of(context);
                 messenger.showSnackBar(
                   const SnackBar(content: Text('Failed to remove notification')),
                 );
@@ -1041,10 +1039,6 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
         ElevatedButton(
           onPressed: () async {
             if (_formKey.currentState?.validate() != true) return;
-
-            final messenger = ScaffoldMessenger.of(context);
-            final navigator = Navigator.of(context);
-
             try {
               final doc = FirebaseService.eventBanner(widget.eventId);
               await doc.set({
@@ -1082,12 +1076,18 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
               }
 
               if (!mounted) return;
+              // ignore: use_build_context_synchronously
+              final messenger = ScaffoldMessenger.of(context);
+              // ignore: use_build_context_synchronously
+              final navigator = Navigator.of(context);
               navigator.pop();
               messenger.showSnackBar(
                 const SnackBar(content: Text('Event notification sent')),
               );
             } catch (e) {
               if (!mounted) return;
+              // ignore: use_build_context_synchronously
+              final messenger = ScaffoldMessenger.of(context);
               messenger.showSnackBar(
                 const SnackBar(content: Text('Failed to send notification')),
               );
@@ -1148,6 +1148,7 @@ class _AddUserDialogState extends State<_AddUserDialog> {
     } catch (e) {
       setState(() => _loading = false);
       if (mounted) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to load users')),
         );
