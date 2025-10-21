@@ -64,7 +64,6 @@ service cloud.firestore {
     match /public_users/{userId} {
       // Anyone can read public profiles
       allow read: if true;
-
       // Users can create their own public profile (during first sign-in)
       // Validate field lengths
       allow create: if isOwner(userId) && isITUEmail() &&
@@ -75,18 +74,69 @@ service cloud.firestore {
          (request.resource.data.occupation is string && 
           request.resource.data.occupation.size() <= 100));
 
+
       // Users can update their own public profile with validation
-      allow update: if isOwner(userId) && isITUEmail() &&
+      allow update: if isOwner(userId) && isITUEmail() && (
         (!('displayName' in request.resource.data) || 
          (request.resource.data.displayName is string && 
           request.resource.data.displayName.size() <= 50 &&
           request.resource.data.displayName.size() > 0)) &&
         (!('occupation' in request.resource.data) || 
          (request.resource.data.occupation is string && 
-          request.resource.data.occupation.size() <= 100));
+          request.resource.data.occupation.size() <= 100))
+      );
 
       // Admins can also update public profiles
       allow update: if isAdmin() && isITUEmail();
+    }
+
+    // ===== FCM TOKENS (per-token documents) =====
+    // Store tokens under: fcm_tokens/{uid}/tokens/{tokenId}
+    // Each token document may include metadata like platform/browser and createdAt.
+    match /fcm_tokens/{userId}/tokens/{tokenId} {
+      // Allow the authenticated user to create their own token document
+      allow create: if isAuthenticated() && request.auth.uid == userId &&
+        request.resource.data.token is string &&
+        request.resource.data.token.size() > 0 &&
+        request.resource.data.createdAt is timestamp;
+
+      // Allow the token owner to delete their token document
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+
+      // Do not allow clients to update token documents (use create/delete pattern)
+      allow update: if false;
+
+      // Allow owners and admins to read token documents
+      allow get: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // ===== NOTIFICATIONS COLLECTION =====
+    // Per-user notifications used by the in-app notification list. Creation
+    // of notifications is intended to be done by server-side code (Cloud
+    // Functions using the Admin SDK). Clients may read their own
+    // notifications and mark them as read.
+    match /notifications/{notificationId} {
+      // Allow reading notifications for the recipient or admins
+      allow get: if isAuthenticated() && (resource.data.recipientUid == request.auth.uid || isAdmin());
+      // Allow queries/lists only when scoped by recipientUid == request.auth.uid
+      allow list: if isAuthenticated() && (request.auth.uid != null);
+
+      // Creation is restricted to admins (server-side functions should run
+      // with admin privileges and bypass rules). This prevents clients from
+      // forging notifications.
+      allow create: if isAdmin();
+
+      // Allow recipients to mark their notifications as read (only the
+      // 'read' field may be changed by the recipient) and allow admins full
+      // update/delete privileges.
+      allow update: if isAdmin() || (
+        isAuthenticated() && resource.data.recipientUid == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) &&
+        request.resource.data.read == true
+      );
+
+      allow delete: if isAdmin();
     }
 
     // ===== EVENTS COLLECTION =====
