@@ -196,7 +196,7 @@ class _SettingsPageState extends State<SettingsPage> {
       'userId': user.uid,
       'userEmail': user.email,
       'message': feedback,
-      'timestamp': FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
       'status': 'unread', // unread, read, responded
     });
   }

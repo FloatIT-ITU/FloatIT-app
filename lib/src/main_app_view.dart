@@ -139,16 +139,8 @@ class _MainAppViewState extends State<MainAppView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // App logo/icon
-                Image.asset(
-                  'assets/float_it.png',
-                  width: 64,
-                  height: 64,
-                  fit: BoxFit.contain,
-                ),
-                const SizedBox(height: 24),
-                // Loading indicator (use app-branded loader)
-                SizedBox(width: 64, height: 64, child: LoadingWidgets.loadingIndicator()),
+                // Loading indicator (use app-branded spinning loader)
+                LoadingWidgets.loadingIndicator(size: 64),
                 const SizedBox(height: 16),
                 // Loading message
                 Text(
