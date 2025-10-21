@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:html' as html;
+import 'dart:html' as html; // ignore: avoid_web_libraries_in_flutter
 
 class PushService {
   PushService._();
@@ -21,9 +21,9 @@ class PushService {
     if (kIsWeb) {
       try {
         await html.window.navigator.serviceWorker!.register('/firebase-messaging-sw.js');
-        print('Service worker registered');
+        print('Service worker registered'); // ignore: avoid_print
       } catch (e) {
-        print('Failed to register service worker: $e');
+        print('Failed to register service worker: $e'); // ignore: avoid_print
       }
     }
     _startOnMessageListener();
@@ -55,20 +55,20 @@ class PushService {
   Future<bool> registerTokenForCurrentUser() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      print('No user logged in');
+      print('No user logged in'); // ignore: avoid_print
       return false;
     }
-    print('Registering token for user ${user.uid}');
+    print('Registering token for user ${user.uid}'); // ignore: avoid_print
     final granted = await requestPermission();
     if (!granted) {
-      print('Permission not granted');
+      print('Permission not granted'); // ignore: avoid_print
       return false;
     }
-    print('Permission granted, getting token...');
+    print('Permission granted, getting token...'); // ignore: avoid_print
     final token = await getToken();
-    print('Got token: $token');
+    print('Got token: $token'); // ignore: avoid_print
     if (token == null) {
-      print('Token is null');
+      print('Token is null'); // ignore: avoid_print
       return false;
     }
 
