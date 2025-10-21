@@ -2,6 +2,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:html' as html;
 
 class PushService {
   PushService._();
@@ -14,6 +16,18 @@ class PushService {
   /// Expose a broadcast stream of foreground messages for the app to listen to
   final StreamController<RemoteMessage> _onMessageController = StreamController<RemoteMessage>.broadcast();
   Stream<RemoteMessage> get onMessageStream => _onMessageController.stream;
+
+  Future<void> initialize() async {
+    if (kIsWeb) {
+      try {
+        await html.window.navigator.serviceWorker!.register('/firebase-messaging-sw.js');
+        print('Service worker registered');
+      } catch (e) {
+        print('Failed to register service worker: $e');
+      }
+    }
+    _startOnMessageListener();
+  }
 
   /// Request permission and return whether granted
   Future<bool> requestPermission() async {
@@ -40,11 +54,23 @@ class PushService {
 
   Future<bool> registerTokenForCurrentUser() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return false;
+    if (user == null) {
+      print('No user logged in');
+      return false;
+    }
+    print('Registering token for user ${user.uid}');
     final granted = await requestPermission();
-    if (!granted) return false;
+    if (!granted) {
+      print('Permission not granted');
+      return false;
+    }
+    print('Permission granted, getting token...');
     final token = await getToken();
-    if (token == null) return false;
+    print('Got token: $token');
+    if (token == null) {
+      print('Token is null');
+      return false;
+    }
 
     // Save token as its own document under fcm_tokens/{uid}/tokens/{tokenId}
     final tokenId = token.replaceAll('/', '_');
