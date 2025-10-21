@@ -34,7 +34,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
   fake_cloud_firestore: ^4.0.0
-  # flutter_launcher_icons removed for web-only repo
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -42,7 +42,7 @@ flutter:
     - assets/privacy_policy.md
     - assets/login_bg.jpg
     - assets/signup_bg.jpg
-    - assets/icon.png
+    - assets/float_it.png
   fonts:
     - family: Inter
       fonts:
@@ -55,6 +55,7 @@ flutter:
           weight: 700
           style: italic
 
-# flutter_icons config removed — this repo is web-only and native icon generation
-# should not be run. If you need launcher icons in the future, re-add the
-# dev dependency and configuration.
+flutter_icons:
+  web:
+    generate: true
+    image_path: assets/float_it.png
