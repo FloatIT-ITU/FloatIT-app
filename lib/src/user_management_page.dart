@@ -131,15 +131,19 @@ class _UserManagementPageState extends State<UserManagementPage> {
                                     const SizedBox(width: 8),
                                     DropdownButton<String>(
                                       value: _adminFilter,
-                                      items: ['All', 'Admins', 'Users'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                                      items: const [
+                                        DropdownMenuItem<String>(value: 'All', child: Text('All')),
+                                        DropdownMenuItem<String>(value: 'Admins', child: Text('Admins')),
+                                        DropdownMenuItem<String>(value: 'Users', child: Text('Users')),
+                                      ],
                                       onChanged: (value) => setState(() => _adminFilter = value ?? 'All'),
                                     ),
                                     const SizedBox(width: 8),
                                     DropdownButton<String>(
                                       value: _sortBy,
-                                      items: [
-                                        DropdownMenuItem(value: 'name', child: Text('Sort: A→Z')),
-                                        DropdownMenuItem(value: 'lastLogin', child: Text('Sort: Last login')),
+                                      items: const [
+                                        DropdownMenuItem<String>(value: 'name', child: Text('Sort: A→Z')),
+                                        DropdownMenuItem<String>(value: 'lastLogin', child: Text('Sort: Last login')),
                                       ],
                                       onChanged: (value) => setState(() => _sortBy = value ?? 'name'),
                                     ),
