@@ -1,0 +1,124 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class PushService {
+  PushService._();
+  static final instance = PushService._();
+
+  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  StreamSubscription<String?>? _tokenSub;
+  StreamSubscription<RemoteMessage>? _msgSub;
+
+  /// Expose a broadcast stream of foreground messages for the app to listen to
+  final StreamController<RemoteMessage> _onMessageController = StreamController<RemoteMessage>.broadcast();
+  Stream<RemoteMessage> get onMessageStream => _onMessageController.stream;
+
+  /// Request permission and return whether granted
+  Future<bool> requestPermission() async {
+    final settings = await _messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+    return settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+  }
+
+  Future<String?> getToken() async {
+    try {
+      return await _messaging.getToken();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> registerTokenForCurrentUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final granted = await requestPermission();
+    if (!granted) return;
+    final token = await getToken();
+    if (token == null) return;
+
+    // Save token as its own document under fcm_tokens/{uid}/tokens/{tokenId}
+    final tokenId = token.replaceAll('/', '_');
+    final tokenRef = FirebaseFirestore.instance
+        .collection('fcm_tokens')
+        .doc(user.uid)
+        .collection('tokens')
+        .doc(tokenId);
+    await tokenRef.set({
+      'token': token,
+      'platform': 'web',
+      'createdAt': FieldValue.serverTimestamp(),
+      'lastSeen': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    // Start listening for token refresh and foreground messages for this user
+    _startTokenRefreshListener(user.uid);
+    _startOnMessageListener();
+  }
+
+  Future<void> unregisterAllTokensForCurrentUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      final token = await getToken();
+      if (token == null) return;
+      final tokenId = token.replaceAll('/', '_');
+      final tokenRef = FirebaseFirestore.instance
+        .collection('fcm_tokens')
+        .doc(user.uid)
+        .collection('tokens')
+        .doc(tokenId);
+      await tokenRef.delete();
+    } catch (_) {}
+    // Stop listeners
+    _stopListeners();
+  }
+
+  void _startTokenRefreshListener(String uid) {
+    // Ensure previous subscription removed
+    _tokenSub?.cancel();
+    _tokenSub = _messaging.onTokenRefresh.listen((newToken) async {
+      final tokenId = newToken.replaceAll('/', '_');
+      final tokenRef = FirebaseFirestore.instance
+          .collection('fcm_tokens')
+          .doc(uid)
+          .collection('tokens')
+          .doc(tokenId);
+      try {
+        await tokenRef.set({
+          'token': newToken,
+          'platform': 'web',
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastSeen': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (_) {}
+    });
+  }
+
+  void _startOnMessageListener() {
+    _msgSub ??= FirebaseMessaging.onMessage.listen((message) {
+      _onMessageController.add(message);
+    });
+  }
+
+  void _stopListeners() {
+    _tokenSub?.cancel();
+    _tokenSub = null;
+    _msgSub?.cancel();
+    _msgSub = null;
+  }
+
+  void dispose() {
+    _stopListeners();
+    _onMessageController.close();
+  }
+}

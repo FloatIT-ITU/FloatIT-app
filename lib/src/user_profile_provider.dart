@@ -13,6 +13,7 @@ class UserProfileProvider extends ChangeNotifier {
   Color? iconColor;
   bool isAdmin = false;
   int eventsJoinedCount = 0;
+  bool notificationsEnabled = true;
   bool _loading = false;
   bool get loading => _loading;
   DateTime? _lastLoadStarted;
@@ -45,6 +46,7 @@ class UserProfileProvider extends ChangeNotifier {
       final publicData = publicDoc.data();
       displayName = publicData?['displayName'] as String?;
       occupation = publicData?['occupation'] as String?;
+  notificationsEnabled = publicData?['notificationsEnabled'] as bool? ?? true;
       final iconColorField = publicData?['iconColor'];
       if (iconColorField is int) {
         iconColor = Color(iconColorField);
@@ -183,6 +185,19 @@ class UserProfileProvider extends ChangeNotifier {
     rateLimitService.recordAction(user.uid, RateLimitAction.updateOccupation);
     
     occupation = newOccupation;
+    notifyListeners();
+  }
+
+  Future<void> setNotificationsEnabled(bool enabled) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    if (!user.email!.endsWith('@itu.dk')) {
+      throw Exception('Email must end with @itu.dk to update profile');
+    }
+    await _firestore.collection('public_users').doc(user.uid).set({
+      'notificationsEnabled': enabled,
+    }, SetOptions(merge: true));
+    notificationsEnabled = enabled;
     notifyListeners();
   }
 

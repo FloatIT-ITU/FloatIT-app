@@ -1,0 +1,12 @@
+{
+  "name": "floatit-notification-sender",
+  "version": "1.0.0",
+  "description": "Small helper to send notifications from Firestore using Firebase Admin SDK",
+  "main": "send_watcher.js",
+  "scripts": {
+    "start": "node send_watcher.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.10.0"
+  }
+}

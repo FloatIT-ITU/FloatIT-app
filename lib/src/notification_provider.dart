@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
+import 'push_service.dart';
 
 class NotificationProvider extends ChangeNotifier {
   final FirebaseFirestore _fs = FirebaseFirestore.instance;
@@ -39,6 +40,56 @@ class NotificationProvider extends ChangeNotifier {
 
   NotificationProvider() {
     _init();
+    // Listen for foreground FCM messages and surface them as in-app notifications
+    // By default we persist notifications to Firestore so they appear in the
+    // server-side list; set _persistForegroundNotifications=false to disable.
+    _listenToForegroundMessages();
+  }
+
+  // Whether to write foreground messages into Firestore notifications
+  // (so they persist and can be marked read). You can turn this off if you
+  // prefer to only show ephemeral in-app banners.
+  final bool _persistForegroundNotifications = true;
+
+  void _listenToForegroundMessages() {
+    PushService.instance.onMessageStream.listen((message) async {
+      // Convert RemoteMessage into a simple map used by the UI
+      final id = DateTime.now().millisecondsSinceEpoch.toString();
+      final map = <String, dynamic>{
+        'id': id,
+        'title': message.notification?.title ?? 'Notification',
+        'body': message.notification?.body ?? '',
+  'data': message.data,
+        'createdAt': DateTime.now().toUtc().toIso8601String(),
+        'read': false,
+      };
+
+      // Prepend to local list and notify listeners
+      _notifications = [map, ..._notifications];
+      notifyListeners();
+
+      // Optionally persist to Firestore notifications collection so it can be
+      // shared across devices and appear in the same UI that reads notifications.
+      try {
+        if (_persistForegroundNotifications) {
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            final doc = await _fs.collection('notifications').add({
+              'recipientUid': user.uid,
+              'title': map['title'],
+              'body': map['body'],
+              'data': map['data'],
+              'createdAt': Timestamp.now(),
+              'read': false,
+            });
+            // update local id with Firestore id
+            map['id'] = doc.id;
+          }
+        }
+      } catch (e) {
+        // ignore persistence failures - we still show the in-memory notification
+      }
+    });
   }
 
   void _init() {

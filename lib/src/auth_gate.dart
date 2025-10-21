@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'user_profile_provider.dart';
 import 'pending_requests_provider.dart';
 import 'microsoft_auth_service.dart';
+import 'push_service.dart';
 import 'widgets/microsoft_sign_in_button.dart';
 import 'widgets/background_image.dart';
 
@@ -50,6 +51,10 @@ class AuthGate extends StatelessWidget {
                 Provider.of<PendingRequestsProvider>(context, listen: false);
             WidgetsBinding.instance.addPostFrameCallback((_) {
               pending.loadForCurrentUser();
+            });
+            // Register FCM token for this user (non-blocking)
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              PushService.instance.registerTokenForCurrentUser();
             });
             FirebaseFirestore.instance.collection('users').doc(user.uid).set({
               'lastLogin': FieldValue.serverTimestamp(),
@@ -165,6 +170,7 @@ class _ProfileCompletionGateState extends State<_ProfileCompletionGate> {
                       const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: () async {
+                          await PushService.instance.unregisterAllTokensForCurrentUser();
                           await FirebaseAuth.instance.signOut();
                         },
                         child: const Text('Sign out'),
