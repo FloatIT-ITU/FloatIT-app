@@ -22,10 +22,12 @@ FloatIT is a Progressive Web App (PWA) designed for managing the ITU (IT Univers
 
 ## Notifications
 
-- The app uses OneSignal for web push notifications. The client registers with OneSignal using the public App ID (configured in `web/index.html`) and OneSignal hosts the subscription endpoints. The repository includes a small server helper at `functions/oneSignalSender.js` which can be used from a secure server or CI job to send programmatic notifications using OneSignal's REST API (requires the `ONESIGNAL_REST_KEY` secret).
-- For privacy and GDPR considerations we share push subscription information with OneSignal — see `assets/privacy_policy.md` for details.
+The app supports push notifications via Firebase Cloud Messaging (FCM) for web and mobile. Global notifications are sent when admins create them through the admin panel, triggering a GitHub Actions workflow that sends FCM pushes to all registered users.
 
-When testing the OneSignal client flow locally, OneSignal supports `allowLocalhostAsSecureOrigin` in the SDK init (see `web/index.html`) and you must add the OneSignal service worker files (`OneSignalSDKWorker.js`, `OneSignalSDKUpdaterWorker.js`) to the `web/` root so they are served at the app root after build.
+- Admins create notifications via the admin panel.
+- Notifications are stored in Firestore `notifications` collection.
+- GitHub Actions workflow sends FCM pushes using a service account.
+- Users receive pushes if they have enabled notifications and registered FCM tokens.
 
 ## Prerequisites
 

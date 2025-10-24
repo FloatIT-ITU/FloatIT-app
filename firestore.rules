@@ -119,31 +119,10 @@ service cloud.firestore {
     }
 
     // ===== NOTIFICATIONS COLLECTION =====
-    // Per-user notifications used by the in-app notification list. Creation
-    // of notifications is intended to be done by server-side code (Cloud
-    // Functions using the Admin SDK). Clients may read their own
-    // notifications and mark them as read.
+    // Global and event notifications created by admins for push sending
     match /notifications/{notificationId} {
-      // Allow reading notifications for the recipient or admins
-      allow get: if isAuthenticated() && (resource.data.recipientUid == request.auth.uid || isAdmin());
-      // Allow queries/lists only when scoped by recipientUid == request.auth.uid
-      allow list: if isAuthenticated() && (request.auth.uid != null);
-
-      // Creation is restricted to admins (server-side functions should run
-      // with admin privileges and bypass rules). This prevents clients from
-      // forging notifications.
-      allow create: if isAdmin();
-
-      // Allow recipients to mark their notifications as read (only the
-      // 'read' field may be changed by the recipient) and allow admins full
-      // update/delete privileges.
-      allow update: if isAdmin() || (
-        isAuthenticated() && resource.data.recipientUid == request.auth.uid &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) &&
-        request.resource.data.read == true
-      );
-
-      allow delete: if isAdmin();
+      // Only admins can create, read, update, or delete notifications
+      allow create, read, update, delete: if isAdmin();
     }
 
     // ===== EVENTS COLLECTION =====
