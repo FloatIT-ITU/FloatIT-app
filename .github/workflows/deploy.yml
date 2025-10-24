@@ -45,6 +45,9 @@ jobs:
       - name: Build web
         run: flutter build web --release --base-href="/${{ github.event.repository.name }}/" --dart-define=VAPID_KEY="${{ secrets.VAPID_KEY }}"
 
+      - name: Copy service worker to output root
+        run: cp web/firebase-messaging-sw.js build/web/firebase-messaging-sw.js
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
