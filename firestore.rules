@@ -277,11 +277,18 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ===== DENY ALL OTHER ACCESS =====
-    // Explicitly deny access to any collections not defined above
+    // ===== ADMIN CONFIG COLLECTION =====
+    // Secure storage for admin secrets like encrypted GitHub keys
 
-    match /{document=**} {
-      allow read, write: if false;
+    match /admin_config/{document} {
+      // Only admins can read/write admin config
+      allow read, write: if isAdmin();
+    }
+
+    // ===== ADMIN CONFIG COLLECTION =====
+    // Secure storage for admin secrets like encrypted GitHub keys
+    match /admin_config/{doc} {
+      allow read, write: if isAdmin();
     }
   }
 }

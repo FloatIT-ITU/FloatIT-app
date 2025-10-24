@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:encrypt/encrypt.dart' as encrypt;
+import 'dart:convert';
+import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:floatit/src/widgets/banners.dart';
 
 import 'layout_widgets.dart';
@@ -20,7 +23,46 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
   String _title = '';
   String _body = '';
   bool _sendAsSystemMessage = true; // Pre-selected by default
-  String _githubToken = ''; // For triggering GitHub Actions
+
+  // GitHub App constants (replace with your values)
+  static const String appId = 'YOUR_APP_ID';
+  static const String installationId = 'YOUR_INSTALLATION_ID';
+
+  // Decrypt AES (compatible with crypto-js)
+  String decryptAES(String encrypted, String key) {
+    final encryptedBytes = base64.decode(encrypted);
+    final iv = encryptedBytes.sublist(0, 16);
+    final cipherText = encryptedBytes.sublist(16);
+    final encrypter = encrypt.Encrypter(encrypt.AES(encrypt.Key.fromUtf8(key)));
+    final decrypted = encrypter.decrypt(encrypt.Encrypted(cipherText), iv: encrypt.IV(iv));
+    return decrypted;
+  }
+
+  // Helper to generate JWT
+  String generateJWT(String privateKeyPem) {
+    final jwt = JWT(
+      {
+        'iss': appId,
+        'iat': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        'exp': (DateTime.now().millisecondsSinceEpoch ~/ 1000) + 600,
+      },
+    );
+    return jwt.sign(RSAPrivateKey(privateKeyPem), algorithm: JWTAlgorithm.RS256);
+  }
+
+  // Get installation token
+  Future<String> getInstallationToken(String jwt) async {
+    final response = await http.post(
+      Uri.parse('https://api.github.com/app/installations/$installationId/access_tokens'),
+      headers: {
+        'Authorization': 'Bearer $jwt',
+        'Accept': 'application/vnd.github+json',
+      },
+    );
+    if (response.statusCode != 201) throw Exception('Failed to get token: ${response.body}');
+    final data = jsonDecode(response.body);
+    return data['token'];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,14 +196,6 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                           : null,
                       maxLines: 4,
                     ),
-                    TextFormField(
-                      decoration: const InputDecoration(labelText: 'GitHub Personal Access Token'),
-                      onChanged: (v) => setState(() => _githubToken = v),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'GitHub token is required for sending push notifications'
-                          : null,
-                      obscureText: true,
-                    ),
                     const SizedBox(height: 12),
                     CheckboxListTile(
                       title: const Text('Also send as system message to all users'),
@@ -249,10 +283,26 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
 
                         // Trigger GitHub Actions for push notifications
                         try {
+                          // Fetch encrypted key and passphrase
+                          final keyDoc = await FirebaseFirestore.instance.collection('admin_config').doc('github_app_key').get();
+                          final encryptedKey = keyDoc.data()?['encrypted_key'] as String?;
+                          final storedPassphrase = keyDoc.data()?['passphrase'] as String?;
+                          if (encryptedKey == null || storedPassphrase == null) throw Exception('GitHub config not found');
+
+                          // Decrypt
+                          final privateKeyPem = decryptAES(encryptedKey, storedPassphrase);
+
+                          // Generate JWT
+                          final jwt = generateJWT(privateKeyPem);
+
+                          // Get installation token
+                          final token = await getInstallationToken(jwt);
+
+                          // Dispatch
                           final response = await http.post(
                             Uri.parse('https://api.github.com/repos/FloatIT-ITU/FloatIT-app/dispatches'),
                             headers: {
-                              'Authorization': 'token $_githubToken',
+                              'Authorization': 'token $token',
                               'Accept': 'application/vnd.github+json',
                               'Content-Type': 'application/json',
                             },
