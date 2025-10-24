@@ -22,8 +22,13 @@ class PushService {
     if (kIsWeb) {
       try {
         debugPrint('[PushService] Registering service worker...');
-        final worker = await html.window.navigator.serviceWorker
-            ?.register('/firebase-messaging-sw.js');
+    // Use a relative script path so the service worker works for
+    // GitHub project pages (served under /<repo>/). Using an absolute
+    // path ('/firebase-messaging-sw.js') causes 404s when the site is
+    // hosted under a subpath. A relative path resolves to
+    // '/<repo>/firebase-messaging-sw.js' in that case.
+    final worker = await html.window.navigator.serviceWorker
+      ?.register('firebase-messaging-sw.js');
         if (worker != null) {
           debugPrint(
               '[PushService] Service worker registered successfully: ${worker.scope}');
