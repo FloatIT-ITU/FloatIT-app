@@ -30,9 +30,7 @@ We do not collect payment information or health data.
 - We use data to operate the app (authenticate users, create and manage events, notify participants).
 - We do not sell personal data to third parties.
 - We may share limited data with service providers (Firebase/Google) as data processors; their use is governed by their privacy policies and our configuration.
-- We may share limited data with service providers (Firebase/Google) as data processors; their use is governed by their privacy policies and our configuration.
-- For push notifications we use OneSignal (https://onesignal.com). When you opt in to receive web push notifications, device subscription information (push endpoints and related metadata) will be shared with OneSignal in order to deliver messages. OneSignal provides GDPR-related documentation and a Data Processing Addendum; please contact the maintainers if you need details about data residency or request removal of your push subscription.
-- Admins (trustworthy student maintainers) may view user data only to operate and moderate the service.
+- Admins may view user data only to operate and moderate the service.
 
 ## 5. Data storage and transfers
 

@@ -1,0 +1,12 @@
+{
+  "name": "floatit-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for FloatIT app automation",
+  "main": "gh-action-send-notifs.js",
+  "scripts": {
+    "send-notifs": "node gh-action-send-notifs.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

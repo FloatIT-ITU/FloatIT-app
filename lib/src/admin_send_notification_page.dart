@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:floatit/src/widgets/banners.dart';
 
 import 'layout_widgets.dart';
@@ -18,6 +20,7 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
   String _title = '';
   String _body = '';
   bool _sendAsSystemMessage = true; // Pre-selected by default
+  String _githubToken = ''; // For triggering GitHub Actions
 
   @override
   Widget build(BuildContext context) {
@@ -151,6 +154,14 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                           : null,
                       maxLines: 4,
                     ),
+                    TextFormField(
+                      decoration: const InputDecoration(labelText: 'GitHub Personal Access Token'),
+                      onChanged: (v) => setState(() => _githubToken = v),
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'GitHub token is required for sending push notifications'
+                          : null,
+                      obscureText: true,
+                    ),
                     const SizedBox(height: 12),
                     CheckboxListTile(
                       title: const Text('Also send as system message to all users'),
@@ -186,7 +197,23 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                           return;
                         }
                         final messenger = ScaffoldMessenger.of(context);
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        if (currentUser == null) {
+                          messenger.showSnackBar(const SnackBar(content: Text('Not authenticated')));
+                          return;
+                        }
                         
+                        // Create notification document
+                        final notificationRef = FirebaseFirestore.instance.collection('notifications').doc();
+                        await notificationRef.set({
+                          'type': 'global',
+                          'title': _title,
+                          'body': _body,
+                          'createdByUid': currentUser.uid,
+                          'createdAt': FieldValue.serverTimestamp(),
+                          'sent': false,
+                        });
+
                         // Send banner notification
                         await FirebaseFirestore.instance
                             .collection('app')
@@ -220,8 +247,23 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                           }
                         }
 
-                        // Note: Push notifications would be sent server-side in production
-                        // For now, only banner notifications are sent
+                        // Trigger GitHub Actions for push notifications
+                        try {
+                          final response = await http.post(
+                            Uri.parse('https://api.github.com/repos/FloatIT-ITU/FloatIT-app/dispatches'),
+                            headers: {
+                              'Authorization': 'token $_githubToken',
+                              'Accept': 'application/vnd.github+json',
+                              'Content-Type': 'application/json',
+                            },
+                            body: '{"event_type": "send_notification", "client_payload": {"notificationId": "${notificationRef.id}"}}',
+                          );
+                          if (response.statusCode != 204) {
+                            messenger.showSnackBar(SnackBar(content: Text('Failed to trigger push notifications: ${response.statusCode}')));
+                          }
+                        } catch (e) {
+                          messenger.showSnackBar(SnackBar(content: Text('Error triggering push notifications: $e')));
+                        }
 
                         if (!mounted) return;
                         messenger.showSnackBar(const SnackBar(
