@@ -1,39 +1,46 @@
-Notification sender (for GitHub Actions)
+Notification sender
 
-This small helper reads unsent documents from `notifications` and sends FCM
-notifications to tokens stored under `fcm_tokens/{uid}/tokens/{tokenId}`.
+This folder contains a Cloud Functions implementation that triggers onCreate for `notifications/{docId}` and sends notifications using the Firebase Admin SDK. This is the recommended production approach.
 
-How it works
+Quick deploy guide (Cloud Functions)
 
-- The script `send_watcher.js` reads up to 50 unsent notifications (`sent==false`).
-- For each notification it loads token documents for the recipient and calls FCM.
-- Invalid tokens are removed from Firestore automatically.
-- The script marks notifications as `sent: true` and `sentAt` on success.
+1. Install Firebase CLI: https://firebase.google.com/docs/cli
+2. Authenticate and select your project:
 
-Running locally
+```bash
+firebase login
+firebase use --add
+```
 
-1. Install dependencies:
+3. Install dependencies and deploy:
 
-```powershell
+```bash
 cd functions
-npm ci
+npm install
+firebase deploy --only functions:sendNotificationOnCreate
 ```
 
-2. Place a service account JSON in `functions/service-account.json` (downloaded from Firebase Console > Project settings > Service accounts)
+Notes
 
-3. Run:
+- Cloud Functions use the project default credentials; you do not need a service-account JSON in the repo.
+- For low traffic, the free tier is typically sufficient. If you expect larger volumes or need guaranteed concurrency, enable Blaze billing.
 
-```powershell
-node send_watcher.js
+OneSignal helper
+-----------------
+
+This repository includes a small server helper `functions/oneSignalSender.js` that
+wraps the OneSignal REST API. To use it from CI or a server, set the following
+environment variables and call the helper from your code:
+
+- `ONESIGNAL_APP_ID` - your OneSignal App ID
+- `ONESIGNAL_REST_KEY` - your OneSignal REST API key (keep secret)
+
+Example (Node):
+
+```js
+const { sendNotification } = require('./oneSignalSender');
+await sendNotification(['player-id-1'], {en: 'Hello'}, {en: 'World'}, {foo: 'bar'});
 ```
 
-Using GitHub Actions (recommended for automated runs)
-
-1. Create a repository secret named `FCM_SERVICE_ACCOUNT` and paste the entire service account JSON as the secret value.
-2. The workflow `.github/workflows/send-notifications.yml` will write the secret to `functions/service-account.json` at runtime and run the script on schedule (every 5 minutes). You can also trigger it manually from Actions -> Run workflow.
-
-Security notes
-
-- DO NOT commit the service account JSON to the repo.
-- The Admin SDK bypasses Firestore rules; treat the service account as a secret.
-- Ensure only trusted admins can create `notifications` documents (your Firestore rules already restrict creation to admins).
+Security: Keep `ONESIGNAL_REST_KEY` out of client bundles. For CI use repository secrets
+and for server use environment variables or secret managers.

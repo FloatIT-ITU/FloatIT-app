@@ -20,6 +20,13 @@ FloatIT is a Progressive Web App (PWA) designed for managing the ITU (IT Univers
 - **Authentication**: Microsoft OAuth 2.0 (Azure AD)
 - **CI/CD**: GitHub Actions
 
+## Notifications
+
+- The app uses OneSignal for web push notifications. The client registers with OneSignal using the public App ID (configured in `web/index.html`) and OneSignal hosts the subscription endpoints. The repository includes a small server helper at `functions/oneSignalSender.js` which can be used from a secure server or CI job to send programmatic notifications using OneSignal's REST API (requires the `ONESIGNAL_REST_KEY` secret).
+- For privacy and GDPR considerations we share push subscription information with OneSignal — see `assets/privacy_policy.md` for details.
+
+When testing the OneSignal client flow locally, OneSignal supports `allowLocalhostAsSecureOrigin` in the SDK init (see `web/index.html`) and you must add the OneSignal service worker files (`OneSignalSDKWorker.js`, `OneSignalSDKUpdaterWorker.js`) to the `web/` root so they are served at the app root after build.
+
 ## Prerequisites
 
 - Flutter SDK 3.24.3 or higher
