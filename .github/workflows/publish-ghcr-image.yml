@@ -6,6 +6,7 @@ on:
     paths:
       - 'server/**'
       - '.github/workflows/publish-ghcr-image.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
