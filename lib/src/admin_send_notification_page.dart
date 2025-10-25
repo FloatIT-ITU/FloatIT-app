@@ -21,8 +21,7 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
   String _body = '';
   bool _sendAsSystemMessage = true; // Pre-selected by default
 
-  // TODO: Replace with your server URL
-  static const String _serverUrl = 'https://floatit-notifications.tinybo.eu'; // Change to your Portainer container URL
+  static const String _serverUrl = 'https://floatit-notifications.tinybo.eu';
 
   @override
   Widget build(BuildContext context) {
@@ -240,11 +239,11 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                             );
                             if (response.statusCode != 200) {
                               // Handle error, but don't fail the whole operation
-                              print('Push send failed: ${response.body}');
+                              // Push send failed: ${response.body}
                             }
                           }
                         } catch (e) {
-                          print('Error sending push: $e');
+                          // Error sending push: $e
                         }
 
                         // Note: Push notifications are now sent via server
