@@ -51,9 +51,12 @@ async function requireAuth(req, res, next) {
   const idToken = authHeader.split('Bearer ')[1];
   try {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
+    console.log('Decoded token uid:', decodedToken.uid);
+    console.log('Admin claim:', decodedToken.admin);
     req.user = decodedToken;
     // Optional: check if user has admin claim
     if (!decodedToken.admin) {
+      console.log('Access denied: no admin claim');
       return res.status(403).json({ error: 'Admin access required' });
     }
     next();
