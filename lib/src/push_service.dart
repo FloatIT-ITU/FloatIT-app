@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class PushService {
   PushService._();
@@ -32,7 +33,9 @@ class PushService {
 
   Future<String?> getToken() async {
     try {
-      return await _messaging.getToken();
+      return await _messaging.getToken(
+        vapidKey: kIsWeb ? const String.fromEnvironment('VAPID_KEY') : null,
+      );
     } catch (e) {
       return null;
     }

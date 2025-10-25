@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:floatit/src/widgets/banners.dart';
 
 import 'layout_widgets.dart';
@@ -18,6 +20,9 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
   String _title = '';
   String _body = '';
   bool _sendAsSystemMessage = true; // Pre-selected by default
+
+  // TODO: Replace with your server URL
+  static const String _serverUrl = 'https://floatit-notifications.tinybo.eu'; // Change to your Portainer container URL
 
   @override
   Widget build(BuildContext context) {
@@ -220,8 +225,29 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                           }
                         }
 
-                        // Note: Push notifications would be sent server-side in production
-                        // For now, only banner notifications are sent
+                        // Send push notification via server
+                        try {
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user != null) {
+                            final idToken = await user.getIdToken();
+                            final response = await http.post(
+                              Uri.parse('$_serverUrl/send/topic'),
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer $idToken',
+                              },
+                              body: '{"topic":"all-users","title":"$_title","body":"$_body"}',
+                            );
+                            if (response.statusCode != 200) {
+                              // Handle error, but don't fail the whole operation
+                              print('Push send failed: ${response.body}');
+                            }
+                          }
+                        } catch (e) {
+                          print('Error sending push: $e');
+                        }
+
+                        // Note: Push notifications are now sent via server
 
                         if (!mounted) return;
                         messenger.showSnackBar(const SnackBar(
