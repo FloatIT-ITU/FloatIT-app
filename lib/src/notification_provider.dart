@@ -59,7 +59,7 @@ class NotificationProvider extends ChangeNotifier {
         'id': id,
         'title': message.notification?.title ?? 'Notification',
         'body': message.notification?.body ?? '',
-  'data': message.data,
+        'data': message.data,
         'createdAt': DateTime.now().toUtc().toIso8601String(),
         'read': false,
       };

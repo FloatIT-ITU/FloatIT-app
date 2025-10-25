@@ -142,7 +142,6 @@ class PushService {
     _stopListeners();
   }
 
-
   void _startTokenRefreshListener(String uid) {
     // Ensure previous subscription removed
     _tokenSub?.cancel();
