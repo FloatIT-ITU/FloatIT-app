@@ -42,15 +42,15 @@ jobs:
         run: flutter analyze
 
       - name: Build web (dev)
-        run: flutter build web --release --base-href="/${{ github.event.repository.name }}/dev/" --dart-define=VAPID_KEY="${{ secrets.VAPID_KEY }}"
+        run: flutter build web --release --base-href="/${{ github.event.repository.name }}/dev/"
 
-      - name: Copy service worker to output root
-        run: cp web/firebase-messaging-sw.js build/web/firebase-messaging-sw.js
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v3
 
-      - name: Deploy to GitHub Pages /dev
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/web
-          destination_dir: dev
-          keep_files: true
+          path: ./build/web
+
+      - name: Deploy to GitHub Pages (dev)
+        uses: actions/deploy-pages@v1
