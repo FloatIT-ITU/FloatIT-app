@@ -1,9 +1,14 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+
+// Web-only libraries required for Firebase Cloud Messaging on web platform
+// These are only used within kIsWeb conditional blocks and are safe for web deployment
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:js' as js;
+// ignore: avoid_web_libraries_in_flutter
 import 'package:universal_html/html.dart' as html;
 
 class PushService {
@@ -22,16 +27,54 @@ class PushService {
     if (kIsWeb) {
       try {
         debugPrint('[PushService] Registering service worker...');
-    // Use a relative script path so the service worker works for
-    // GitHub project pages (served under /<repo>/). Using an absolute
-    // path ('/firebase-messaging-sw.js') causes 404s when the site is
-    // hosted under a subpath. A relative path resolves to
-    // '/<repo>/firebase-messaging-sw.js' in that case.
-    final worker = await html.window.navigator.serviceWorker
-      ?.register('firebase-messaging-sw.js');
-        if (worker != null) {
+        // Use a relative script path so the service worker works for
+        // GitHub project pages (served under /<repo>/). Using an absolute
+        // path ('/firebase-messaging-sw.js') causes 404s when the site is
+        // hosted under a subpath. A relative path resolves to
+        // '/<repo>/firebase-messaging-sw.js' in that case.
+        final registration = await html.window.navigator.serviceWorker
+            ?.register('firebase-messaging-sw.js');
+
+        if (registration != null) {
           debugPrint(
-              '[PushService] Service worker registered successfully: ${worker.scope}');
+              '[PushService] Service worker registered successfully: ${registration.scope}');
+
+          // Wait for the service worker to be ready
+          await registration.update();
+          debugPrint('[PushService] Service worker updated');
+
+          // Wait for the service worker to become active
+          if (registration.active == null) {
+            await Future.delayed(const Duration(milliseconds: 100));
+            debugPrint('[PushService] Waiting for service worker to become active...');
+            // Wait for the service worker to activate
+            await Future.doWhile(() async {
+              await Future.delayed(const Duration(milliseconds: 50));
+              return registration.active == null;
+            }).timeout(const Duration(seconds: 5), onTimeout: () {
+              debugPrint('[PushService] Timeout waiting for service worker to activate');
+            });
+          }
+
+          if (registration.active != null) {
+            debugPrint('[PushService] Service worker is active');
+
+            // Try to configure Firebase to use our service worker
+            try {
+              // Access the Firebase web SDK directly
+              final firebaseMessaging = js.context['firebase']?['messaging']?.callMethod('getMessaging');
+              if (firebaseMessaging != null) {
+                firebaseMessaging.callMethod('useServiceWorker', [registration]);
+                debugPrint('[PushService] Configured Firebase to use our service worker');
+              } else {
+                debugPrint('[PushService] Could not access Firebase messaging SDK');
+              }
+            } catch (e) {
+              debugPrint('[PushService] Error configuring Firebase service worker: $e');
+            }
+          } else {
+            debugPrint('[PushService] Service worker failed to activate');
+          }
         } else {
           debugPrint('[PushService] Service worker registration returned null.');
         }

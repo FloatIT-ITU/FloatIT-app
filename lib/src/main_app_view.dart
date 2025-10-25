@@ -13,6 +13,7 @@ import 'package:floatit/src/utils/navigation_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:floatit/src/widgets/loading_widgets.dart';
+import 'services/session_manager.dart';
 
 class MainAppView extends StatefulWidget {
   const MainAppView({super.key});
@@ -81,6 +82,9 @@ class _MainAppViewState extends State<MainAppView> {
   }
   
   void _openSettings() {
+    // Record user activity for session management
+    SessionManager.instance.recordActivity();
+    
     NavigationUtils.pushWithoutAnimation(
       context,
       const SettingsPage(),

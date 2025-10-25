@@ -26,6 +26,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'pending_requests_provider.dart';
 import 'package:provider/provider.dart';
 import 'services/rate_limit_service.dart';
+import 'services/session_manager.dart';
 
 class EventDetailsPage extends StatefulWidget {
   final String eventId;
@@ -129,6 +130,9 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                 if (!rateLimitService.isActionAllowed(uid, actionType)) {
                   return;
                 }
+                
+                // Record user activity for session management
+                SessionManager.instance.recordActivity();
                 
                 try {
                   // Record the action before processing

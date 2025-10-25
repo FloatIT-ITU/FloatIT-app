@@ -73,11 +73,36 @@ class ValidationUtils {
     return null;
   }
   
-  /// Validate required field (generic)
-  static String? validateRequired(String? value, String fieldName) {
+  /// Validate message content for security and appropriateness
+  static String? validateMessage(String? value) {
     final text = value?.trim() ?? '';
-    if (text.isEmpty) return '$fieldName is required';
+    if (text.isEmpty) return 'Message cannot be empty';
+    if (text.length > 2000) return 'Message too long (maximum 2000 characters)';
+
+    // Prevent dangerous HTML/script content
+    final dangerousPatterns = RegExp(r'[<>{}\[\]\\]');
+    if (dangerousPatterns.hasMatch(text)) {
+      return 'Message contains invalid characters';
+    }
+
+    // Prevent excessive special characters (potential spam)
+    final specialChars = RegExp(r'[^\w\s]').allMatches(text);
+    if (specialChars.length > text.length * 0.3) { // More than 30% special chars
+      return 'Message contains too many special characters';
+    }
+
+    // Prevent messages that are just special characters
+    final alphanumericChars = RegExp(r'[a-zA-Z0-9]').allMatches(text);
+    if (alphanumericChars.length < text.length * 0.1) { // Less than 10% alphanumeric
+      return 'Message must contain meaningful content';
+    }
+
     return null;
+  }
+
+  /// Check if message content is valid (for programmatic validation)
+  static bool isValidMessage(String text) {
+    return validateMessage(text) == null;
   }
   
   // ===== FORM FIELD BUILDERS =====

@@ -9,9 +9,14 @@ class PoolStatusService {
   static const Duration _cacheDuration = Duration(minutes: 5);
   static const Duration _requestTimeout = Duration(seconds: 10);
   
-  // TEMPORARY: Use a CORS proxy for web to bypass CORS restrictions
-  static const bool _useCorsProxy = true;
-  static const String _corsProxyUrl = 'https://api.allorigins.win/raw?url=';
+  // Use CORS proxy for web to bypass CORS restrictions
+  static const bool _useCorsProxy = kIsWeb; // Only use proxy on web
+  static const List<String> _corsProxies = [
+    'https://thingproxy.freeboard.io/fetch/',
+    'https://cors-anywhere.herokuapp.com/',
+    'https://api.codetabs.com/v1/proxy?quest=',
+  ];
+  static int _currentProxyIndex = 0;
   
   DateTime? _lastFetchTime;
   String? _cachedStatus;
@@ -27,31 +32,59 @@ class PoolStatusService {
       }
     }
     
-    // Build the URL with or without CORS proxy
-    final fetchUrl = _useCorsProxy 
-        ? '$_corsProxyUrl${Uri.encodeComponent(_poolStatusUrl)}'
-        : _poolStatusUrl;
-    
-    try {
-      final response = await http.get(
-        Uri.parse(fetchUrl),
-        headers: {
-          'User-Agent': 'FloatIT-App/1.0',
-          'Accept': 'text/html',
-        },
-      ).timeout(_requestTimeout);
-      
-      if (response.statusCode == 200) {
-        final status = _parsePoolStatus(response.body);
-        if (status != null) {
-          _cachedStatus = status;
-          _lastFetchTime = DateTime.now();
+    // Try different CORS proxies if on web
+    if (_useCorsProxy) {
+      for (int attempt = 0; attempt < _corsProxies.length; attempt++) {
+        final fetchUrl = '${_corsProxies[_currentProxyIndex]}$_poolStatusUrl';
+        
+        try {
+          final response = await http.get(
+            Uri.parse(fetchUrl),
+            headers: {
+              'User-Agent': 'FloatIT-App/1.0',
+              'Accept': 'text/html',
+            },
+          ).timeout(_requestTimeout);
+          
+          if (response.statusCode == 200) {
+            final status = _parsePoolStatus(response.body);
+            if (status != null) {
+              _cachedStatus = status;
+              _lastFetchTime = DateTime.now();
+              return status;
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('PoolStatus: Error with proxy ${_corsProxies[_currentProxyIndex]}: $e');
+          }
+          // Try next proxy
+          _currentProxyIndex = (_currentProxyIndex + 1) % _corsProxies.length;
         }
-        return status;
       }
-    } catch (e) {
-      if (kDebugMode) {
-        print('PoolStatus: Error fetching status: $e');
+    } else {
+      // Direct request for non-web platforms
+      try {
+        final response = await http.get(
+          Uri.parse(_poolStatusUrl),
+          headers: {
+            'User-Agent': 'FloatIT-App/1.0',
+            'Accept': 'text/html',
+          },
+        ).timeout(_requestTimeout);
+        
+        if (response.statusCode == 200) {
+          final status = _parsePoolStatus(response.body);
+          if (status != null) {
+            _cachedStatus = status;
+            _lastFetchTime = DateTime.now();
+            return status;
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('PoolStatus: Error fetching status: $e');
+        }
       }
     }
     

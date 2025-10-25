@@ -515,6 +515,17 @@ class _SendMessageDialogState extends State<_SendMessageDialog> {
           onPressed: () async {
             if (_formKey.currentState?.validate() != true) return;
 
+            final messageText = _message.trim();
+
+            // Enhanced message validation
+            if (!ValidationUtils.isValidMessage(messageText)) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Message contains invalid content or is too long')),
+              );
+              return;
+            }
+
             final messenger = ScaffoldMessenger.of(context);
             final navigator = Navigator.of(context);
             final currentUser = FirebaseAuth.instance.currentUser;
@@ -543,10 +554,10 @@ class _SendMessageDialogState extends State<_SendMessageDialog> {
                 await firestore.collection('messages').doc(conversationId).update({
                   'messages.$messageId': {
                     'senderId': currentUser.uid,
-                    'text': _message.trim(),
+                    'text': messageText,
                     'timestamp': FieldValue.serverTimestamp(),
                   },
-                  'lastMessage': _message.trim(),
+                  'lastMessage': messageText,
                   'lastMessageTime': FieldValue.serverTimestamp(),
                   'unreadCount.${widget.recipientId}': FieldValue.increment(1),
                   'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
@@ -556,7 +567,7 @@ class _SendMessageDialogState extends State<_SendMessageDialog> {
                 await firestore.collection('messages').doc(conversationId).set({
                   'participants': participants,
                   'eventId': null, // Regular user conversation, not event-related
-                  'lastMessage': _message.trim(),
+                  'lastMessage': messageText,
                   'lastMessageTime': FieldValue.serverTimestamp(),
                   'unreadCount': {widget.recipientId: 1},
                   'createdAt': FieldValue.serverTimestamp(),
@@ -564,7 +575,7 @@ class _SendMessageDialogState extends State<_SendMessageDialog> {
                   'messages': {
                     messageId: {
                       'senderId': currentUser.uid,
-                      'text': _message.trim(),
+                      'text': messageText,
                       'timestamp': FieldValue.serverTimestamp(),
                     }
                   }

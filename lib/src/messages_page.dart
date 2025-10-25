@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:floatit/src/theme_colors.dart';
 import 'package:floatit/src/widgets/loading_widgets.dart';
 import 'package:floatit/src/widgets/swimmer_icon_picker.dart';
+import 'package:floatit/src/utils/validation_utils.dart';
 
 class MessagesPage extends StatelessWidget {
   const MessagesPage({super.key});
@@ -311,6 +312,18 @@ class _ConversationPageState extends State<ConversationPage> {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null || _messageController.text.trim().isEmpty) return;
 
+    final messageText = _messageController.text.trim();
+
+    // Enhanced message validation
+    if (!ValidationUtils.isValidMessage(messageText)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Message contains invalid content or is too long')),
+        );
+      }
+      return;
+    }
+
     // Prevent sending a message to yourself
     if (widget.otherUserId == currentUser.uid) {
       if (mounted) {
@@ -321,7 +334,6 @@ class _ConversationPageState extends State<ConversationPage> {
       return;
     }
 
-    final messageText = _messageController.text.trim();
     _messageController.clear();
     // Keep focus in the message field so the user can continue typing
     _messageFocusNode.requestFocus();
@@ -329,7 +341,7 @@ class _ConversationPageState extends State<ConversationPage> {
     try {
       // Generate unique message ID
       final messageId = FirebaseFirestore.instance.collection('messages').doc().id;
-      
+
       // Update thread with new message
       await FirebaseFirestore.instance
           .collection('messages')

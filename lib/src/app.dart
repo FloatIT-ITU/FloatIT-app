@@ -8,6 +8,7 @@ import 'pool_status_provider.dart';
 import 'theme_provider.dart';
 import 'theme_colors.dart';
 import 'core/presentation/design_system/design_system.dart';
+import 'services/session_manager.dart';
 // Firebase Auth is used by AuthGate; no direct import required here.
 
 class FloatITApp extends StatelessWidget {
@@ -144,7 +145,9 @@ class FloatITApp extends StatelessWidget {
             onError: (error, stackTrace) {
               // Log error to analytics or crash reporting service
             },
-            child: const AuthGate(),
+            child: SessionProvider(
+              child: const AuthGate(),
+            ),
           ),
         ),
       ),

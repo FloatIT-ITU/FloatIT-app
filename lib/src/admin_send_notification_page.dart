@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:encrypt/encrypt.dart' as encrypt;
-import 'dart:convert';
-import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:floatit/src/widgets/banners.dart';
 
 import 'layout_widgets.dart';
-import 'event_service.dart';
+import 'services/notification_service.dart';
+import 'services/github_app_service.dart';
 
 class AdminSendNotificationPage extends StatefulWidget {
   const AdminSendNotificationPage({super.key});
@@ -23,48 +19,6 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
   String _title = '';
   String _body = '';
   bool _sendAsSystemMessage = true; // Pre-selected by default
-
-  // GitHub App constants
-  static const String appId = '2172696';
-  static const String installationId = '91462056';
-
-  bool get _isGitHubAppConfigured => appId != 'APP_ID' && installationId != 'INSTALLATION_ID';
-
-  // Decrypt AES (compatible with crypto-js)
-  String decryptAES(String encrypted, String key) {
-    final encryptedBytes = base64.decode(encrypted);
-    final iv = encryptedBytes.sublist(0, 16);
-    final cipherText = encryptedBytes.sublist(16);
-    final encrypter = encrypt.Encrypter(encrypt.AES(encrypt.Key.fromUtf8(key)));
-    final decrypted = encrypter.decrypt(encrypt.Encrypted(cipherText), iv: encrypt.IV(iv));
-    return decrypted;
-  }
-
-  // Helper to generate JWT
-  String generateJWT(String privateKeyPem) {
-    final jwt = JWT(
-      {
-        'iss': appId,
-        'iat': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-        'exp': (DateTime.now().millisecondsSinceEpoch ~/ 1000) + 600,
-      },
-    );
-    return jwt.sign(RSAPrivateKey(privateKeyPem), algorithm: JWTAlgorithm.RS256);
-  }
-
-  // Get installation token
-  Future<String> getInstallationToken(String jwt) async {
-    final response = await http.post(
-      Uri.parse('https://api.github.com/app/installations/$installationId/access_tokens'),
-      headers: {
-        'Authorization': 'Bearer $jwt',
-        'Accept': 'application/vnd.github+json',
-      },
-    );
-    if (response.statusCode != 201) throw Exception('Failed to get token: ${response.body}');
-    final data = jsonDecode(response.body);
-    return data['token'];
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +137,7 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
-                    if (!_isGitHubAppConfigured)
+                    if (!GitHubAppService.instance.isConfigured)
                       Card(
                         color: Theme.of(context).colorScheme.errorContainer,
                         child: Padding(
@@ -244,90 +198,17 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                           return;
                         }
                         final messenger = ScaffoldMessenger.of(context);
-                        final currentUser = FirebaseAuth.instance.currentUser;
-                        if (currentUser == null) {
-                          messenger.showSnackBar(const SnackBar(content: Text('Not authenticated')));
-                          return;
-                        }
-                        
-                        // Create notification document
-                        final notificationRef = FirebaseFirestore.instance.collection('notifications').doc();
-                        await notificationRef.set({
-                          'type': 'global',
-                          'title': _title,
-                          'body': _body,
-                          'createdByUid': currentUser.uid,
-                          'createdAt': FieldValue.serverTimestamp(),
-                          'sent': false,
-                        });
-
-                        // Send banner notification
-                        await FirebaseFirestore.instance
-                            .collection('app')
-                            .doc('global_banner')
-                            .set({
-                          'title': _title,
-                          'body': _body,
-                          'createdAt':
-                              DateTime.now().toUtc().toIso8601String(),
-                        });
-
-                        // Send system messages to all users if requested
-                        if (_sendAsSystemMessage) {
-                          try {
-                            final usersSnapshot = await FirebaseFirestore.instance
-                                .collection('public_users')
-                                .get();
-                            
-                            final message = 'Global Notification: ${_title.trim()}\n\n${_body.trim()}';
-                            for (final userDoc in usersSnapshot.docs) {
-                              final userId = userDoc.id;
-                              await EventService.sendSystemMessage(
-                                userId: userId,
-                                message: message,
-                                eventId: 'global', // Use 'global' as eventId for global notifications
-                              );
-                            }
-                          } catch (e) {
-                            // Log error but don't fail the whole operation
-                            // System messages are not critical
-                          }
-                        }
-
-                        // Trigger GitHub Actions for push notifications
-                        if (_isGitHubAppConfigured) {
-                          try {
-                            // Fetch encrypted key and passphrase
-                            final keyDoc = await FirebaseFirestore.instance.collection('admin_config').doc('github_app_key').get();
-                            final encryptedKey = keyDoc.data()?['encrypted_key'] as String?;
-                            final storedPassphrase = keyDoc.data()?['passphrase'] as String?;
-                            if (encryptedKey == null || storedPassphrase == null) throw Exception('GitHub config not found');
-
-                            // Decrypt
-                            final privateKeyPem = decryptAES(encryptedKey, storedPassphrase);
-
-                            // Generate JWT
-                            final jwt = generateJWT(privateKeyPem);
-
-                            // Get installation token
-                            final token = await getInstallationToken(jwt);
-
-                            // Dispatch
-                            final response = await http.post(
-                              Uri.parse('https://api.github.com/repos/FloatIT-ITU/FloatIT-app/dispatches'),
-                              headers: {
-                                'Authorization': 'token $token',
-                                'Accept': 'application/vnd.github+json',
-                                'Content-Type': 'application/json',
-                              },
-                              body: '{"event_type": "send_notification", "client_payload": {"notificationId": "${notificationRef.id}"}}',
-                            );
-                            if (response.statusCode != 204) {
-                              messenger.showSnackBar(SnackBar(content: Text('Failed to trigger push notifications: ${response.statusCode}')));
-                            }
-                          } catch (e) {
-                            messenger.showSnackBar(SnackBar(content: Text('Error triggering push notifications: $e')));
-                          }
+                        try {
+                          await NotificationService.instance.sendGlobalNotification(
+                            title: _title,
+                            body: _body,
+                            sendAsSystemMessage: _sendAsSystemMessage,
+                          );
+                          messenger.showSnackBar(const SnackBar(
+                              content: Text('Global notification sent')));
+                        } catch (e) {
+                          messenger.showSnackBar(SnackBar(
+                              content: Text('Error sending notification: $e')));
                         }
                       },
                       child: const Text('Send Global Notification'),
