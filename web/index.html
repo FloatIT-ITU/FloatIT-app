@@ -107,21 +107,16 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        // Unregister any existing service workers first
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for (let registration of registrations) {
-            registration.unregister();
-            console.log('Unregistered existing service worker:', registration.scope);
-          }
-        }).then(function() {
-          // Register Firebase Messaging Service Worker for push notifications
-          navigator.serviceWorker.register('firebase-messaging-sw.js')
+        // Register Firebase Messaging Service Worker for push notifications
+        // Let Flutter load its service worker first
+        setTimeout(function() {
+          navigator.serviceWorker.register('firebase-messaging-sw.js', { scope: '/firebase-cloud-messaging-push-scope' })
             .then(function(registration) {
               console.log('FCM ServiceWorker registration successful with scope: ', registration.scope);
             }, function(err) {
               console.log('FCM ServiceWorker registration failed: ', err);
             });
-        });
+        }, 1000); // Wait 1 second for Flutter SW to load first
       });
     }
   </script>
