@@ -110,7 +110,7 @@
         // Register Firebase Messaging Service Worker for push notifications
         // Let Flutter load its service worker first
         setTimeout(function() {
-          navigator.serviceWorker.register('firebase-messaging-sw.js', { scope: '/firebase-cloud-messaging-push-scope' })
+          navigator.serviceWorker.register('firebase-messaging-sw.js', { scope: '/FloatIT-app/firebase-cloud-messaging-push-scope' })
             .then(function(registration) {
               console.log('FCM ServiceWorker registration successful with scope: ', registration.scope);
             }, function(err) {
