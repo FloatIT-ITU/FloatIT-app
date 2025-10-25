@@ -32,11 +32,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set image registry
+        run: |
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_REGISTRY=ghcr.io/$OWNER_LC/fcm-sender" >> $GITHUB_ENV
+
       - name: Build and push image
         uses: docker/build-push-action@v4
         with:
           context: ./server
           push: true
           tags: |
-            ghcr.io/floatit-itu/fcm-sender:latest
-            ghcr.io/floatit-itu/fcm-sender:${{ github.sha }}
+            ${{ env.IMAGE_REGISTRY }}:latest
+            ${{ env.IMAGE_REGISTRY }}:${{ github.sha }}

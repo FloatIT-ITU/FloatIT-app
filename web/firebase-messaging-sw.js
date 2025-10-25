@@ -11,3 +11,12 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
+
+// Add event listeners to ensure the service worker activates immediately
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
