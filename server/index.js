@@ -38,7 +38,12 @@ const app = express();
 app.use(express.json());
 // Allow cross-origin requests from your deployed web app. During testing this
 // allows any origin; in production restrict this to your GitHub Pages domain.
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://floatit-itu.github.io',
+  ],
+  credentials: true
+}));
 
 const jwt = require('jsonwebtoken');
 
@@ -170,23 +175,23 @@ app.post('/send/user', requireAuth, async (req, res) => {
 
 // POST /admin/set-claim - set custom claim for a user (requires admin)
 app.post('/admin/set-claim', requireAuth, async (req, res) => {
-  const { uid, admin } = req.body;
-  if (!uid || typeof admin !== 'boolean') {
+  const { uid, admin: isAdmin } = req.body;
+  if (!uid || typeof isAdmin !== 'boolean') {
     return res.status(400).json({ error: 'uid and admin (boolean) required' });
   }
   try {
-    await admin.auth().setCustomUserClaims(uid, { admin });
+    await admin.auth().setCustomUserClaims(uid, { admin: isAdmin });
     
     // Log the action
     await admin.firestore().collection('server_logs').add({
       action: 'set_admin_claim',
       adminUid: req.user.uid,
-      details: { targetUid: uid, admin },
+      details: { targetUid: uid, admin: isAdmin },
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       deleteAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)),
     });
     
-    res.json({ success: true, message: `Admin claim ${admin ? 'set' : 'removed'} for ${uid}` });
+    res.json({ success: true, message: `Admin claim ${isAdmin ? 'set' : 'removed'} for ${uid}` });
   } catch (err) {
     console.error('Error setting custom claim:', err);
     
@@ -194,7 +199,7 @@ app.post('/admin/set-claim', requireAuth, async (req, res) => {
     await admin.firestore().collection('server_logs').add({
       action: 'set_admin_claim_error',
       adminUid: req.user.uid,
-      details: { targetUid: uid, admin, error: err.message },
+      details: { targetUid: uid, admin: isAdmin, error: err.message },
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       deleteAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)),
     });
