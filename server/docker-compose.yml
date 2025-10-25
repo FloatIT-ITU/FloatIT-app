@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  fcm-sender:
+    image: ghcr.io/floatit-itu/fcm-sender:latest
+    ports:
+      - "5454:5454"
+    environment:
+      - PORT=5454
+      - SERVICE_ACCOUNT_JSON=${SERVICE_ACCOUNT_JSON}
+    restart: always
