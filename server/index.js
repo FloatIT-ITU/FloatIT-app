@@ -79,9 +79,29 @@ app.post('/send/topic', requireAuth, async (req, res) => {
 
   try {
     const resp = await admin.messaging().send(message);
+    
+    // Log the action
+    await admin.firestore().collection('server_logs').add({
+      action: 'send_topic',
+      adminUid: req.user.uid,
+      details: { topic, title, body },
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      deleteAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)), // 15 days
+    });
+    
     res.json({ success: true, resp });
   } catch (err) {
     console.error('FCM send error', err);
+    
+    // Log the error
+    await admin.firestore().collection('server_logs').add({
+      action: 'send_topic_error',
+      adminUid: req.user.uid,
+      details: { topic, title, body, error: err.message },
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      deleteAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)),
+    });
+    
     res.status(500).json({ error: err.message });
   }
 });
@@ -116,10 +136,69 @@ app.post('/send/user', requireAuth, async (req, res) => {
   };
 
   try {
-    const resp = await admin.messaging().sendToDevice(targetTokens, message);
+    const resp = await admin.messaging().sendEachForMulticast({
+      tokens: targetTokens,
+      notification: { title: title || '', body: body || '' },
+      data: data || {},
+    });
+    
+    // Log the action
+    await admin.firestore().collection('server_logs').add({
+      action: 'send_user',
+      adminUid: req.user.uid,
+      details: { uids, tokensCount: targetTokens.length, title, body, successCount: resp.successCount, failureCount: resp.failureCount },
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      deleteAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)),
+    });
+    
     res.json({ success: true, resp });
   } catch (err) {
     console.error('FCM send error', err);
+    
+    // Log the error
+    await admin.firestore().collection('server_logs').add({
+      action: 'send_user_error',
+      adminUid: req.user.uid,
+      details: { uids, tokensCount: targetTokens.length, title, body, error: err.message },
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      deleteAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)),
+    });
+    
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /admin/set-claim - set custom claim for a user (requires admin)
+app.post('/admin/set-claim', requireAuth, async (req, res) => {
+  const { uid, admin } = req.body;
+  if (!uid || typeof admin !== 'boolean') {
+    return res.status(400).json({ error: 'uid and admin (boolean) required' });
+  }
+  try {
+    await admin.auth().setCustomUserClaims(uid, { admin });
+    
+    // Log the action
+    await admin.firestore().collection('server_logs').add({
+      action: 'set_admin_claim',
+      adminUid: req.user.uid,
+      details: { targetUid: uid, admin },
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      deleteAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)),
+    });
+    
+    res.json({ success: true, message: `Admin claim ${admin ? 'set' : 'removed'} for ${uid}` });
+  } catch (err) {
+    console.error('Error setting custom claim:', err);
+    
+    // Log the error
+    await admin.firestore().collection('server_logs').add({
+      action: 'set_admin_claim_error',
+      adminUid: req.user.uid,
+      details: { targetUid: uid, admin, error: err.message },
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      deleteAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)),
+    });
+    
     res.status(500).json({ error: err.message });
   }
 });

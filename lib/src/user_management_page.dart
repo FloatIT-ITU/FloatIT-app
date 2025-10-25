@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'layout_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:floatit/src/widgets/banners.dart';
 import 'styles.dart';
@@ -9,6 +10,8 @@ import 'package:provider/provider.dart';
 import 'user_profile_provider.dart';
 import 'user_service.dart';
 import 'utils/validation_utils.dart';
+import 'widgets/swimmer_icon_picker.dart';
+import 'theme_colors.dart';
 
 class UserManagementPage extends StatefulWidget {
   const UserManagementPage({super.key});
@@ -197,6 +200,25 @@ class _UserCard extends StatelessWidget {
     return doc.data();
   }
 
+  Color _colorFromDynamic(dynamic value) {
+    try {
+      if (value == null) return AppThemeColors.lightOnBackground;
+      if (value is int) return Color(value);
+      if (value is String) {
+        var s = value.trim();
+        if (s.startsWith('#')) s = s.substring(1);
+        if (s.startsWith('0x')) s = s.substring(2);
+        // If only RGB provided (6 chars), add opaque alpha
+        if (s.length <= 6) s = 'ff${s.padLeft(6, '0')}';
+        final v = int.parse(s, radix: 16);
+        return Color(v);
+      }
+    } catch (e) {
+      // Color parse error, use default
+    }
+    return AppThemeColors.lightOnBackground;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>?>(
@@ -221,10 +243,24 @@ class _UserCard extends StatelessWidget {
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: ListTile(
-            leading: isAdmin
-                ? Icon(Icons.shield,
-                    color: Theme.of(context).colorScheme.secondary)
-                : const Icon(Icons.person_2),
+            leading: Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                SwimmerIconPicker.buildIcon(
+                  _colorFromDynamic(data['iconColor']),
+                  radius: 20,
+                ),
+                if (isAdmin)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.secondary,
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(Icons.star, size: 12, color: Colors.white),
+                  ),
+              ],
+            ),
             title: currentUserIsAdmin
                 ? Row(
                     children: [
@@ -329,6 +365,22 @@ class _UserCard extends StatelessWidget {
     if (confirm == true) {
       try {
         await UserService.updateAdminStatus(userId, makeAdmin);
+        // Also update custom claims via server
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser != null) {
+          final idToken = await currentUser.getIdToken();
+          final response = await http.post(
+            Uri.parse('https://floatit-notifications.tinybo.eu/admin/set-claim'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $idToken',
+            },
+            body: '{"uid":"$userId","admin":$makeAdmin}',
+          );
+          if (response.statusCode != 200) {
+            // Log error but don't fail the operation
+          }
+        }
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -406,24 +458,41 @@ class _UserCard extends StatelessWidget {
   }
 
   Future<void> _editOccupation(BuildContext context) async {
-    final controller = TextEditingController(text: data['occupation'] ?? '');
+    const occupations = [
+      'SWU',
+      'GBI',
+      'BDDIT',
+      'BDS',
+      'MDDIT',
+      'DIM',
+      'E-BUSS',
+      'GAMES/DT',
+      'GAMES/Tech',
+      'CS',
+      'SD',
+      'MDS',
+      'MIT',
+      'Employee',
+      'PhD',
+      'Other',
+    ];
+    String? selected = data['occupation'];
+    if (selected != null && !occupations.contains(selected)) {
+      selected = 'Other'; // Default to Other if current is not in list
+    }
     final newOccupation = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit Occupation'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(labelText: 'Occupation'),
-          autofocus: true,
+        content: DropdownButton<String>(
+          value: selected,
+          items: occupations.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          onChanged: (value) => Navigator.of(context).pop(value),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Save'),
           ),
         ],
       ),
