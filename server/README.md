@@ -46,7 +46,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 final token = await FirebaseAuth.instance.currentUser!.getIdToken();
 final response = await http.post(
-  Uri.parse('https://floatit-notifications.tinybo.eu/send/topic'),
+  Uri.parse('https://your-fcm-sender-domain/send/topic'),
   headers: {
     'Authorization': 'Bearer $token',
     'Content-Type': 'application/json',
