@@ -24,9 +24,11 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
   String _body = '';
   bool _sendAsSystemMessage = true; // Pre-selected by default
 
-  // GitHub App constants (replace with your values)
-  static const String appId = 'YOUR_APP_ID';
-  static const String installationId = 'YOUR_INSTALLATION_ID';
+  // GitHub App constants
+  static const String appId = '2172696';
+  static const String installationId = '91462056';
+
+  bool get _isGitHubAppConfigured => appId != 'APP_ID' && installationId != 'INSTALLATION_ID';
 
   // Decrypt AES (compatible with crypto-js)
   String decryptAES(String encrypted, String key) {
@@ -181,6 +183,17 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
+                    if (!_isGitHubAppConfigured)
+                      Card(
+                        color: Theme.of(context).colorScheme.errorContainer,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Text(
+                            'GitHub App not configured. Push notifications will not be sent. Contact admin to set up GitHub App.',
+                            style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
+                          ),
+                        ),
+                      ),
                     TextFormField(
                       decoration: const InputDecoration(labelText: 'Title'),
                       onChanged: (v) => setState(() => _title = v),
@@ -282,42 +295,40 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                         }
 
                         // Trigger GitHub Actions for push notifications
-                        try {
-                          // Fetch encrypted key and passphrase
-                          final keyDoc = await FirebaseFirestore.instance.collection('admin_config').doc('github_app_key').get();
-                          final encryptedKey = keyDoc.data()?['encrypted_key'] as String?;
-                          final storedPassphrase = keyDoc.data()?['passphrase'] as String?;
-                          if (encryptedKey == null || storedPassphrase == null) throw Exception('GitHub config not found');
+                        if (_isGitHubAppConfigured) {
+                          try {
+                            // Fetch encrypted key and passphrase
+                            final keyDoc = await FirebaseFirestore.instance.collection('admin_config').doc('github_app_key').get();
+                            final encryptedKey = keyDoc.data()?['encrypted_key'] as String?;
+                            final storedPassphrase = keyDoc.data()?['passphrase'] as String?;
+                            if (encryptedKey == null || storedPassphrase == null) throw Exception('GitHub config not found');
 
-                          // Decrypt
-                          final privateKeyPem = decryptAES(encryptedKey, storedPassphrase);
+                            // Decrypt
+                            final privateKeyPem = decryptAES(encryptedKey, storedPassphrase);
 
-                          // Generate JWT
-                          final jwt = generateJWT(privateKeyPem);
+                            // Generate JWT
+                            final jwt = generateJWT(privateKeyPem);
 
-                          // Get installation token
-                          final token = await getInstallationToken(jwt);
+                            // Get installation token
+                            final token = await getInstallationToken(jwt);
 
-                          // Dispatch
-                          final response = await http.post(
-                            Uri.parse('https://api.github.com/repos/FloatIT-ITU/FloatIT-app/dispatches'),
-                            headers: {
-                              'Authorization': 'token $token',
-                              'Accept': 'application/vnd.github+json',
-                              'Content-Type': 'application/json',
-                            },
-                            body: '{"event_type": "send_notification", "client_payload": {"notificationId": "${notificationRef.id}"}}',
-                          );
-                          if (response.statusCode != 204) {
-                            messenger.showSnackBar(SnackBar(content: Text('Failed to trigger push notifications: ${response.statusCode}')));
+                            // Dispatch
+                            final response = await http.post(
+                              Uri.parse('https://api.github.com/repos/FloatIT-ITU/FloatIT-app/dispatches'),
+                              headers: {
+                                'Authorization': 'token $token',
+                                'Accept': 'application/vnd.github+json',
+                                'Content-Type': 'application/json',
+                              },
+                              body: '{"event_type": "send_notification", "client_payload": {"notificationId": "${notificationRef.id}"}}',
+                            );
+                            if (response.statusCode != 204) {
+                              messenger.showSnackBar(SnackBar(content: Text('Failed to trigger push notifications: ${response.statusCode}')));
+                            }
+                          } catch (e) {
+                            messenger.showSnackBar(SnackBar(content: Text('Error triggering push notifications: $e')));
                           }
-                        } catch (e) {
-                          messenger.showSnackBar(SnackBar(content: Text('Error triggering push notifications: $e')));
                         }
-
-                        if (!mounted) return;
-                        messenger.showSnackBar(const SnackBar(
-                            content: Text('Global notification sent')));
                       },
                       child: const Text('Send Global Notification'),
                     ),
