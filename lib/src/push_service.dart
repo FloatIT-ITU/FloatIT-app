@@ -67,6 +67,13 @@ class PushService {
       return false;
     }
 
+    // Subscribe to global notifications topic
+    try {
+      await _messaging.subscribeToTopic('all-users');
+    } catch (e) {
+      // Subscription failed, but don't fail registration
+    }
+
     // Start listening for token refresh and foreground messages for this user
     _startTokenRefreshListener(user.uid);
     _startOnMessageListener();
@@ -81,17 +88,19 @@ class PushService {
       if (token == null) return;
       final tokenId = token.replaceAll('/', '_');
       final tokenRef = FirebaseFirestore.instance
-        .collection('fcm_tokens')
-        .doc(user.uid)
-        .collection('tokens')
-        .doc(tokenId);
+          .collection('fcm_tokens')
+          .doc(user.uid)
+          .collection('tokens')
+          .doc(tokenId);
       await tokenRef.delete();
+    } catch (_) {}
+    // Unsubscribe from global notifications topic
+    try {
+      await _messaging.unsubscribeFromTopic('all-users');
     } catch (_) {}
     // Stop listeners
     _stopListeners();
   }
-
-
   void _startTokenRefreshListener(String uid) {
     // Ensure previous subscription removed
     _tokenSub?.cancel();
