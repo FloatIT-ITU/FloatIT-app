@@ -19,8 +19,8 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'FloatIT';
   const notificationOptions = {
     body: payload.notification?.body || '',
-    icon: '/icons/Icon-192.png',
-    badge: '/icons/Icon-192.png',
+    icon: './icons/Icon-192.png',
+    badge: './icons/Icon-192.png',
     data: payload.data || {},
   };
 
