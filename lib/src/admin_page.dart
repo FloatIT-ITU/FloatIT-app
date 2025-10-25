@@ -9,6 +9,7 @@ import 'user_management_page.dart';
 import 'admin_event_management_page.dart';
 import 'admin_feedback_page.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
+import 'admin_server_logs_page.dart';
 
 class AdminPage extends StatefulWidget {
   const AdminPage({super.key});
@@ -144,9 +145,24 @@ class _AdminPageState extends State<AdminPage> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 24),
+                    // System section
+                    const SectionHeader(title: 'System'),
+                    const SizedBox(height: 8),
+                    Card(
+                      elevation: 1,
+                      child: ListTile(
+                        leading: const Icon(Icons.receipt_long_outlined),
+                        title: const Text('Server Logs'),
+                        onTap: () {
+                          NavigationUtils.pushWithoutAnimation(
+                            context,
+                            const AdminServerLogsPage(),
+                          );
+                        },
+                      ),
+                    ),
                     const SizedBox(height: 16),
-                    // Queued Join Requests removed
-                    const SizedBox(height: 32),
                   ],
                 ),
               ),
