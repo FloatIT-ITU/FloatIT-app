@@ -257,8 +257,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         const SizedBox(height: 24),
                       ],
-                      // Account section - moved down
-                      const SectionHeader(title: 'Account'),
+                      // Options section
+                      const SectionHeader(title: 'Options'),
                       const SizedBox(height: 8),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -278,47 +278,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                   ),
                                 ),
                               ),
-                              ListTile(
-                                leading: const Icon(Icons.lock_outline),
-                                title: const Text('Change Password'),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () async {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => const ChangePasswordDialog(),
-                                  );
-                                },
-                              ),
-                              const Divider(height: 1),
-                              ListTile(
-                                leading: const Icon(Icons.logout),
-                                title: const Text('Sign out'),
-                                onTap: () async {
-                                  final confirmed = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: const Text('Sign out'),
-                                      content: const Text('Are you sure you want to sign out?'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.of(context).pop(false),
-                                          child: const Text('Cancel'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.of(context).pop(true),
-                                          child: const Text('Sign out'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirmed == true) {
-                                    await FirebaseAuth.instance.signOut();
-                                    if (!context.mounted) return;
-                                    Navigator.of(context).pop(); // Go back after signing out
-                                  }
-                                },
-                              ),
-                              const Divider(height: 1),
                               ListTile(
                                 leading: const Icon(Icons.notifications),
                                 title: const Text('Enable notifications'),
@@ -365,6 +324,61 @@ class _SettingsPageState extends State<SettingsPage> {
                                   ),
                                 ),
                               ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Account section
+                      const SectionHeader(title: 'Account'),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Card(
+                          elevation: 1,
+                          child: Column(
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.lock_outline),
+                                title: const Text('Change Password'),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () async {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => const ChangePasswordDialog(),
+                                  );
+                                },
+                              ),
+                              const Divider(height: 1),
+                              ListTile(
+                                leading: const Icon(Icons.logout),
+                                title: const Text('Sign out'),
+                                onTap: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Sign out'),
+                                      content: const Text('Are you sure you want to sign out?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(true),
+                                          child: const Text('Sign out'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed == true) {
+                                    await FirebaseAuth.instance.signOut();
+                                    if (!context.mounted) return;
+                                    Navigator.of(context).pop(); // Go back after signing out
+                                  }
+                                },
+                              ),
+                              const Divider(height: 1),
                               ListTile(
                                 leading: Icon(Icons.delete_forever, color: Theme.of(context).colorScheme.error),
                                 title: Text('Delete Account', style: TextStyle(color: Theme.of(context).colorScheme.error)),
