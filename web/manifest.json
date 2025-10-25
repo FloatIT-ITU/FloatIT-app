@@ -1,11 +1,11 @@
 {
-    "name": "FloatIT - ITU Event Management",
+    "name": "FloatIT ITU ",
     "short_name": "FloatIT",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Join FloatIT practice sessions and stay updated with ITU team events. Login with your @itu.dk account.",
+    "description": "FloatIT  Signup App",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "categories": ["education", "productivity", "social"],
