@@ -298,6 +298,17 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ===== SERVER LOGS COLLECTION =====
+    // Server-side logging for admin actions
+
+    match /server_logs/{logId} {
+      // Only admins can read server logs
+      allow read: if isAdmin();
+      
+      // Only server-side code can write logs (they run with admin privileges)
+      allow write: if false;
+    }
+
     // ===== DENY ALL OTHER ACCESS =====
     // Explicitly deny access to any collections not defined above
 
