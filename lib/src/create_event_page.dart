@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:floatit/src/widgets/date_time_picker_helper.dart';
 import 'package:floatit/src/widgets/banners.dart';
 import 'package:floatit/src/services/firebase_service.dart';
+import 'package:floatit/src/services/audit_logger.dart';
 
 import 'layout_widgets.dart';
 
@@ -388,7 +389,21 @@ class _CreateEventPageState extends State<CreateEventPage> {
                                 final ev = Map<String, dynamic>.from(baseData);
                                 if (startTime != null) ev['startTime'] = startTime!.toUtc().toIso8601String();
                                 if (endTime != null) ev['endTime'] = endTime!.toUtc().toIso8601String();
-                                await FirebaseService.events.add(ev);
+                                
+                                final eventRef = await FirebaseService.events.add(ev);
+
+                                // Audit log the event creation
+                                try {
+                                  await AuditLogger.logEventManagement(
+                                    action: 'create',
+                                    eventId: eventRef.id,
+                                    eventName: eventName,
+                                    changes: ev,
+                                  );
+                                } catch (e) {
+                                  // Audit logging failure shouldn't block event creation
+                                  // Silently continue - logging failures don't affect core functionality
+                                }
 
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Event created!')));

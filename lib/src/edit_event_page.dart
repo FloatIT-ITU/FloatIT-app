@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:floatit/src/widgets/event_date_time_field.dart';
 import 'package:floatit/src/widgets/banners.dart';
 import 'package:floatit/src/services/firebase_service.dart';
+import 'package:floatit/src/services/audit_logger.dart';
 
 import 'layout_widgets.dart';
 
@@ -108,10 +109,67 @@ class _EditEventPageState extends State<EditEventPage> {
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
+      // Capture changes for audit logging
+      final oldData = widget.eventData;
+      final changes = <String, Map<String, dynamic>>{};
+      
+      // Compare each field
+      if (oldData['name'] != eventName) {
+        changes['name'] = {'old': oldData['name'], 'new': eventName};
+      }
+      if (oldData['location'] != location) {
+        changes['location'] = {'old': oldData['location'], 'new': location};
+      }
+      if (oldData['description'] != description) {
+        changes['description'] = {'old': oldData['description'], 'new': description};
+      }
+      if (oldData['attendeeLimit'] != attendeeLimit) {
+        changes['attendeeLimit'] = {'old': oldData['attendeeLimit'], 'new': attendeeLimit};
+      }
+      if (oldData['waitingList'] != waitingList) {
+        changes['waitingList'] = {'old': oldData['waitingList'], 'new': waitingList};
+      }
+      if (oldData['type'] != type) {
+        changes['type'] = {'old': oldData['type'], 'new': type};
+      }
+      if (oldData['host'] != host) {
+        changes['host'] = {'old': oldData['host'], 'new': host};
+      }
+      
+      // Handle date comparisons
+      final oldStartTime = oldData['startTime'] is Timestamp 
+          ? oldData['startTime'].toDate().toUtc().toIso8601String()
+          : oldData['startTime'];
+      final newStartTime = startTime?.toUtc().toIso8601String();
+      if (oldStartTime != newStartTime) {
+        changes['startTime'] = {'old': oldStartTime, 'new': newStartTime};
+      }
+      
+      final oldEndTime = oldData['endTime'] is Timestamp 
+          ? oldData['endTime'].toDate().toUtc().toIso8601String()
+          : oldData['endTime'];
+      final newEndTime = endTime?.toUtc().toIso8601String();
+      if (oldEndTime != newEndTime) {
+        changes['endTime'] = {'old': oldEndTime, 'new': newEndTime};
+      }
+
       await FirebaseFirestore.instance
           .collection('events')
           .doc(widget.eventId)
           .update(updateData);
+
+      // Audit log the event update
+      try {
+        await AuditLogger.logEventManagement(
+          action: 'update',
+          eventId: widget.eventId,
+          eventName: eventName,
+          changes: changes.isNotEmpty ? changes : null,
+        );
+      } catch (e) {
+        // Audit logging failure shouldn't block event update
+        // Silently continue - logging failures don't affect core functionality
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

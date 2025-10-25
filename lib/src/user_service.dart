@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'services/audit_logger.dart';
 
 class UserService {
   /// Check if a user has admin privileges
@@ -22,11 +23,30 @@ class UserService {
     if (userId.isEmpty) {
       throw ArgumentError('userId cannot be empty');
     }
-    
+
+    // Get current admin status for logging
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    final currentAdminStatus = userDoc.exists && userDoc.data() != null && userDoc.data()!['admin'] == true;
+
+    // Get user email for logging
+    final publicUserDoc = await FirebaseFirestore.instance.collection('public_users').doc(userId).get();
+    final userEmail = publicUserDoc.exists && publicUserDoc.data() != null
+        ? publicUserDoc.data()!['email'] ?? 'unknown'
+        : 'unknown';
+
     await FirebaseFirestore.instance.collection('users').doc(userId).set({
       'admin': isAdmin,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    // Log the admin action
+    await AuditLogger.logUserManagement(
+      action: isAdmin ? 'admin_privilege_granted' : 'admin_privilege_revoked',
+      targetUserId: userId,
+      targetUserEmail: userEmail,
+      oldValue: currentAdminStatus.toString(),
+      newValue: isAdmin.toString(),
+    );
   }
 
   /// Update user occupation in public profile
@@ -35,17 +55,35 @@ class UserService {
     if (userId.isEmpty) {
       throw ArgumentError('userId cannot be empty');
     }
-    
+
     // Sanitize occupation input (basic validation)
     final sanitizedOccupation = occupation.trim();
     if (sanitizedOccupation.length > 100) {
       throw ArgumentError('Occupation must be 100 characters or less');
     }
-    
+
+    // Get current value for logging
+    final publicUserDoc = await FirebaseFirestore.instance.collection('public_users').doc(userId).get();
+    final currentOccupation = publicUserDoc.exists && publicUserDoc.data() != null
+        ? publicUserDoc.data()!['occupation'] ?? ''
+        : '';
+    final userEmail = publicUserDoc.exists && publicUserDoc.data() != null
+        ? publicUserDoc.data()!['email'] ?? 'unknown'
+        : 'unknown';
+
     await FirebaseFirestore.instance.collection('public_users').doc(userId).set({
       'occupation': sanitizedOccupation,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    // Log the admin action
+    await AuditLogger.logUserManagement(
+      action: 'occupation_updated',
+      targetUserId: userId,
+      targetUserEmail: userEmail,
+      oldValue: currentOccupation,
+      newValue: sanitizedOccupation,
+    );
   }
 
   /// Update user display name in public profile
@@ -54,7 +92,7 @@ class UserService {
     if (userId.isEmpty) {
       throw ArgumentError('userId cannot be empty');
     }
-    
+
     // Sanitize display name input (basic validation)
     final sanitizedName = displayName.trim();
     if (sanitizedName.isEmpty) {
@@ -63,10 +101,28 @@ class UserService {
     if (sanitizedName.length > 50) {
       throw ArgumentError('Display name must be 50 characters or less');
     }
-    
+
+    // Get current value for logging
+    final publicUserDoc = await FirebaseFirestore.instance.collection('public_users').doc(userId).get();
+    final currentDisplayName = publicUserDoc.exists && publicUserDoc.data() != null
+        ? publicUserDoc.data()!['displayName'] ?? ''
+        : '';
+    final userEmail = publicUserDoc.exists && publicUserDoc.data() != null
+        ? publicUserDoc.data()!['email'] ?? 'unknown'
+        : 'unknown';
+
     await FirebaseFirestore.instance.collection('public_users').doc(userId).set({
       'displayName': sanitizedName,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    // Log the admin action
+    await AuditLogger.logUserManagement(
+      action: 'display_name_updated',
+      targetUserId: userId,
+      targetUserEmail: userEmail,
+      oldValue: currentDisplayName,
+      newValue: sanitizedName,
+    );
   }
 }

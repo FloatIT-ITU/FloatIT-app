@@ -5,6 +5,7 @@ import 'package:floatit/src/widgets/banners.dart';
 import 'styles.dart';
 import 'edit_event_page.dart';
 import 'package:floatit/src/utils/navigation_utils.dart';
+import 'package:floatit/src/services/audit_logger.dart';
 
 class AdminEventManagementPage extends StatefulWidget {
   const AdminEventManagementPage({super.key});
@@ -471,10 +472,32 @@ class _EventCard extends StatelessWidget {
             onPressed: () async {
               Navigator.pop(context);
               try {
+                // Get event data before deletion for audit logging
+                final eventDoc = await FirebaseFirestore.instance
+                    .collection('events')
+                    .doc(eventId)
+                    .get();
+                
+                final eventData = eventDoc.data() ?? {};
+                final eventName = eventData['name'] ?? 'Unknown Event';
+                
+                // Delete the event
                 await FirebaseFirestore.instance.collection('events').doc(eventId).delete();
-                if (context.mounted) {
+                
+                // Audit log the event deletion
+                try {
+                  await AuditLogger.logEventManagement(
+                    action: 'delete',
+                    eventId: eventId,
+                    eventName: eventName,
+                    changes: eventData,
+                  );
+                } catch (e) {
+                  // Audit logging failure shouldn't show error to user
+                  // Silently continue - logging failures don't affect core functionality
+                }                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Event "$title" deleted successfully')),
+                    SnackBar(content: Text('Event "$eventName" deleted successfully')),
                   );
                 }
               } catch (e) {

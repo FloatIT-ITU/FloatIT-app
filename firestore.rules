@@ -36,36 +36,19 @@ service cloud.firestore {
     }
 
     // ===== USERS COLLECTION =====
-    // Private user data - only owner and admins can access
-
     match /users/{userId} {
-      // Users can read/write their own private data
       allow read: if isOwner(userId);
-
-      // Users can create their own document (during first sign-in)
-      // Ensure admin field defaults to false
       allow create: if isOwner(userId) && 
         (!('admin' in request.resource.data) || request.resource.data.admin == false);
-
-      // Users can update their own data (except admin field)
       allow update: if isOwner(userId) &&
         !('admin' in request.resource.data.diff(resource.data).affectedKeys());
-
-      // Admins can read all user private data
       allow read: if isAdmin();
-      
-      // Admins can update any user data including admin field
       allow update: if isAdmin() && isITUEmail();
     }
 
     // ===== PUBLIC USERS COLLECTION =====
-    // Public profile data - readable by all, writable by owner/admins
-
     match /public_users/{userId} {
-      // Anyone can read public profiles
       allow read: if true;
-      // Users can create their own public profile (during first sign-in)
-      // Validate field lengths
       allow create: if isOwner(userId) && isITUEmail() &&
         (!('displayName' in request.resource.data) || 
          (request.resource.data.displayName is string && 
@@ -73,10 +56,6 @@ service cloud.firestore {
         (!('occupation' in request.resource.data) || 
          (request.resource.data.occupation is string && 
           request.resource.data.occupation.size() <= 100));
-
-
-      // Users can update their own public profile with validation
-      // Allow updating displayName, occupation and notificationsEnabled flag
       allow update: if isOwner(userId) && isITUEmail() && (
         (!('displayName' in request.resource.data) || 
          (request.resource.data.displayName is string && 
@@ -88,206 +67,119 @@ service cloud.firestore {
         (!('notificationsEnabled' in request.resource.data) ||
          (request.resource.data.notificationsEnabled is bool))
       );
-
-      // Admins can also update public profiles
       allow update: if isAdmin() && isITUEmail();
     }
 
-    // ===== FCM TOKENS (per-token documents) =====
+    // ===== FCM TOKENS =====
     // Store tokens under: fcm_tokens/{uid}/tokens/{tokenId}
-    // Each token document may include metadata like platform/browser and createdAt.
     match /fcm_tokens/{userId}/tokens/{tokenId} {
-      // Allow the authenticated user to create their own token document
-      // only if they have not opted out of notifications in their public profile.
       allow create: if isAuthenticated() && request.auth.uid == userId &&
         request.resource.data.token is string &&
         request.resource.data.token.size() > 0 &&
         request.resource.data.createdAt is timestamp &&
-        // Ensure the user's public profile allows notifications (default true)
         (!exists(/databases/$(database)/documents/public_users/$(userId)) ||
          get(/databases/$(database)/documents/public_users/$(userId)).data.notificationsEnabled == true);
 
-      // Allow the token owner to delete their token document
       allow delete: if isAuthenticated() && request.auth.uid == userId;
-
-      // Do not allow clients to update token documents (use create/delete pattern)
       allow update: if false;
-
-      // Allow owners and admins to read token documents
-      allow get: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow list: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow get, list: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
     }
 
     // ===== NOTIFICATIONS COLLECTION =====
-    // Global and event notifications created by admins for push sending
     match /notifications/{notificationId} {
-      // Only admins can create, read, update, or delete notifications
       allow create, read, update, delete: if isAdmin();
     }
 
     // ===== EVENTS COLLECTION =====
-    // Event data - readable by all, managed by admins and users for attendance
-
     match /events/{eventId} {
-      // Anyone can read event details
       allow read: if true;
-
-      // Only admins can create or delete events
       allow create, delete: if isAdmin() && isITUEmail();
-      
-      // Admins can update any fields
       allow update: if isAdmin() && isITUEmail();
-      
-      // Regular users can ONLY update attendees and waitingListUids (join/leave)
       allow update: if isAuthenticated() && isITUEmail() &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendees', 'waitingListUids']);
     }
 
     // ===== EVENT BANNERS =====
-    // Event-specific notifications
-
     match /events/{eventId}/meta/event_banner {
-      // Anyone can read event banners
       allow read: if true;
-
-      // Event hosts and admins can create/update/delete event banners
       allow write: if isITUEmail() && (isEventHost(eventId) || isAdmin());
     }
 
     // ===== GLOBAL BANNER =====
-    // App-wide notifications
-
     match /app/global_banner {
-      // Anyone can read the global banner
       allow read: if true;
-
-      // Only admins can manage the global banner
       allow write: if isAdmin() && isITUEmail();
     }
 
     // ===== TEMPLATES COLLECTION =====
-    // Event templates for recurring events
-
     match /templates/{templateId} {
-      // Anyone can read templates
       allow read: if true;
-
-      // Only admins can manage templates
       allow write: if isAdmin() && isITUEmail();
     }
 
     // ===== JOIN REQUESTS COLLECTION =====
-    // Queue for join/leave requests
-
     match /join_requests/{requestId} {
-      // Users can create requests for themselves
       allow create: if isAuthenticated() && isITUEmail() &&
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.type in ['join', 'leave'] &&
         request.resource.data.eventId is string &&
         request.resource.data.createdAt is string;
-
-      // Only admins can read requests (for processing)
       allow read: if isAdmin();
-      
-      // Only admins can delete processed requests
       allow delete: if isAdmin();
     }
 
     // ===== AUTH LOGS COLLECTION =====
-    // Authentication logging
-
     match /auth_logs/{logId} {
-      // System-managed logs - no direct write access
       allow write: if false;
-      
-      // Only admins can read logs
       allow read: if isAdmin();
     }
 
     // ===== POOL STATUS COLLECTION =====
-    // Pool status data from external source
-
     match /pool_status/{document} {
-      // Anyone can read pool status (public information)
       allow read: if true;
-
-      // Only Cloud Functions can write (they run with admin privileges)
       allow write: if false;
     }
 
     // ===== MESSAGES COLLECTION =====
-    // Private messaging threads between users
-
     match /messages/{threadId} {
-      // Allow reads for authenticated users
       allow read: if isAuthenticated();
-
-      // Writes are allowed only when the following holds:
-      // - The request is authenticated
-      // - If creating/updating a thread with a 'participants' array, the
-      //   participants array must contain at least two distinct uids and
-      //   must not contain only the request.auth.uid (prevents self-messaging)
       allow create, update: if isAuthenticated() &&
         ( !('participants' in request.resource.data) || (
             request.resource.data.participants is list &&
-            // At least two participants
             request.resource.data.participants.size() >= 2 &&
-            // Basic check: first two entries are strings (good heuristic)
             request.resource.data.participants[0] is string &&
             request.resource.data.participants[1] is string
+        )) &&
+        (!('messages' in request.resource.data) || (
+          request.resource.data.messages is map &&
+          request.resource.data.messages.size() <= 100 &&
+          request.resource.data.messages.size() >= 0
         ));
     }
 
     // ===== USER EVENT HISTORY COLLECTION =====
-    // Track user event participation for statistics
-
     match /user_event_history/{document} {
-      // All authenticated users can read event history (needed for rankings)
       allow read: if isAuthenticated();
-
-      // Users can write their own event history
-      allow write: if isAuthenticated() &&
-        resource.data.userId == request.auth.uid;
-
-      // Users can create their own event history records
-      allow create: if isAuthenticated() &&
-        request.resource.data.userId == request.auth.uid;
+      allow write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
     }
 
     // ===== FEEDBACK COLLECTION =====
-    // User feedback messages for admins
-
     match /feedback/{document} {
-      // All authenticated users can create feedback with validation
       allow create: if isAuthenticated() &&
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.message is string &&
         request.resource.data.message.size() > 0 &&
         request.resource.data.message.size() <= 5000 &&
+        !request.resource.data.message.matches('.*[<>{}\\[\\]\\\\].*') &&
         request.resource.data.createdAt is timestamp;
-
-      // Only admins can read feedback messages
       allow read: if isAdmin();
-
-      // Only admins can update feedback (mark as read/responded)
       allow update: if isAdmin();
-
-      // Only admins can delete feedback
       allow delete: if isAdmin();
     }
 
     // ===== ADMIN CONFIG COLLECTION =====
-    // Secure storage for admin secrets like encrypted GitHub keys
-
     match /admin_config/{document} {
-      // Only admins can read/write admin config
-      allow read, write: if isAdmin();
-    }
-
-    // ===== ADMIN CONFIG COLLECTION =====
-    // Secure storage for admin secrets like encrypted GitHub keys
-    match /admin_config/{doc} {
       allow read, write: if isAdmin();
     }
   }
