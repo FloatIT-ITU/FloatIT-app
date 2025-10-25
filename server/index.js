@@ -124,5 +124,20 @@ app.post('/send/user', requireAuth, async (req, res) => {
   }
 });
 
+// POST /admin/set-claim - set custom claim for a user (requires admin)
+app.post('/admin/set-claim', requireAuth, async (req, res) => {
+  const { uid, admin } = req.body;
+  if (!uid || typeof admin !== 'boolean') {
+    return res.status(400).json({ error: 'uid and admin (boolean) required' });
+  }
+  try {
+    await admin.auth().setCustomUserClaims(uid, { admin });
+    res.json({ success: true, message: `Admin claim ${admin ? 'set' : 'removed'} for ${uid}` });
+  } catch (err) {
+    console.error('Error setting custom claim:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/', (req, res) => res.send('FCM sender running'));
 app.listen(PORT, () => console.log(`Listening ${PORT}`));
