@@ -21,11 +21,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="FloatIT - ITU event management app. Join practice sessions and stay updated with team events.">
 
-  <!-- Enhanced Content Security Policy for Firebase with additional XSS protection -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://*.googleusercontent.com https://*.gstatic.com; connect-src 'self' https://*.firebaseapp.com https://*.googleapis.com https://*.googleusercontent.com wss://*.firebaseio.com wss://*.googleapis.com; frame-src https://*.firebaseapp.com https://*.google.com https://*.googleusercontent.com; img-src 'self' data: https://*.firebaseapp.com https://*.googleapis.com https://*.googleusercontent.com https://*.gstatic.com; style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri https://pheadar.report-uri.com/r/d/csp/enforce;">
-
-  <!-- CSP Report Only for monitoring (non-blocking) -->
-  <meta http-equiv="Content-Security-Policy-Report-Only" content="default-src 'self'; script-src 'self' https://*.firebaseapp.com https://*.googleapis.com https://*.googleusercontent.com https://*.gstatic.com; style-src 'self' https://*.googleapis.com https://*.gstatic.com; report-uri https://pheadar.report-uri.com/r/d/csp/reportOnly;">
+  <!-- Content Security Policy for Flutter Web App with Firebase -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseapp.com https://*.googleapis.com https://*.googleusercontent.com https://*.gstatic.com https://www.gstatic.com; connect-src 'self' https://*.firebaseapp.com https://*.googleapis.com https://*.googleusercontent.com https://www.gstatic.com wss://*.firebaseio.com wss://*.googleapis.com; frame-src https://*.firebaseapp.com https://*.google.com https://*.googleusercontent.com; img-src 'self' data: https://*.firebaseapp.com https://*.googleapis.com https://*.googleusercontent.com https://*.gstatic.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://*.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
