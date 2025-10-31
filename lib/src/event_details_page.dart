@@ -27,6 +27,7 @@ import 'package:provider/provider.dart';
 import 'services/rate_limit_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'external_config.dart';
 
 class EventDetailsPage extends StatefulWidget {
   final String eventId;
@@ -1087,7 +1088,7 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
 
               // Send push notifications immediately via Vercel function
               try {
-                const vercelUrl = 'https://vercel-functions-ohmlzwgw7-pheadars-projects.vercel.app/api/send-notification';
+                const vercelUrl = '${ExternalConfig.vercelFunctionsUrl}/api/send-notification';
                 final response = await http.post(
                   Uri.parse(vercelUrl),
                   headers: {'Content-Type': 'application/json'},
