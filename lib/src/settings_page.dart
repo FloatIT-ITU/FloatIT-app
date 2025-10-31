@@ -230,7 +230,7 @@ class _SettingsPageState extends State<SettingsPage> {
       // Immediately trigger notification sending via Vercel function
       try {
         await http.post(
-          Uri.parse('https://vercel-functions-ohmlzwgw7-pheadars-projects.vercel.app/api/send-notification'),
+          Uri.parse('https://vercel-functions-pheadars-projects.vercel.app/api/send-notification'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'type': 'feedback'}),
         );

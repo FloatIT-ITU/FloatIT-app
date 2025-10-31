@@ -377,7 +377,7 @@ class _ConversationPageState extends State<ConversationPage> {
 
         // Send push notification immediately via Vercel function
         try {
-          const vercelUrl = 'https://vercel-functions-ohmlzwgw7-pheadars-projects.vercel.app/api/send-notification';
+          const vercelUrl = 'https://vercel-functions-pheadars-projects.vercel.app/api/send-notification';
           await http.post(
             Uri.parse(vercelUrl),
             headers: {'Content-Type': 'application/json'},
