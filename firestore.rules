@@ -298,15 +298,94 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ===== SERVER LOGS COLLECTION =====
-    // Server-side logging for admin actions
+    // ===== ADMIN NOTIFICATIONS COLLECTION =====
+    // Pending admin notifications to be sent via Vercel functions
 
-    match /server_logs/{logId} {
-      // Only admins can read server logs
+    match /admin_notifications/{notificationId} {
+      // Authenticated users can create admin notifications (for global broadcasts)
+      allow create: if isAuthenticated() && isITUEmail() &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.title is string &&
+        request.resource.data.body is string &&
+        request.resource.data.createdAt is string;
+
+      // Only admins can read admin notifications
       allow read: if isAdmin();
-      
-      // Only server-side code can write logs (they run with admin privileges)
-      allow write: if false;
+
+      // Only server-side code can update status (Vercel functions with admin privileges)
+      allow update: if false;
+
+      // Only admins can delete failed notifications
+      allow delete: if isAdmin();
+    }
+
+    // ===== EVENT NOTIFICATIONS COLLECTION =====
+    // Pending event notifications to be sent to attendees via Vercel functions
+
+    match /event_notifications/{notificationId} {
+      // Authenticated users can create event notifications (event hosts/admins)
+      allow create: if isAuthenticated() && isITUEmail() &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.eventId is string &&
+        request.resource.data.title is string &&
+        request.resource.data.body is string &&
+        request.resource.data.createdAt is string;
+
+      // Only admins can read event notifications
+      allow read: if isAdmin();
+
+      // Only server-side code can update status (Vercel functions with admin privileges)
+      allow update: if false;
+
+      // Only admins can delete failed notifications
+      allow delete: if isAdmin();
+    }
+
+    // ===== MESSAGE NOTIFICATIONS COLLECTION =====
+    // Pending personal message notifications to be sent via Vercel functions
+
+    match /message_notifications/{notificationId} {
+      // Authenticated users can create message notifications when sending messages
+      allow create: if isAuthenticated() && isITUEmail() &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.recipientId is string &&
+        request.resource.data.senderId == request.auth.uid &&
+        request.resource.data.senderName is string &&
+        request.resource.data.message is string &&
+        request.resource.data.conversationId is string &&
+        request.resource.data.createdAt is string;
+
+      // Only admins can read message notifications
+      allow read: if isAdmin();
+
+      // Only server-side code can update status (Vercel functions with admin privileges)
+      allow update: if false;
+
+      // Only admins can delete failed notifications
+      allow delete: if isAdmin();
+    }
+
+    // ===== FEEDBACK NOTIFICATIONS COLLECTION =====
+    // Pending feedback notifications to be sent to admins via Vercel functions
+
+    match /feedback_notifications/{notificationId} {
+      // Authenticated users can create feedback notifications when submitting feedback
+      allow create: if isAuthenticated() && isITUEmail() &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.userName is string &&
+        request.resource.data.userEmail is string &&
+        request.resource.data.message is string &&
+        request.resource.data.createdAt is string;
+
+      // Only admins can read feedback notifications
+      allow read: if isAdmin();
+
+      // Only server-side code can update status (Vercel functions with admin privileges)
+      allow update: if false;
+
+      // Only admins can delete failed notifications
+      allow delete: if isAdmin();
     }
 
     // ===== DENY ALL OTHER ACCESS =====
