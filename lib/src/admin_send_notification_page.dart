@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'layout_widgets.dart';
+import 'external_config.dart';
 
 class AdminSendNotificationPage extends StatefulWidget {
   const AdminSendNotificationPage({super.key});
@@ -208,7 +209,7 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
 
                         // Send push notifications immediately via Vercel function
                         try {
-                                                    const vercelUrl = 'https://vercel-functions-pheadars-projects.vercel.app/api/send-notification';
+                                                    final vercelUrl = '${ExternalConfig.vercelFunctionsUrl}/api/send-notification';
                           final response = await http.post(
                             Uri.parse(vercelUrl),
                             headers: {'Content-Type': 'application/json'},
