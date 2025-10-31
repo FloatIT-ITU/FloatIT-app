@@ -398,9 +398,10 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
 
       final adminUid = currentUser.uid;
       if (adminUid == userId) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('Cannot send a message to yourself')));
+        }
         return;
       }
       final initialText =

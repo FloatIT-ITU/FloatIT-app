@@ -1086,7 +1086,6 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
               }
 
               // Send push notifications immediately via Vercel function
-              final messenger = ScaffoldMessenger.of(context);
               try {
                 const vercelUrl = 'https://vercel-functions-ohmlzwgw7-pheadars-projects.vercel.app/api/send-notification';
                 final response = await http.post(
@@ -1095,17 +1094,25 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
                   body: jsonEncode({}),
                 );
 
-                if (response.statusCode == 200) {
-                  final result = jsonDecode(response.body);
-                  messenger.showSnackBar(SnackBar(
-                      content: Text('Event notification sent immediately! Processed ${result['results']['event']['processed']} notifications')));
-                } else {
+                if (mounted) {
+                  // ignore: use_build_context_synchronously
+                  final messenger = ScaffoldMessenger.of(context);
+                  if (response.statusCode == 200) {
+                    final result = jsonDecode(response.body);
+                    messenger.showSnackBar(SnackBar(
+                        content: Text('Event notification sent immediately! Processed ${result['results']['event']['processed']} notifications')));
+                  } else {
+                    messenger.showSnackBar(const SnackBar(
+                        content: Text('Banner sent, but push notifications may be delayed')));
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                  // ignore: use_build_context_synchronously
+                  final messenger = ScaffoldMessenger.of(context);
                   messenger.showSnackBar(const SnackBar(
                       content: Text('Banner sent, but push notifications may be delayed')));
                 }
-              } catch (e) {
-                messenger.showSnackBar(const SnackBar(
-                    content: Text('Banner sent, but push notifications may be delayed')));
               }
 
               if (!mounted) return;

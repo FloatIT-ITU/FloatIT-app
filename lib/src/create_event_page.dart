@@ -280,8 +280,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
                                 final picked =
                                     await pickDateTime(context, initial);
                                 if (!mounted) return;
-                                if (picked != null)
+                                if (picked != null) {
                                   setState(() => endTime = picked);
+                                }
                               },
                             ),
                             const SizedBox(height: 12),
@@ -439,12 +440,14 @@ class _CreateEventPageState extends State<CreateEventPage> {
                                 };
 
                                 final ev = Map<String, dynamic>.from(baseData);
-                                if (startTime != null)
+                                if (startTime != null) {
                                   ev['startTime'] =
                                       startTime!.toUtc().toIso8601String();
-                                if (endTime != null)
+                                }
+                                if (endTime != null) {
                                   ev['endTime'] =
                                       endTime!.toUtc().toIso8601String();
+                                }
                                 await FirebaseService.events.add(ev);
 
                                 if (!context.mounted) return;
