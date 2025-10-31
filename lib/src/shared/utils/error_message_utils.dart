@@ -98,7 +98,8 @@ class ErrorMessageUtils {
 
   /// Get a retry action message based on the failure type
   static String getRetryActionMessage(Failure failure) {
-    if (failure is NetworkFailure || failure is DatabaseFailure && failure.code == 'network-error') {
+    if (failure is NetworkFailure ||
+        failure is DatabaseFailure && failure.code == 'network-error') {
       return 'Check your internet connection and try again.';
     } else if (failure is AuthFailure) {
       return 'Please check your credentials and try again.';

@@ -38,7 +38,8 @@ class Attendee {
   }
 
   /// Create from user data (used when building attendee lists)
-  factory Attendee.fromUserData(String id, Map<String, dynamic> userData, bool isAdmin) {
+  factory Attendee.fromUserData(
+      String id, Map<String, dynamic> userData, bool isAdmin) {
     return Attendee(
       id: id,
       name: userData['displayName'] as String? ?? 'Unknown',

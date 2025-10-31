@@ -13,7 +13,8 @@ class PushService {
   StreamSubscription<RemoteMessage>? _msgSub;
 
   /// Expose a broadcast stream of foreground messages for the app to listen to
-  final StreamController<RemoteMessage> _onMessageController = StreamController<RemoteMessage>.broadcast();
+  final StreamController<RemoteMessage> _onMessageController =
+      StreamController<RemoteMessage>.broadcast();
   Stream<RemoteMessage> get onMessageStream => _onMessageController.stream;
 
   /// Request permission and return whether granted
@@ -58,10 +59,10 @@ class PushService {
         .doc(tokenId);
     try {
       await tokenRef.set({
-      'token': token,
-      'platform': 'web',
-      'createdAt': FieldValue.serverTimestamp(),
-      'lastSeen': FieldValue.serverTimestamp(),
+        'token': token,
+        'platform': 'web',
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastSeen': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
       return false;
@@ -101,6 +102,7 @@ class PushService {
     // Stop listeners
     _stopListeners();
   }
+
   void _startTokenRefreshListener(String uid) {
     // Ensure previous subscription removed
     _tokenSub?.cancel();

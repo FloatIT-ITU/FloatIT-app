@@ -77,7 +77,8 @@ class DependencyInjection {
     _signOutUseCase = SignOutUseCase(_authRepository);
     _sendPasswordResetUseCase = SendPasswordResetUseCase(_authRepository);
     _isEmailVerifiedUseCase = IsEmailVerifiedUseCase(_authRepository);
-    _sendEmailVerificationUseCase = SendEmailVerificationUseCase(_authRepository);
+    _sendEmailVerificationUseCase =
+        SendEmailVerificationUseCase(_authRepository);
 
     _getCurrentUserUseCase = GetCurrentUserUseCase(_userRepository);
     _getUserByIdUseCase = GetUserByIdUseCase(_userRepository);
@@ -100,8 +101,10 @@ class DependencyInjection {
     _getEventBannerUseCase = GetEventBannerUseCase(_notificationRepository);
     _setGlobalBannerUseCase = SetGlobalBannerUseCase(_notificationRepository);
     _setEventBannerUseCase = SetEventBannerUseCase(_notificationRepository);
-    _deleteGlobalBannerUseCase = DeleteGlobalBannerUseCase(_notificationRepository);
-    _deleteEventBannerUseCase = DeleteEventBannerUseCase(_notificationRepository);
+    _deleteGlobalBannerUseCase =
+        DeleteGlobalBannerUseCase(_notificationRepository);
+    _deleteEventBannerUseCase =
+        DeleteEventBannerUseCase(_notificationRepository);
   }
 
   // Getters for repositories
@@ -114,17 +117,23 @@ class DependencyInjection {
   SignInUseCase get signInUseCase => _signInUseCase;
   SignUpUseCase get signUpUseCase => _signUpUseCase;
   SignOutUseCase get signOutUseCase => _signOutUseCase;
-  SendPasswordResetUseCase get sendPasswordResetUseCase => _sendPasswordResetUseCase;
+  SendPasswordResetUseCase get sendPasswordResetUseCase =>
+      _sendPasswordResetUseCase;
   IsEmailVerifiedUseCase get isEmailVerifiedUseCase => _isEmailVerifiedUseCase;
-  SendEmailVerificationUseCase get sendEmailVerificationUseCase => _sendEmailVerificationUseCase;
+  SendEmailVerificationUseCase get sendEmailVerificationUseCase =>
+      _sendEmailVerificationUseCase;
 
   GetCurrentUserUseCase get getCurrentUserUseCase => _getCurrentUserUseCase;
   GetUserByIdUseCase get getUserByIdUseCase => _getUserByIdUseCase;
-  GetPublicUserByIdUseCase get getPublicUserByIdUseCase => _getPublicUserByIdUseCase;
-  UpdateUserProfileUseCase get updateUserProfileUseCase => _updateUserProfileUseCase;
+  GetPublicUserByIdUseCase get getPublicUserByIdUseCase =>
+      _getPublicUserByIdUseCase;
+  UpdateUserProfileUseCase get updateUserProfileUseCase =>
+      _updateUserProfileUseCase;
   GetAdminUsersUseCase get getAdminUsersUseCase => _getAdminUsersUseCase;
-  UserDocumentExistsUseCase get userDocumentExistsUseCase => _userDocumentExistsUseCase;
-  CreateUserDocumentUseCase get createUserDocumentUseCase => _createUserDocumentUseCase;
+  UserDocumentExistsUseCase get userDocumentExistsUseCase =>
+      _userDocumentExistsUseCase;
+  CreateUserDocumentUseCase get createUserDocumentUseCase =>
+      _createUserDocumentUseCase;
 
   GetEventsUseCase get getEventsUseCase => _getEventsUseCase;
   GetEventByIdUseCase get getEventByIdUseCase => _getEventByIdUseCase;
@@ -139,6 +148,8 @@ class DependencyInjection {
   GetEventBannerUseCase get getEventBannerUseCase => _getEventBannerUseCase;
   SetGlobalBannerUseCase get setGlobalBannerUseCase => _setGlobalBannerUseCase;
   SetEventBannerUseCase get setEventBannerUseCase => _setEventBannerUseCase;
-  DeleteGlobalBannerUseCase get deleteGlobalBannerUseCase => _deleteGlobalBannerUseCase;
-  DeleteEventBannerUseCase get deleteEventBannerUseCase => _deleteEventBannerUseCase;
+  DeleteGlobalBannerUseCase get deleteGlobalBannerUseCase =>
+      _deleteGlobalBannerUseCase;
+  DeleteEventBannerUseCase get deleteEventBannerUseCase =>
+      _deleteEventBannerUseCase;
 }

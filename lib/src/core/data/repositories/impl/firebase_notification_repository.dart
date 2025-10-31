@@ -51,7 +51,8 @@ class FirebaseNotificationRepository implements NotificationRepository {
   }
 
   @override
-  Future<Result<void>> setEventBanner(String eventId, NotificationBanner banner) async {
+  Future<Result<void>> setEventBanner(
+      String eventId, NotificationBanner banner) async {
     try {
       await FirebaseService.eventBanner(eventId).set(banner.toJson());
       return Result.right(null);

@@ -10,7 +10,8 @@ class AdminEventManagementPage extends StatefulWidget {
   const AdminEventManagementPage({super.key});
 
   @override
-  State<AdminEventManagementPage> createState() => _AdminEventManagementPageState();
+  State<AdminEventManagementPage> createState() =>
+      _AdminEventManagementPageState();
 }
 
 class _AdminEventManagementPageState extends State<AdminEventManagementPage> {
@@ -24,7 +25,8 @@ class _AdminEventManagementPageState extends State<AdminEventManagementPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const StandardPageBanner(title: 'Event Management', showBackArrow: true),
+          const StandardPageBanner(
+              title: 'Event Management', showBackArrow: true),
           Expanded(
             child: ConstrainedContent(
               child: StreamBuilder<QuerySnapshot>(
@@ -37,7 +39,7 @@ class _AdminEventManagementPageState extends State<AdminEventManagementPage> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   final docs = snapshot.data!.docs;
-                  
+
                   // Extract event types for filter
                   final eventTypes = <String>{};
                   for (var doc in docs) {
@@ -51,10 +53,11 @@ class _AdminEventManagementPageState extends State<AdminEventManagementPage> {
                   final events = docs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     final title = (data['name'] ?? '').toString().toLowerCase();
-                    final location = (data['location'] ?? '').toString().toLowerCase();
+                    final location =
+                        (data['location'] ?? '').toString().toLowerCase();
                     final host = (data['host'] ?? '').toString().toLowerCase();
                     final type = (data['type'] ?? '').toString();
-                    
+
                     // Parse event time
                     final startTimeRaw = data['startTime'];
                     DateTime? startTime;
@@ -65,12 +68,13 @@ class _AdminEventManagementPageState extends State<AdminEventManagementPage> {
                     }
 
                     // Search filter
-                    final matchesSearch = title.contains(_search) || 
-                                        location.contains(_search) || 
-                                        host.contains(_search);
+                    final matchesSearch = title.contains(_search) ||
+                        location.contains(_search) ||
+                        host.contains(_search);
 
                     // Type filter
-                    final matchesType = _filterType == 'All' || type == _filterType;
+                    final matchesType =
+                        _filterType == 'All' || type == _filterType;
 
                     // Status filter
                     bool matchesStatus = true;
@@ -94,10 +98,12 @@ class _AdminEventManagementPageState extends State<AdminEventManagementPage> {
                                 Expanded(
                                   child: TextField(
                                     decoration: const InputDecoration(
-                                      labelText: 'Search by name, location, or host',
+                                      labelText:
+                                          'Search by name, location, or host',
                                       prefixIcon: Icon(Icons.search),
                                     ),
-                                    onChanged: (value) => setState(() => _search = value.trim().toLowerCase()),
+                                    onChanged: (value) => setState(() =>
+                                        _search = value.trim().toLowerCase()),
                                   ),
                                 ),
                               ],
@@ -110,8 +116,12 @@ class _AdminEventManagementPageState extends State<AdminEventManagementPage> {
                                     value: _filterType,
                                     hint: const Text('Type'),
                                     isExpanded: true,
-                                    items: typeList.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                                    onChanged: (value) => setState(() => _filterType = value ?? 'All'),
+                                    items: typeList
+                                        .map((e) => DropdownMenuItem(
+                                            value: e, child: Text(e)))
+                                        .toList(),
+                                    onChanged: (value) => setState(
+                                        () => _filterType = value ?? 'All'),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -121,11 +131,16 @@ class _AdminEventManagementPageState extends State<AdminEventManagementPage> {
                                     hint: const Text('Status'),
                                     isExpanded: true,
                                     items: const [
-                                      DropdownMenuItem(value: 'All', child: Text('All')),
-                                      DropdownMenuItem(value: 'Upcoming', child: Text('Upcoming')),
-                                      DropdownMenuItem(value: 'Past', child: Text('Past')),
+                                      DropdownMenuItem(
+                                          value: 'All', child: Text('All')),
+                                      DropdownMenuItem(
+                                          value: 'Upcoming',
+                                          child: Text('Upcoming')),
+                                      DropdownMenuItem(
+                                          value: 'Past', child: Text('Past')),
                                     ],
-                                    onChanged: (value) => setState(() => _filterStatus = value ?? 'All'),
+                                    onChanged: (value) => setState(
+                                        () => _filterStatus = value ?? 'All'),
                                   ),
                                 ),
                               ],
@@ -137,7 +152,8 @@ class _AdminEventManagementPageState extends State<AdminEventManagementPage> {
                         child: ListView.builder(
                           itemCount: events.length,
                           itemBuilder: (context, i) {
-                            final data = events[i].data() as Map<String, dynamic>;
+                            final data =
+                                events[i].data() as Map<String, dynamic>;
                             final eventId = events[i].id;
                             return _EventCard(eventId: eventId, data: data);
                           },
@@ -158,20 +174,20 @@ class _AdminEventManagementPageState extends State<AdminEventManagementPage> {
 class _EventCard extends StatelessWidget {
   final String eventId;
   final Map<String, dynamic> data;
-  
+
   const _EventCard({required this.eventId, required this.data});
 
   Future<String> _getHostName() async {
     final hostId = data['host'] ?? '';
     if (hostId.isEmpty) return 'Unknown Host';
-    
+
     try {
       // Try to get display name from public_users first
       final publicDoc = await FirebaseFirestore.instance
           .collection('public_users')
           .doc(hostId)
           .get();
-      
+
       if (publicDoc.exists) {
         final publicData = publicDoc.data() ?? {};
         final displayName = publicData['displayName'];
@@ -179,13 +195,13 @@ class _EventCard extends StatelessWidget {
           return displayName.toString();
         }
       }
-      
+
       // Fallback to email from users collection
       final privateDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(hostId)
           .get();
-      
+
       if (privateDoc.exists) {
         final privateData = privateDoc.data() ?? {};
         final email = privateData['email'];
@@ -193,7 +209,7 @@ class _EventCard extends StatelessWidget {
           return email.toString();
         }
       }
-      
+
       return 'User $hostId';
     } catch (e) {
       return 'Unknown Host';
@@ -208,7 +224,7 @@ class _EventCard extends StatelessWidget {
     final attendeeLimit = data['attendeeLimit'] ?? 0;
     final attendees = List<String>.from(data['attendees'] ?? []);
     final waitingList = List<String>.from(data['waitingListUids'] ?? []);
-    
+
     // Parse start time
     final startTimeRaw = data['startTime'];
     String startTimeStr = 'Unknown Time';
@@ -216,12 +232,14 @@ class _EventCard extends StatelessWidget {
     if (startTimeRaw is Timestamp) {
       final dt = startTimeRaw.toDate();
       isPast = dt.isBefore(DateTime.now());
-      startTimeStr = '${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      startTimeStr =
+          '${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     } else if (startTimeRaw is String) {
       final dt = DateTime.tryParse(startTimeRaw);
       if (dt != null) {
         isPast = dt.isBefore(DateTime.now());
-        startTimeStr = '${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+        startTimeStr =
+            '${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
       }
     }
 
@@ -230,9 +248,7 @@ class _EventCard extends StatelessWidget {
       child: ExpansionTile(
         leading: Icon(
           isPast ? Icons.event_busy : Icons.event,
-          color: isPast 
-            ? Colors.grey 
-            : Theme.of(context).colorScheme.primary,
+          color: isPast ? Colors.grey : Theme.of(context).colorScheme.primary,
         ),
         title: Text(
           title,
@@ -266,7 +282,8 @@ class _EventCard extends StatelessWidget {
                   children: [
                     Text(
                       'Attendees: ${attendees.length}/${attendeeLimit > 0 ? attendeeLimit : '∞'}',
-                      style: AppTextStyles.body().copyWith(fontWeight: AppFontWeights.bold),
+                      style: AppTextStyles.body()
+                          .copyWith(fontWeight: AppFontWeights.bold),
                     ),
                     if (waitingList.isNotEmpty)
                       Text(
@@ -279,10 +296,12 @@ class _EventCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                if (data['description'] != null && data['description'].toString().isNotEmpty) ...[
+                if (data['description'] != null &&
+                    data['description'].toString().isNotEmpty) ...[
                   Text(
                     'Description:',
-                    style: AppTextStyles.body().copyWith(fontWeight: AppFontWeights.bold),
+                    style: AppTextStyles.body()
+                        .copyWith(fontWeight: AppFontWeights.bold),
                   ),
                   Text(
                     data['description'].toString(),
@@ -304,12 +323,16 @@ class _EventCard extends StatelessWidget {
                       icon: const Icon(Icons.people),
                       label: const Text('Attendees'),
                       onPressed: () {
-                        _showAttendeesDialog(context, eventId, attendees, waitingList);
+                        _showAttendeesDialog(
+                            context, eventId, attendees, waitingList);
                       },
                     ),
                     TextButton.icon(
-                      icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-                      label: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                      icon: Icon(Icons.delete,
+                          color: Theme.of(context).colorScheme.error),
+                      label: Text('Delete',
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.error)),
                       onPressed: () {
                         _showDeleteConfirmation(context, eventId, title);
                       },
@@ -324,14 +347,16 @@ class _EventCard extends StatelessWidget {
     );
   }
 
-  void _showEditDialog(BuildContext context, String eventId, Map<String, dynamic> data) {
+  void _showEditDialog(
+      BuildContext context, String eventId, Map<String, dynamic> data) {
     NavigationUtils.pushWithoutAnimation(
       context,
       EditEventPage(eventId: eventId, eventData: data),
     );
   }
 
-  void _showAttendeesDialog(BuildContext context, String eventId, List<String> attendees, List<String> waitingList) {
+  void _showAttendeesDialog(BuildContext context, String eventId,
+      List<String> attendees, List<String> waitingList) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -345,21 +370,22 @@ class _EventCard extends StatelessWidget {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              
+
               if (snapshot.hasError) {
                 return Text('Error loading attendees: ${snapshot.error}');
               }
-              
+
               final userDetails = snapshot.data ?? {};
-              
+
               return SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (attendees.isNotEmpty) ...[
-                      Text('Attendees (${attendees.length}):', 
-                           style: AppTextStyles.body().copyWith(fontWeight: AppFontWeights.bold)),
+                      Text('Attendees (${attendees.length}):',
+                          style: AppTextStyles.body()
+                              .copyWith(fontWeight: AppFontWeights.bold)),
                       const SizedBox(height: 8),
                       ...attendees.map((uid) {
                         final user = userDetails[uid];
@@ -370,7 +396,9 @@ class _EventCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('• $name', style: AppTextStyles.body().copyWith(fontWeight: AppFontWeights.bold)),
+                              Text('• $name',
+                                  style: AppTextStyles.body().copyWith(
+                                      fontWeight: AppFontWeights.bold)),
                               Text('  $email', style: AppTextStyles.caption()),
                             ],
                           ),
@@ -379,8 +407,9 @@ class _EventCard extends StatelessWidget {
                       const SizedBox(height: 16),
                     ],
                     if (waitingList.isNotEmpty) ...[
-                      Text('Waiting List (${waitingList.length}):', 
-                           style: AppTextStyles.body().copyWith(fontWeight: AppFontWeights.bold)),
+                      Text('Waiting List (${waitingList.length}):',
+                          style: AppTextStyles.body()
+                              .copyWith(fontWeight: AppFontWeights.bold)),
                       const SizedBox(height: 8),
                       ...waitingList.map((uid) {
                         final user = userDetails[uid];
@@ -391,7 +420,9 @@ class _EventCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('• $name', style: AppTextStyles.body().copyWith(fontWeight: AppFontWeights.bold)),
+                              Text('• $name',
+                                  style: AppTextStyles.body().copyWith(
+                                      fontWeight: AppFontWeights.bold)),
                               Text('  $email', style: AppTextStyles.caption()),
                             ],
                           ),
@@ -416,9 +447,10 @@ class _EventCard extends StatelessWidget {
     );
   }
 
-  Future<Map<String, Map<String, dynamic>>> _fetchUserDetails(List<String> userIds) async {
+  Future<Map<String, Map<String, dynamic>>> _fetchUserDetails(
+      List<String> userIds) async {
     final Map<String, Map<String, dynamic>> userDetails = {};
-    
+
     // Fetch user data from both collections to get complete information
     for (String userId in userIds) {
       try {
@@ -427,23 +459,26 @@ class _EventCard extends StatelessWidget {
             .collection('public_users')
             .doc(userId)
             .get();
-        
+
         // Fetch private data (email)
         final privateDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(userId)
             .get();
-        
-        final publicData = publicDoc.exists ? (publicDoc.data() ?? {}) : <String, dynamic>{};
-        final privateData = privateDoc.exists ? (privateDoc.data() ?? {}) : <String, dynamic>{};
-        
+
+        final publicData =
+            publicDoc.exists ? (publicDoc.data() ?? {}) : <String, dynamic>{};
+        final privateData =
+            privateDoc.exists ? (privateDoc.data() ?? {}) : <String, dynamic>{};
+
         // Merge the data, prioritizing public data for display name
         userDetails[userId] = {
-          'displayName': publicData['displayName'] ?? privateData['email'] ?? 'Unknown User',
+          'displayName': publicData['displayName'] ??
+              privateData['email'] ??
+              'Unknown User',
           'email': privateData['email'] ?? 'Unknown Email',
           'occupation': publicData['occupation'] ?? '',
         };
-        
       } catch (e) {
         // If we can't fetch user data, use fallback
         userDetails[userId] = {
@@ -452,16 +487,18 @@ class _EventCard extends StatelessWidget {
         };
       }
     }
-    
+
     return userDetails;
   }
 
-  void _showDeleteConfirmation(BuildContext context, String eventId, String title) {
+  void _showDeleteConfirmation(
+      BuildContext context, String eventId, String title) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Event'),
-        content: Text('Are you sure you want to delete "$title"?\n\nThis action cannot be undone.'),
+        content: Text(
+            'Are you sure you want to delete "$title"?\n\nThis action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -471,10 +508,14 @@ class _EventCard extends StatelessWidget {
             onPressed: () async {
               Navigator.pop(context);
               try {
-                await FirebaseFirestore.instance.collection('events').doc(eventId).delete();
+                await FirebaseFirestore.instance
+                    .collection('events')
+                    .doc(eventId)
+                    .delete();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Event "$title" deleted successfully')),
+                    SnackBar(
+                        content: Text('Event "$title" deleted successfully')),
                   );
                 }
               } catch (e) {
@@ -485,7 +526,8 @@ class _EventCard extends StatelessWidget {
                 }
               }
             },
-            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error),
             child: const Text('Delete'),
           ),
         ],

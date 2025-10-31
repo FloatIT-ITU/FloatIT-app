@@ -18,10 +18,12 @@ Future<DateTime?> pickDateTime(BuildContext context, DateTime? initial) async {
         : TimeOfDay.now(),
     builder: (builderContext, child) {
       final parent = MediaQuery.of(builderContext);
-      return MediaQuery(data: parent.copyWith(alwaysUse24HourFormat: true), child: child!);
+      return MediaQuery(
+          data: parent.copyWith(alwaysUse24HourFormat: true), child: child!);
     },
   );
   if (time == null) return null;
 
-  return DateTime(picked.year, picked.month, picked.day, time.hour, time.minute);
+  return DateTime(
+      picked.year, picked.month, picked.day, time.hour, time.minute);
 }

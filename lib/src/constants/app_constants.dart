@@ -71,7 +71,7 @@ class EventTypes {
   static const String practice = 'practice';
   static const String competition = 'competition';
   static const String other = 'other';
-  
+
   static const List<String> all = [practice, competition, other];
 }
 
@@ -145,9 +145,12 @@ class ButtonSizes {
 
 /// Common error messages
 class ErrorMessages {
-  static const String networkError = 'Network error. Please check your connection.';
-  static const String unknownError = 'An unknown error occurred. Please try again.';
-  static const String authError = 'Authentication failed. Please sign in again.';
+  static const String networkError =
+      'Network error. Please check your connection.';
+  static const String unknownError =
+      'An unknown error occurred. Please try again.';
+  static const String authError =
+      'Authentication failed. Please sign in again.';
   static const String permissionDenied = 'Permission denied. Contact an admin.';
   static const String eventNotFound = 'Event not found.';
   static const String userNotFound = 'User not found.';

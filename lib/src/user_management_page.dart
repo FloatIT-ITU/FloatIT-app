@@ -26,10 +26,12 @@ class _UserManagementPageState extends State<UserManagementPage> {
   String _adminFilter = 'All';
   String _sortBy = 'name';
 
-  Future<Map<String, Map<String, dynamic>?>> _fetchPrivateMap(List<String> ids) async {
+  Future<Map<String, Map<String, dynamic>?>> _fetchPrivateMap(
+      List<String> ids) async {
     final Map<String, Map<String, dynamic>?> result = {};
     for (final id in ids) {
-      final snap = await FirebaseFirestore.instance.collection('users').doc(id).get();
+      final snap =
+          await FirebaseFirestore.instance.collection('users').doc(id).get();
       result[id] = snap.data();
     }
     return result;
@@ -44,11 +46,14 @@ class _UserManagementPageState extends State<UserManagementPage> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const StandardPageBanner(title: 'User Management', showBackArrow: true),
+              const StandardPageBanner(
+                  title: 'User Management', showBackArrow: true),
               Expanded(
                 child: ConstrainedContent(
                   child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance.collection('public_users').snapshots(),
+                    stream: FirebaseFirestore.instance
+                        .collection('public_users')
+                        .snapshots(),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return const Center(child: CircularProgressIndicator());
@@ -59,15 +64,24 @@ class _UserManagementPageState extends State<UserManagementPage> {
                         final occ = (doc['occupation'] ?? '').toString();
                         if (occ.isNotEmpty) occupations.add(occ);
                       }
-                      final occupationList = ['All', ...occupations.toList()..sort()];
+                      final occupationList = [
+                        'All',
+                        ...occupations.toList()..sort()
+                      ];
                       // Initial filter by search and occupation
                       final baseFiltered = docs.where((doc) {
                         final data = doc.data() as Map<String, dynamic>;
-                        final name = (data['displayName'] ?? '').toString().toLowerCase();
-                        final email = (data['email'] ?? '').toString().toLowerCase();
-                        final occupation = (data['occupation'] ?? '').toString();
-                        final matchesSearch = name.contains(_search) || email.contains(_search);
-                        final matchesFilter = _filterOccupation == 'All' || occupation == _filterOccupation;
+                        final name = (data['displayName'] ?? '')
+                            .toString()
+                            .toLowerCase();
+                        final email =
+                            (data['email'] ?? '').toString().toLowerCase();
+                        final occupation =
+                            (data['occupation'] ?? '').toString();
+                        final matchesSearch =
+                            name.contains(_search) || email.contains(_search);
+                        final matchesFilter = _filterOccupation == 'All' ||
+                            occupation == _filterOccupation;
                         return matchesSearch && matchesFilter;
                       }).toList();
 
@@ -77,7 +91,8 @@ class _UserManagementPageState extends State<UserManagementPage> {
                         future: _fetchPrivateMap(ids),
                         builder: (context, privateSnapshot) {
                           if (!privateSnapshot.hasData) {
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                                child: CircularProgressIndicator());
                           }
 
                           final privateMap = privateSnapshot.data!;
@@ -94,8 +109,16 @@ class _UserManagementPageState extends State<UserManagementPage> {
                           // Sort
                           if (_sortBy == 'name') {
                             filtered.sort((a, b) {
-                              final nameA = ((a.data() as Map<String, dynamic>)['displayName'] ?? '').toString().toLowerCase();
-                              final nameB = ((b.data() as Map<String, dynamic>)['displayName'] ?? '').toString().toLowerCase();
+                              final nameA = ((a.data() as Map<String, dynamic>)[
+                                          'displayName'] ??
+                                      '')
+                                  .toString()
+                                  .toLowerCase();
+                              final nameB = ((b.data() as Map<String, dynamic>)[
+                                          'displayName'] ??
+                                      '')
+                                  .toString()
+                                  .toLowerCase();
                               return nameA.compareTo(nameB);
                             });
                           } else if (_sortBy == 'lastLogin') {
@@ -104,8 +127,16 @@ class _UserManagementPageState extends State<UserManagementPage> {
                               final pb = privateMap[b.id];
                               final da = pa?['lastLogin'];
                               final db = pb?['lastLogin'];
-                              final ta = da is Timestamp ? da.toDate().millisecondsSinceEpoch : (da is DateTime ? da.millisecondsSinceEpoch : 0);
-                              final tb = db is Timestamp ? db.toDate().millisecondsSinceEpoch : (db is DateTime ? db.millisecondsSinceEpoch : 0);
+                              final ta = da is Timestamp
+                                  ? da.toDate().millisecondsSinceEpoch
+                                  : (da is DateTime
+                                      ? da.millisecondsSinceEpoch
+                                      : 0);
+                              final tb = db is Timestamp
+                                  ? db.toDate().millisecondsSinceEpoch
+                                  : (db is DateTime
+                                      ? db.millisecondsSinceEpoch
+                                      : 0);
                               return tb.compareTo(ta); // most recent first
                             });
                           }
@@ -122,33 +153,50 @@ class _UserManagementPageState extends State<UserManagementPage> {
                                           labelText: 'Search by name or email',
                                           prefixIcon: Icon(Icons.search),
                                         ),
-                                        onChanged: (value) => setState(() => _search = value.trim().toLowerCase()),
+                                        onChanged: (value) => setState(() =>
+                                            _search =
+                                                value.trim().toLowerCase()),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
                                     DropdownButton<String>(
                                       value: _filterOccupation,
-                                      items: occupationList.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                                      onChanged: (value) => setState(() => _filterOccupation = value ?? 'All'),
+                                      items: occupationList
+                                          .map((e) => DropdownMenuItem(
+                                              value: e, child: Text(e)))
+                                          .toList(),
+                                      onChanged: (value) => setState(() =>
+                                          _filterOccupation = value ?? 'All'),
                                     ),
                                     const SizedBox(width: 8),
                                     DropdownButton<String>(
                                       value: _adminFilter,
                                       items: const [
-                                        DropdownMenuItem<String>(value: 'All', child: Text('All')),
-                                        DropdownMenuItem<String>(value: 'Admins', child: Text('Admins')),
-                                        DropdownMenuItem<String>(value: 'Users', child: Text('Users')),
+                                        DropdownMenuItem<String>(
+                                            value: 'All', child: Text('All')),
+                                        DropdownMenuItem<String>(
+                                            value: 'Admins',
+                                            child: Text('Admins')),
+                                        DropdownMenuItem<String>(
+                                            value: 'Users',
+                                            child: Text('Users')),
                                       ],
-                                      onChanged: (value) => setState(() => _adminFilter = value ?? 'All'),
+                                      onChanged: (value) => setState(
+                                          () => _adminFilter = value ?? 'All'),
                                     ),
                                     const SizedBox(width: 8),
                                     DropdownButton<String>(
                                       value: _sortBy,
                                       items: const [
-                                        DropdownMenuItem<String>(value: 'name', child: Text('Sort: A→Z')),
-                                        DropdownMenuItem<String>(value: 'lastLogin', child: Text('Sort: Last login')),
+                                        DropdownMenuItem<String>(
+                                            value: 'name',
+                                            child: Text('Sort: A→Z')),
+                                        DropdownMenuItem<String>(
+                                            value: 'lastLogin',
+                                            child: Text('Sort: Last login')),
                                       ],
-                                      onChanged: (value) => setState(() => _sortBy = value ?? 'name'),
+                                      onChanged: (value) => setState(
+                                          () => _sortBy = value ?? 'name'),
                                     ),
                                   ],
                                 ),
@@ -157,7 +205,8 @@ class _UserManagementPageState extends State<UserManagementPage> {
                                 child: ListView.builder(
                                   itemCount: filtered.length,
                                   itemBuilder: (context, i) {
-                                    final data = filtered[i].data() as Map<String, dynamic>;
+                                    final data = filtered[i].data()
+                                        as Map<String, dynamic>;
                                     final userId = filtered[i].id;
                                     return _UserCard(
                                       userId: userId,
@@ -286,7 +335,9 @@ class _UserCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                     ],
-                    Expanded(child: Text('Occupation: ${data['occupation'] ?? 'Unknown'}')),
+                    Expanded(
+                        child: Text(
+                            'Occupation: ${data['occupation'] ?? 'Unknown'}')),
                   ],
                 ),
                 Row(
@@ -294,10 +345,14 @@ class _UserCard extends StatelessWidget {
                     Expanded(
                       child: GestureDetector(
                         onTap: () async {
-                          final uri = Uri(scheme: 'mailto', path: email.toString());
+                          final uri =
+                              Uri(scheme: 'mailto', path: email.toString());
                           if (await canLaunchUrl(uri)) await launchUrl(uri);
                         },
-                        child: Text('Email: $email', style: TextStyle(decoration: TextDecoration.underline, color: Theme.of(context).colorScheme.primary)),
+                        child: Text('Email: $email',
+                            style: TextStyle(
+                                decoration: TextDecoration.underline,
+                                color: Theme.of(context).colorScheme.primary)),
                       ),
                     ),
                   ],
@@ -326,7 +381,8 @@ class _UserCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Switch(
                         value: isAdmin,
-                        onChanged: (value) => _toggleAdminStatus(context, value),
+                        onChanged: (value) =>
+                            _toggleAdminStatus(context, value),
                       ),
                     ],
                   )
@@ -343,7 +399,9 @@ class _UserCard extends StatelessWidget {
 
   Future<void> _toggleAdminStatus(BuildContext context, bool makeAdmin) async {
     final displayName = data['displayName'] ?? 'Unknown';
-    final action = makeAdmin ? 'grant admin permissions to' : 'revoke admin permissions from';
+    final action = makeAdmin
+        ? 'grant admin permissions to'
+        : 'revoke admin permissions from';
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -370,7 +428,8 @@ class _UserCard extends StatelessWidget {
         if (currentUser != null) {
           final idToken = await currentUser.getIdToken();
           final response = await http.post(
-            Uri.parse('https://floatit-notifications.tinybo.eu/admin/set-claim'),
+            Uri.parse(
+                'https://floatit-notifications.tinybo.eu/admin/set-claim'),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $idToken',
@@ -384,7 +443,8 @@ class _UserCard extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Successfully ${makeAdmin ? 'granted' : 'revoked'} admin permissions for $displayName'),
+              content: Text(
+                  'Successfully ${makeAdmin ? 'granted' : 'revoked'} admin permissions for $displayName'),
             ),
           );
         }
@@ -404,7 +464,7 @@ class _UserCard extends StatelessWidget {
   Future<void> _editDisplayName(BuildContext context) async {
     final controller = TextEditingController(text: data['displayName'] ?? '');
     final formKey = GlobalKey<FormState>();
-    
+
     final newName = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -436,7 +496,9 @@ class _UserCard extends StatelessWidget {
       ),
     );
 
-    if (newName != null && newName.isNotEmpty && newName != data['displayName']) {
+    if (newName != null &&
+        newName.isNotEmpty &&
+        newName != data['displayName']) {
       try {
         await UserService.updateDisplayName(userId, newName);
         if (context.mounted) {
@@ -486,7 +548,9 @@ class _UserCard extends StatelessWidget {
         title: const Text('Edit Occupation'),
         content: DropdownButton<String>(
           value: selected,
-          items: occupations.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          items: occupations
+              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
           onChanged: (value) => Navigator.of(context).pop(value),
         ),
         actions: [
@@ -590,26 +654,34 @@ class _SendMessageDialogState extends State<_SendMessageDialog> {
 
             if (currentUser == null) {
               messenger.showSnackBar(
-                const SnackBar(content: Text('You must be logged in to send messages')),
+                const SnackBar(
+                    content: Text('You must be logged in to send messages')),
               );
               return;
             }
 
             try {
               final firestore = FirebaseFirestore.instance;
-              
+
               // Generate conversation ID (sorted to ensure consistency)
-              final participants = [currentUser.uid, widget.recipientId]..sort();
+              final participants = [currentUser.uid, widget.recipientId]
+                ..sort();
               final conversationId = participants.join('_');
-              
+
               // Check if conversation exists
-              final conversationDoc = await firestore.collection('messages').doc(conversationId).get();
-              
+              final conversationDoc = await firestore
+                  .collection('messages')
+                  .doc(conversationId)
+                  .get();
+
               final messageId = firestore.collection('messages').doc().id;
-              
+
               if (conversationDoc.exists) {
                 // Update existing conversation
-                await firestore.collection('messages').doc(conversationId).update({
+                await firestore
+                    .collection('messages')
+                    .doc(conversationId)
+                    .update({
                   'messages.$messageId': {
                     'senderId': currentUser.uid,
                     'text': _message.trim(),
@@ -618,18 +690,21 @@ class _SendMessageDialogState extends State<_SendMessageDialog> {
                   'lastMessage': _message.trim(),
                   'lastMessageTime': FieldValue.serverTimestamp(),
                   'unreadCount.${widget.recipientId}': FieldValue.increment(1),
-                  'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+                  'deleteAt': Timestamp.fromDate(
+                      DateTime.now().add(const Duration(days: 15))),
                 });
               } else {
                 // Create new conversation
                 await firestore.collection('messages').doc(conversationId).set({
                   'participants': participants,
-                  'eventId': null, // Regular user conversation, not event-related
+                  'eventId':
+                      null, // Regular user conversation, not event-related
                   'lastMessage': _message.trim(),
                   'lastMessageTime': FieldValue.serverTimestamp(),
                   'unreadCount': {widget.recipientId: 1},
                   'createdAt': FieldValue.serverTimestamp(),
-                  'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+                  'deleteAt': Timestamp.fromDate(
+                      DateTime.now().add(const Duration(days: 15))),
                   'messages': {
                     messageId: {
                       'senderId': currentUser.uid,
@@ -643,7 +718,8 @@ class _SendMessageDialogState extends State<_SendMessageDialog> {
               if (!mounted) return;
               navigator.pop();
               messenger.showSnackBar(
-                SnackBar(content: Text('Message sent to ${widget.recipientName}')),
+                SnackBar(
+                    content: Text('Message sent to ${widget.recipientName}')),
               );
             } catch (e) {
               if (!mounted) return;

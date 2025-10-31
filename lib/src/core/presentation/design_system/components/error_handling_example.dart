@@ -60,7 +60,8 @@ class ErrorHandlingExample extends StatelessWidget {
     );
   }
 
-  void _refreshEvents(BuildContext context, EventsProvider eventsProvider) async {
+  void _refreshEvents(
+      BuildContext context, EventsProvider eventsProvider) async {
     try {
       await eventsProvider.refreshEvents();
     } catch (error) {
@@ -80,7 +81,8 @@ class ErrorHandlingExample extends StatelessWidget {
     }
   }
 
-  void _handleEventTap(BuildContext context, EventsProvider eventsProvider, String eventId) async {
+  void _handleEventTap(BuildContext context, EventsProvider eventsProvider,
+      String eventId) async {
     final event = await eventsProvider.loadEventById(eventId);
 
     if (event != null) {

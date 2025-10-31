@@ -105,7 +105,8 @@ class FloatITSecondaryButton extends StatelessWidget {
                 height: FloatITSpacing.iconMd,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(FloatITColors.primary),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(FloatITColors.primary),
                 ),
               )
             : Row(
@@ -152,7 +153,8 @@ class FloatITTextButton extends StatelessWidget {
               height: FloatITSpacing.iconMd,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(FloatITColors.primary),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(FloatITColors.primary),
               ),
             )
           : Row(

@@ -27,7 +27,7 @@ class _MainAppViewState extends State<MainAppView> {
   bool _isAdmin = false;
   bool _hasUnreadFeedback = false;
   StreamSubscription<QuerySnapshot>? _feedbackSubscription;
-  
+
   @override
   void initState() {
     super.initState();
@@ -36,35 +36,36 @@ class _MainAppViewState extends State<MainAppView> {
       _preloadData();
     });
   }
-  
+
   @override
   void dispose() {
     _feedbackSubscription?.cancel();
     super.dispose();
   }
-  
+
   Future<void> _preloadData() async {
     // Store providers before async operation to avoid BuildContext issues
-    final userProvider = Provider.of<UserProfileProvider>(context, listen: false);
-    final pendingProvider = Provider.of<PendingRequestsProvider>(context, listen: false);
-    
+    final userProvider =
+        Provider.of<UserProfileProvider>(context, listen: false);
+    final pendingProvider =
+        Provider.of<PendingRequestsProvider>(context, listen: false);
+
     try {
       if (mounted) setState(() => _loadingMessage = 'Loading user data...');
-      
+
       // Load user profile
       await userProvider.loadUserProfile();
-      
+
       // Wait a bit for notifications to load (they load via streams)
       if (mounted) setState(() => _loadingMessage = 'Loading notifications...');
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       // Load pending requests (will only load if user is admin)
       if (mounted) setState(() => _loadingMessage = 'Loading admin data...');
       await pendingProvider.loadForCurrentUser();
-      
+
       // Brief pause to ensure smooth transition
       await Future.delayed(const Duration(milliseconds: 200));
-      
     } catch (e) {
       // Continue even if some data fails to load
     } finally {
@@ -73,13 +74,13 @@ class _MainAppViewState extends State<MainAppView> {
       if (_isAdmin) {
         _setupFeedbackListener();
       }
-      
+
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
   }
-  
+
   void _openSettings() {
     NavigationUtils.pushWithoutAnimation(
       context,
@@ -180,61 +181,62 @@ class _MainAppViewState extends State<MainAppView> {
                 child: Container(
                   height: kToolbarHeight,
                   width: 720, // kContentMaxWidth
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 4.0),
                   decoration: const BoxDecoration(
                     color: Colors.transparent,
                   ),
                   child: SafeArea(
                     child: Row(
-                    children: [
-                      // Centered title with icon (like StandardPageBanner)
-                      Expanded(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            ThemeAwareAppIcon(
-                              width: 28,
-                              height: 28,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Events',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w500,
+                      children: [
+                        // Centered title with icon (like StandardPageBanner)
+                        Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              ThemeAwareAppIcon(
+                                width: 28,
+                                height: 28,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Settings button on the right
-                      IconButton(
-                        icon: Stack(
-                          children: [
-                            const Icon(Icons.settings),
-                            if (_isAdmin && _hasUnreadFeedback)
-                              Positioned(
-                                right: 0,
-                                top: 0,
-                                child: Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Events',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                          ],
+                            ],
+                          ),
                         ),
-                        onPressed: _openSettings,
-                        tooltip: 'Settings',
-                      ),
-                    ],
+                        // Settings button on the right
+                        IconButton(
+                          icon: Stack(
+                            children: [
+                              const Icon(Icons.settings),
+                              if (_isAdmin && _hasUnreadFeedback)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          onPressed: _openSettings,
+                          tooltip: 'Settings',
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
               ),
               // Global banners
               ...bannerWidgets,

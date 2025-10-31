@@ -10,18 +10,18 @@ import 'package:floatit/src/layout_widgets.dart';
 /// A persistent banner that displays the pool status at the bottom of the screen
 class PoolStatusBanner extends StatelessWidget {
   const PoolStatusBanner({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return Consumer<PoolStatusProvider>(
       builder: (context, provider, child) {
         final status = provider.currentStatus;
-        
+
         // Don't show banner if there's no status
         if (status == null || status.isEmpty) {
           return const SizedBox.shrink();
         }
-        
+
         final isNormal = provider.isNormalStatus;
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final backgroundColor = !isNormal
@@ -39,7 +39,7 @@ class PoolStatusBanner extends StatelessWidget {
             : isDark
                 ? AppThemeColors.bannerEventTextDark
                 : AppThemeColors.bannerEventTextLight;
-        
+
         return Material(
           elevation: 4,
           child: Container(
@@ -80,8 +80,10 @@ class PoolStatusBanner extends StatelessWidget {
                             child: GestureDetector(
                               onTap: () {
                                 // Open the Sundby Bad website
-                                final uri = Uri.parse('https://svoemkbh.kk.dk/svoemmeanlaeg/svoemmehaller/sundby-bad');
-                                launchUrl(uri, mode: LaunchMode.externalApplication);
+                                final uri = Uri.parse(
+                                    'https://svoemkbh.kk.dk/svoemmeanlaeg/svoemmehaller/sundby-bad');
+                                launchUrl(uri,
+                                    mode: LaunchMode.externalApplication);
                               },
                               child: Text(
                                 'Status',
@@ -105,18 +107,22 @@ class PoolStatusBanner extends StatelessWidget {
                       color: iconColor,
                       size: 20,
                     ),
-                    onPressed: provider.isLoading ? null : () {
-                      final user = FirebaseAuth.instance.currentUser;
-                      if (user == null) return;
-                      
-                      final rateLimitService = RateLimitService.instance;
-                      if (!rateLimitService.isActionAllowed(user.uid, RateLimitAction.poolRefresh)) {
-                        return;
-                      }
-                      
-                      rateLimitService.recordAction(user.uid, RateLimitAction.poolRefresh);
-                      provider.forceRefresh(user.uid);
-                    },
+                    onPressed: provider.isLoading
+                        ? null
+                        : () {
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user == null) return;
+
+                            final rateLimitService = RateLimitService.instance;
+                            if (!rateLimitService.isActionAllowed(
+                                user.uid, RateLimitAction.poolRefresh)) {
+                              return;
+                            }
+
+                            rateLimitService.recordAction(
+                                user.uid, RateLimitAction.poolRefresh);
+                            provider.forceRefresh(user.uid);
+                          },
                     tooltip: 'Refresh status',
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(

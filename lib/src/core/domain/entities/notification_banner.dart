@@ -116,7 +116,8 @@ class NotificationBanner {
       id: id,
       title: json['title'] as String? ?? '',
       body: json['body'] as String?,
-      backgroundColor: Color(json['backgroundColor'] as int? ?? Colors.orange.value),
+      backgroundColor:
+          Color(json['backgroundColor'] as int? ?? Colors.orange.value),
       isGlobal: json['isGlobal'] as bool? ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String)

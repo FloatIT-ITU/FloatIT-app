@@ -70,13 +70,10 @@ class _EventsPageContentState extends State<EventsPageContent> {
 
     // Also emit filtered docs when timer fires (for time-based filtering)
     timerStream.listen((_) {
-      FirebaseService.events
-          .orderBy('startTime')
-          .get()
-          .then((snapshot) {
-            final docs = snapshot.docs;
-            _eventsController.add(_filterEvents(docs));
-          });
+      FirebaseService.events.orderBy('startTime').get().then((snapshot) {
+        final docs = snapshot.docs;
+        _eventsController.add(_filterEvents(docs));
+      });
     });
 
     _filteredEventsStream = _eventsController.stream;
@@ -95,7 +92,9 @@ class _EventsPageContentState extends State<EventsPageContent> {
     if (typeFilter != 'all') {
       events = events.where((doc) {
         final data = doc.data() as Map<String, dynamic>?;
-        final t = data != null && data.containsKey('type') ? data['type'] : (doc['type'] as String?);
+        final t = data != null && data.containsKey('type')
+            ? data['type']
+            : (doc['type'] as String?);
         return t == typeFilter;
       });
     }
@@ -106,132 +105,144 @@ class _EventsPageContentState extends State<EventsPageContent> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<DocumentSnapshot>>(
-        stream: _filteredEventsStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final eventsList = snapshot.hasData ? snapshot.data! : <DocumentSnapshot>[];
+      stream: _filteredEventsStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final eventsList =
+            snapshot.hasData ? snapshot.data! : <DocumentSnapshot>[];
 
-          return ConstrainedContent(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Filter and messages buttons at the top — always render the row
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Row(
-                    children: [
-                      // Messages button on the left (same position as back button)
-                      StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseAuth.instance.currentUser != null
-                            ? FirebaseFirestore.instance
-                                .collection('messages')
-                                .where('participants', arrayContains: FirebaseAuth.instance.currentUser!.uid)
-                                .snapshots()
-                            : null,
-                        builder: (context, snapshot) {
-                          int totalUnread = 0;
-                          if (snapshot.hasData) {
-                            for (var doc in snapshot.data!.docs) {
-                              final data = doc.data() as Map<String, dynamic>;
-                              final unreadCount = (data['unreadCount'] as Map<String, dynamic>?)?[FirebaseAuth.instance.currentUser!.uid] as int? ?? 0;
-                              totalUnread += unreadCount;
-                            }
+        return ConstrainedContent(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Filter and messages buttons at the top — always render the row
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    // Messages button on the left (same position as back button)
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseAuth.instance.currentUser != null
+                          ? FirebaseFirestore.instance
+                              .collection('messages')
+                              .where('participants',
+                                  arrayContains:
+                                      FirebaseAuth.instance.currentUser!.uid)
+                              .snapshots()
+                          : null,
+                      builder: (context, snapshot) {
+                        int totalUnread = 0;
+                        if (snapshot.hasData) {
+                          for (var doc in snapshot.data!.docs) {
+                            final data = doc.data() as Map<String, dynamic>;
+                            final unreadCount = (data['unreadCount']
+                                            as Map<String, dynamic>?)?[
+                                        FirebaseAuth.instance.currentUser!.uid]
+                                    as int? ??
+                                0;
+                            totalUnread += unreadCount;
                           }
-                          return Stack(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.mail_outline),
-                                onPressed: _openMessages,
-                                tooltip: 'Messages',
-                              ),
-                              if (totalUnread > 0)
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(10),
+                        }
+                        return Stack(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.mail_outline),
+                              onPressed: _openMessages,
+                              tooltip: 'Messages',
+                            ),
+                            if (totalUnread > 0)
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    totalUnread > 99 ? '99+' : '$totalUnread',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    constraints: const BoxConstraints(
-                                      minWidth: 16,
-                                      minHeight: 16,
-                                    ),
-                                    child: Text(
-                                      totalUnread > 99 ? '99+' : '$totalUnread',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
-                            ],
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                    // Spacer to push filter dropdown to the right
+                    const Expanded(child: SizedBox()),
+                    // Filter dropdown on the right — always visible
+                    SizedBox(
+                      width: 150,
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedEventType,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          border: InputBorder.none,
+                          filled: false,
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'all', child: Text('All')),
+                          DropdownMenuItem(
+                              value: 'practice', child: Text('Practice')),
+                          DropdownMenuItem(
+                              value: 'competition', child: Text('Competition')),
+                          DropdownMenuItem(
+                              value: 'other', child: Text('Other')),
+                        ],
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() {
+                            _selectedEventType = v;
+                          });
+                          // Emit new filtered data immediately when filter changes
+                          FirebaseService.events
+                              .orderBy('startTime')
+                              .get()
+                              .then((snapshot) {
+                            final docs = snapshot.docs;
+                            _eventsController.add(_filterEvents(docs));
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Event list or empty message — keep filter visible above
+              Expanded(
+                child: eventsList.isEmpty
+                    ? const Center(child: Text('No upcoming events!'))
+                    : ListView.builder(
+                        itemCount: eventsList.length,
+                        itemBuilder: (context, i) {
+                          final doc = eventsList[i];
+                          final eventId = doc.id;
+                          return _EventCard(
+                            key: ValueKey(eventId),
+                            eventId: eventId,
                           );
                         },
                       ),
-                      // Spacer to push filter dropdown to the right
-                      const Expanded(child: SizedBox()),
-                      // Filter dropdown on the right — always visible
-                      SizedBox(
-                        width: 150,
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedEventType,
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            border: InputBorder.none,
-                            filled: false,
-                          ),
-                          items: const [
-                            DropdownMenuItem(value: 'all', child: Text('All')),
-                            DropdownMenuItem(value: 'practice', child: Text('Practice')),
-                            DropdownMenuItem(value: 'competition', child: Text('Competition')),
-                            DropdownMenuItem(value: 'other', child: Text('Other')),
-                          ],
-                          onChanged: (v) {
-                            if (v == null) return;
-                            setState(() {
-                              _selectedEventType = v;
-                            });
-                            // Emit new filtered data immediately when filter changes
-                            FirebaseService.events
-                                .orderBy('startTime')
-                                .get()
-                                .then((snapshot) {
-                                  final docs = snapshot.docs;
-                                  _eventsController.add(_filterEvents(docs));
-                                });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Event list or empty message — keep filter visible above
-                Expanded(
-                  child: eventsList.isEmpty
-                      ? const Center(child: Text('No upcoming events!'))
-                      : ListView.builder(
-                          itemCount: eventsList.length,
-                          itemBuilder: (context, i) {
-                            final doc = eventsList[i];
-                            final eventId = doc.id;
-                            return _EventCard(
-                              key: ValueKey(eventId),
-                              eventId: eventId,
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-          );
-        },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -259,7 +270,9 @@ class _EventCard extends StatelessWidget {
         if (eventData == null) return const SizedBox.shrink();
 
         // Card content - ALL data from real-time stream
-        final start = DateTime.tryParse(eventData['startTime']?.toString() ?? '')?.toLocal();
+        final start =
+            DateTime.tryParse(eventData['startTime']?.toString() ?? '')
+                ?.toLocal();
         final eventName = eventData['name'] ?? 'Untitled Event';
         final now = DateTime.now();
         String eventDate = '';
@@ -278,13 +291,15 @@ class _EventCard extends StatelessWidget {
           builder: (context, bannerSnapshot) {
             Widget? bannerSection;
             if (bannerSnapshot.hasData && bannerSnapshot.data!.exists) {
-              final bannerData = bannerSnapshot.data!.data() as Map<String, dynamic>?;
+              final bannerData =
+                  bannerSnapshot.data!.data() as Map<String, dynamic>?;
               if (bannerData != null &&
                   ((bannerData['title'] ?? '').toString().isNotEmpty ||
-                   (bannerData['body'] ?? '').toString().isNotEmpty)) {
+                      (bannerData['body'] ?? '').toString().isNotEmpty)) {
                 bannerSection = Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                   decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? AppThemeColors.bannerEventDark
@@ -305,9 +320,10 @@ class _EventCard extends StatelessWidget {
                         Text(
                           bannerData['title'] ?? '',
                           style: TextStyle(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? AppThemeColors.bannerEventTextDark
-                                : AppThemeColors.bannerEventTextLight,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? AppThemeColors.bannerEventTextDark
+                                    : AppThemeColors.bannerEventTextLight,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -317,7 +333,8 @@ class _EventCard extends StatelessWidget {
                             child: Text(
                               bannerData['body'] ?? '',
                               style: TextStyle(
-                                color: Theme.of(context).brightness == Brightness.dark
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? AppThemeColors.bannerEventTextDark
                                     : AppThemeColors.bannerEventTextLight,
                               ),
@@ -355,10 +372,34 @@ class _EventCard extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(eventName, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                                Text(eventName,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                            fontWeight: FontWeight.w600)),
                                 const SizedBox(height: 4),
-                                if (eventDate.isNotEmpty) Text('$eventDate${eventTime.isNotEmpty ? ' at $eventTime' : ''}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                                if (location.isNotEmpty) ...[const SizedBox(height: 2), Text(location, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant))],
+                                if (eventDate.isNotEmpty)
+                                  Text(
+                                      '$eventDate${eventTime.isNotEmpty ? ' at $eventTime' : ''}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant)),
+                                if (location.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(location,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant))
+                                ],
                               ],
                             ),
                           ),
@@ -367,33 +408,50 @@ class _EventCard extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 AttendanceBadge(
-                                  attending: (eventData['attendees'] as List<dynamic>?)?.contains(user.uid) ?? false,
-                                  waiting: (eventData['waitingListUids'] as List<dynamic>?)?.contains(user.uid) ?? false,
+                                  attending:
+                                      (eventData['attendees'] as List<dynamic>?)
+                                              ?.contains(user.uid) ??
+                                          false,
+                                  waiting: (eventData['waitingListUids']
+                                              as List<dynamic>?)
+                                          ?.contains(user.uid) ??
+                                      false,
                                   hosting: eventData['host'] == user.uid,
                                 ),
                                 const SizedBox(height: 8),
                                 // Display attendee count
                                 Builder(
                                   builder: (context) {
-                                    final attendees = eventData['attendees'] as List<dynamic>? ?? [];
-                                    final hostUid = eventData['host'] as String?;
-                                    final attendeeCount = hostUid != null && hostUid.isNotEmpty && !attendees.contains(hostUid)
+                                    final attendees = eventData['attendees']
+                                            as List<dynamic>? ??
+                                        [];
+                                    final hostUid =
+                                        eventData['host'] as String?;
+                                    final attendeeCount = hostUid != null &&
+                                            hostUid.isNotEmpty &&
+                                            !attendees.contains(hostUid)
                                         ? attendees.length + 1
                                         : attendees.length;
-                                    final attendeeLimit = eventData['attendeeLimit'] ?? 0;
-                                    final attendeeText = attendeeLimit == 0 
-                                        ? '$attendeeCount attendees' 
+                                    final attendeeLimit =
+                                        eventData['attendeeLimit'] ?? 0;
+                                    final attendeeText = attendeeLimit == 0
+                                        ? '$attendeeCount attendees'
                                         : '$attendeeCount/$attendeeLimit attendees';
                                     return Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.primaryContainer,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer,
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
                                         attendeeText,
                                         style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimaryContainer,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 12,
                                         ),

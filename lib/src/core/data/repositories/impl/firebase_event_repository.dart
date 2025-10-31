@@ -31,7 +31,8 @@ class FirebaseEventRepository implements EventRepository {
         return Result.left(DatabaseFailure.notFound());
       }
 
-      final event = Event.fromJson(eventId, eventDoc.data()! as Map<String, dynamic>);
+      final event =
+          Event.fromJson(eventId, eventDoc.data()! as Map<String, dynamic>);
       return Result.right(event);
     } catch (e) {
       return Result.left(DatabaseFailure.unknown());
@@ -81,7 +82,8 @@ class FirebaseEventRepository implements EventRepository {
 
         final eventData = eventSnap.data()! as Map<String, dynamic>;
         final attendees = List<String>.from(eventData['attendees'] ?? []);
-        final waitingList = List<String>.from(eventData['waitingListUids'] ?? []);
+        final waitingList =
+            List<String>.from(eventData['waitingListUids'] ?? []);
         final maxAttendees = eventData['attendeeLimit'] as int? ?? 10;
 
         // Remove from waiting list if present
@@ -103,10 +105,13 @@ class FirebaseEventRepository implements EventRepository {
         final eventSnap = await FirebaseService.eventDoc(eventId).get();
         final eventData = eventSnap.data() as Map<String, dynamic>?;
         final startTimeStr = eventData?['startTime'] as String?;
-        final eventDate = startTimeStr != null ? DateTime.tryParse(startTimeStr)?.toLocal() : null;
+        final eventDate = startTimeStr != null
+            ? DateTime.tryParse(startTimeStr)?.toLocal()
+            : null;
 
         if (eventDate != null) {
-          await UserStatisticsService.recordEventJoin(userId, eventId, eventDate);
+          await UserStatisticsService.recordEventJoin(
+              userId, eventId, eventDate);
         }
       } catch (e) {
         // Statistics recording failed - non-critical, don't throw
@@ -133,7 +138,8 @@ class FirebaseEventRepository implements EventRepository {
 
         final eventData = eventSnap.data()! as Map<String, dynamic>;
         final attendees = List<String>.from(eventData['attendees'] ?? []);
-        final waitingList = List<String>.from(eventData['waitingListUids'] ?? []);
+        final waitingList =
+            List<String>.from(eventData['waitingListUids'] ?? []);
         final attendeeLimit = eventData['attendeeLimit'] as int? ?? 0;
 
         // Remove from both lists
@@ -158,11 +164,12 @@ class FirebaseEventRepository implements EventRepository {
           final eventSnap = await FirebaseService.eventDoc(eventId).get();
           final eventData = eventSnap.data() as Map<String, dynamic>?;
           final eventName = eventData?['name'] ?? 'Event';
-          
+
           // Import the EventService to use sendSystemMessage
           await EventService.sendSystemMessage(
             userId: promotedUserId!,
-            message: 'Great news! You\'ve been promoted from the waiting list to attendee for "$eventName".',
+            message:
+                'Great news! You\'ve been promoted from the waiting list to attendee for "$eventName".',
             eventId: eventId,
           );
         } catch (e) {
@@ -188,8 +195,10 @@ class FirebaseEventRepository implements EventRepository {
   Future<Result<List<Event>>> getUserEvents(String userId) async {
     try {
       // Get events where user is host or attendee
-      final hostEventsQuery = FirebaseService.events.where('host', isEqualTo: userId);
-      final attendeeEventsQuery = FirebaseService.events.where('attendees', arrayContains: userId);
+      final hostEventsQuery =
+          FirebaseService.events.where('host', isEqualTo: userId);
+      final attendeeEventsQuery =
+          FirebaseService.events.where('attendees', arrayContains: userId);
 
       final [hostSnapshot, attendeeSnapshot] = await Future.wait([
         hostEventsQuery.get(),
@@ -203,7 +212,8 @@ class FirebaseEventRepository implements EventRepository {
       for (final doc in hostSnapshot.docs) {
         if (!eventIds.contains(doc.id)) {
           eventIds.add(doc.id);
-          events.add(Event.fromJson(doc.id, doc.data() as Map<String, dynamic>));
+          events
+              .add(Event.fromJson(doc.id, doc.data() as Map<String, dynamic>));
         }
       }
 
@@ -211,7 +221,8 @@ class FirebaseEventRepository implements EventRepository {
       for (final doc in attendeeSnapshot.docs) {
         if (!eventIds.contains(doc.id)) {
           eventIds.add(doc.id);
-          events.add(Event.fromJson(doc.id, doc.data() as Map<String, dynamic>));
+          events
+              .add(Event.fromJson(doc.id, doc.data() as Map<String, dynamic>));
         }
       }
 
@@ -243,7 +254,8 @@ class FirebaseEventRepository implements EventRepository {
           return Result.left(DatabaseFailure.notFound());
         }
 
-        final event = Event.fromJson(eventId, snapshot.data()! as Map<String, dynamic>);
+        final event =
+            Event.fromJson(eventId, snapshot.data()! as Map<String, dynamic>);
         return Result.right(event);
       } catch (e) {
         return Result.left(DatabaseFailure.unknown());

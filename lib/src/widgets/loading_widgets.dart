@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 /// Reusable loading widgets and state management patterns for async operations
 class LoadingWidgets {
   LoadingWidgets._();
-  
+
   /// Standard loading indicator with optional message
   static Widget loadingIndicator({String? message, double size = 48}) {
     return Center(
@@ -22,7 +22,7 @@ class LoadingWidgets {
       ),
     );
   }
-  
+
   /// Inline loading indicator (for buttons, smaller spaces)
   static Widget inlineLoading({double size = 16, Color? color}) {
     return SizedBox(
@@ -31,7 +31,7 @@ class LoadingWidgets {
       child: AppLoadingIcon(size: size),
     );
   }
-  
+
   /// Loading scaffold (full screen loading)
   static Widget loadingScaffold({
     String? message,
@@ -42,7 +42,7 @@ class LoadingWidgets {
       body: loadingIndicator(message: message),
     );
   }
-  
+
   /// Error widget with retry button
   static Widget errorWidget(
     BuildContext context, {
@@ -56,11 +56,8 @@ class LoadingWidgets {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline, 
-              size: 48, 
-              color: AppThemeColors.text(context).withOpacity(0.5)
-            ),
+            Icon(Icons.error_outline,
+                size: 48, color: AppThemeColors.text(context).withOpacity(0.5)),
             const SizedBox(height: 16),
             Text(
               message,
@@ -79,7 +76,7 @@ class LoadingWidgets {
       ),
     );
   }
-  
+
   /// Empty state widget
   static Widget emptyState(
     BuildContext context, {
@@ -94,11 +91,8 @@ class LoadingWidgets {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon, 
-              size: 64, 
-              color: AppThemeColors.text(context).withOpacity(0.5)
-            ),
+            Icon(icon,
+                size: 64, color: AppThemeColors.text(context).withOpacity(0.5)),
             const SizedBox(height: 16),
             Text(
               message,
@@ -126,12 +120,12 @@ enum AsyncState { idle, loading, success, error }
 mixin AsyncOperationsMixin<T extends StatefulWidget> on State<T> {
   AsyncState _asyncState = AsyncState.idle;
   String? _errorMessage;
-  
+
   AsyncState get asyncState => _asyncState;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _asyncState == AsyncState.loading;
   bool get hasError => _asyncState == AsyncState.error;
-  
+
   /// Execute an async operation with automatic state management
   Future<R?> executeAsync<R>(
     Future<R> Function() operation, {
@@ -145,36 +139,36 @@ mixin AsyncOperationsMixin<T extends StatefulWidget> on State<T> {
         _errorMessage = null;
       });
     }
-    
+
     try {
       final result = await operation();
-      
+
       if (mounted) {
         setState(() {
           _asyncState = AsyncState.success;
           _errorMessage = null;
         });
-        
+
         onSuccess?.call(result);
       }
-      
+
       return result;
     } catch (e) {
       final error = e.toString();
-      
+
       if (mounted) {
         setState(() {
           _asyncState = AsyncState.error;
           _errorMessage = error;
         });
-        
+
         onError?.call(error);
       }
-      
+
       return null;
     }
   }
-  
+
   /// Reset async state
   void resetAsyncState() {
     setState(() {
@@ -182,7 +176,7 @@ mixin AsyncOperationsMixin<T extends StatefulWidget> on State<T> {
       _errorMessage = null;
     });
   }
-  
+
   /// Show loading indicator if loading, otherwise show content
   Widget buildWithAsyncState({
     required Widget Function() builder,
@@ -194,8 +188,8 @@ mixin AsyncOperationsMixin<T extends StatefulWidget> on State<T> {
         return LoadingWidgets.loadingIndicator(message: loadingMessage);
       case AsyncState.error:
         final error = _errorMessage ?? 'An error occurred';
-        return errorBuilder?.call(error) ?? 
-               LoadingWidgets.errorWidget(context, message: error);
+        return errorBuilder?.call(error) ??
+            LoadingWidgets.errorWidget(context, message: error);
       default:
         return builder();
     }
@@ -209,7 +203,7 @@ class StreamBuilderWrapper<T> extends StatelessWidget {
   final Widget Function(BuildContext context, Object error)? errorBuilder;
   final Widget Function(BuildContext context)? loadingBuilder;
   final T? initialData;
-  
+
   const StreamBuilderWrapper({
     super.key,
     required this.stream,
@@ -218,7 +212,7 @@ class StreamBuilderWrapper<T> extends StatelessWidget {
     this.loadingBuilder,
     this.initialData,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<T>(
@@ -227,22 +221,22 @@ class StreamBuilderWrapper<T> extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return errorBuilder?.call(context, snapshot.error!) ??
-                 LoadingWidgets.errorWidget(
-                   context,
-                   message: 'Error: ${snapshot.error}',
-                 );
+              LoadingWidgets.errorWidget(
+                context,
+                message: 'Error: ${snapshot.error}',
+              );
         }
-        
+
         if (!snapshot.hasData) {
           return loadingBuilder?.call(context) ??
-                 LoadingWidgets.loadingIndicator();
+              LoadingWidgets.loadingIndicator();
         }
-        
+
         final data = snapshot.data;
         if (data == null) {
           return LoadingWidgets.errorWidget(context, message: 'Data is null');
         }
-        
+
         return builder(context, data);
       },
     );
@@ -256,7 +250,7 @@ class FutureBuilderWrapper<T> extends StatelessWidget {
   final Widget Function(BuildContext context, Object error)? errorBuilder;
   final Widget Function(BuildContext context)? loadingBuilder;
   final T? initialData;
-  
+
   const FutureBuilderWrapper({
     super.key,
     required this.future,
@@ -265,7 +259,7 @@ class FutureBuilderWrapper<T> extends StatelessWidget {
     this.loadingBuilder,
     this.initialData,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<T>(
@@ -274,29 +268,29 @@ class FutureBuilderWrapper<T> extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return errorBuilder?.call(context, snapshot.error!) ??
-                 LoadingWidgets.errorWidget(
-                   context,
-                   message: 'Error: ${snapshot.error}',
-                 );
+              LoadingWidgets.errorWidget(
+                context,
+                message: 'Error: ${snapshot.error}',
+              );
         }
-        
+
         if (snapshot.connectionState == ConnectionState.waiting) {
           return loadingBuilder?.call(context) ??
-                 LoadingWidgets.loadingIndicator();
+              LoadingWidgets.loadingIndicator();
         }
-        
+
         if (!snapshot.hasData) {
           return LoadingWidgets.emptyState(
             context,
             message: 'No data available',
           );
         }
-        
+
         final data = snapshot.data;
         if (data == null) {
           return LoadingWidgets.errorWidget(context, message: 'Data is null');
         }
-        
+
         return builder(context, data);
       },
     );
@@ -308,19 +302,24 @@ class AppLoadingIcon extends StatefulWidget {
   final double size;
   final Duration duration;
 
-  const AppLoadingIcon({super.key, this.size = 48, this.duration = const Duration(milliseconds: 1200)});
+  const AppLoadingIcon(
+      {super.key,
+      this.size = 48,
+      this.duration = const Duration(milliseconds: 1200)});
 
   @override
   State<AppLoadingIcon> createState() => _AppLoadingIconState();
 }
 
-class _AppLoadingIconState extends State<AppLoadingIcon> with SingleTickerProviderStateMixin {
+class _AppLoadingIconState extends State<AppLoadingIcon>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration)..repeat();
+    _controller = AnimationController(vsync: this, duration: widget.duration)
+      ..repeat();
   }
 
   @override
@@ -361,7 +360,8 @@ class ThemeAwareAppIcon extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         final isDark = themeProvider.isDark;
-        final iconPath = isDark ? 'assets/float_it_dark_mode.png' : 'assets/float_it.png';
+        final iconPath =
+            isDark ? 'assets/float_it_dark_mode.png' : 'assets/float_it.png';
 
         return Image.asset(
           iconPath,

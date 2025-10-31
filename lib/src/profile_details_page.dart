@@ -23,7 +23,8 @@ class ProfileDetailsPage extends StatelessWidget {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const StandardPageBanner(title: 'Your profile', showBackArrow: true),
+              const StandardPageBanner(
+                  title: 'Your profile', showBackArrow: true),
               Expanded(
                 child: ConstrainedContent(
                   child: SingleChildScrollView(
@@ -54,13 +55,17 @@ class ProfileDetailsPage extends StatelessWidget {
                                     selectedColor != profile.iconColor) {
                                   if (context.mounted) {
                                     try {
-                                      await Provider.of<UserProfileProvider>(context,
+                                      await Provider.of<UserProfileProvider>(
+                                              context,
                                               listen: false)
                                           .updateIconColor(selectedColor);
                                     } catch (e) {
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Failed to update icon color: ${e.toString()}')),
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content: Text(
+                                                  'Failed to update icon color: ${e.toString()}')),
                                         );
                                       }
                                     }
@@ -72,9 +77,7 @@ class ProfileDetailsPage extends StatelessWidget {
                                 children: [
                                   SwimmerIconPicker.buildIcon(
                                       profile.iconColor ??
-                                          Theme.of(context)
-                                              .colorScheme
-                                              .primary,
+                                          Theme.of(context).colorScheme.primary,
                                       radius: 36),
                                   Positioned(
                                     bottom: 0,
@@ -129,8 +132,8 @@ class ProfileDetailsPage extends StatelessWidget {
                             (profile.occupation == null ||
                                 profile.occupation!.trim().isEmpty))
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
                             child: Container(
                               decoration: BoxDecoration(
                                 color: AppThemeColors.primaryOverlayLow,
@@ -144,9 +147,8 @@ class ProfileDetailsPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Icon(Icons.info_outline,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                       size: 20),
                                   const SizedBox(width: 8),
                                   Expanded(
@@ -172,29 +174,27 @@ class ProfileDetailsPage extends StatelessWidget {
                                 ListTile(
                                   leading: const Icon(Icons.person_2),
                                   title: const Text('Name'),
-                                  subtitle: Text(
-                                      (profile.displayName != null &&
-                                              profile.displayName!
-                                                  .trim()
-                                                  .isNotEmpty)
-                                          ? profile.displayName!
-                                          : 'not set'),
+                                  subtitle: Text((profile.displayName != null &&
+                                          profile.displayName!
+                                              .trim()
+                                              .isNotEmpty)
+                                      ? profile.displayName!
+                                      : 'not set'),
                                   trailing: const Icon(Icons.edit_note),
-                                  onTap: () => _editDisplayName(context, profile),
+                                  onTap: () =>
+                                      _editDisplayName(context, profile),
                                 ),
                                 const Divider(height: 1),
                                 ListTile(
                                   leading: const Icon(Icons.business_center),
                                   title: const Text('Occupation'),
-                                  subtitle: Text(
-                                      (profile.occupation != null &&
-                                              profile.occupation!
-                                                  .trim()
-                                                  .isNotEmpty)
-                                          ? profile.occupation!
-                                          : 'not set'),
+                                  subtitle: Text((profile.occupation != null &&
+                                          profile.occupation!.trim().isNotEmpty)
+                                      ? profile.occupation!
+                                      : 'not set'),
                                   trailing: const Icon(Icons.edit_note),
-                                  onTap: () => _editOccupation(context, profile),
+                                  onTap: () =>
+                                      _editOccupation(context, profile),
                                 ),
                               ],
                             ),
@@ -262,8 +262,8 @@ class ProfileDetailsPage extends StatelessWidget {
                     return;
                   }
                   if (!RegExp(r'^[a-zA-Z0-9 -]+$').hasMatch(newName)) {
-                    setState(() =>
-                        error = 'Only letters, numbers, spaces, and hyphens allowed');
+                    setState(() => error =
+                        'Only letters, numbers, spaces, and hyphens allowed');
                     return;
                   }
                   try {
@@ -333,7 +333,8 @@ class ProfileDetailsPage extends StatelessWidget {
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to update occupation: ${e.toString()}')),
+            SnackBar(
+                content: Text('Failed to update occupation: ${e.toString()}')),
           );
         }
       }

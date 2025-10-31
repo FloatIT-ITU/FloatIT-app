@@ -19,7 +19,7 @@ class JoinRequestService {
     if (uid.isEmpty) {
       throw ArgumentError('uid cannot be empty');
     }
-    
+
     final fs = firestore ?? FirebaseFirestore.instance;
     await fs.collection('join_requests').add({
       'eventId': eventId,
@@ -44,7 +44,7 @@ class JoinRequestService {
     if (uid.isEmpty) {
       throw ArgumentError('uid cannot be empty');
     }
-    
+
     final fs = firestore ?? FirebaseFirestore.instance;
     await fs.collection('join_requests').add({
       'eventId': eventId,

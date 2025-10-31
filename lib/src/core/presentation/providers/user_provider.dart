@@ -18,7 +18,8 @@ class UserProvider extends ChangeNotifier {
   bool get hasError => _error != null;
 
   /// Get user-friendly error message
-  String? get errorMessage => _error != null ? ErrorMessageUtils.getUserFriendlyMessage(_error!) : null;
+  String? get errorMessage =>
+      _error != null ? ErrorMessageUtils.getUserFriendlyMessage(_error!) : null;
 
   /// Load current user profile
   Future<void> loadCurrentUser() async {

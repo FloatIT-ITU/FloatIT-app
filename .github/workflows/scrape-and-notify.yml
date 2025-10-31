@@ -1,0 +1,80 @@
+name: Scrape Pool Status and Send Notifications
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allow manual triggering
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-and-notify:
+    # Only run this job when the workflow is executed on the main branch.
+    # This prevents scheduled/manual runs from other branches (for example `dev`).
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: true
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: tools/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd tools
+        npm ci
+        
+    - name: Run scraper and send notifications
+      env:
+        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+      run: |
+        cd tools
+        node scrape_and_notify.js
+
+    - name: Publish pool.json to gh-pages (create branch if missing)
+      if: always()
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        # Ensure pool.json exists in workspace
+        if [ ! -f pool.json ]; then
+          echo "pool.json not found, skipping publish"
+          exit 0
+        fi
+
+        # Fetch remote branches
+        git fetch origin
+
+        if git ls-remote --exit-code --heads origin gh-pages; then
+          # gh-pages exists remotely: check it out and update
+          git checkout gh-pages
+          git pull origin gh-pages
+        else
+          # Create orphan gh-pages branch
+          git checkout --orphan gh-pages
+          git rm -rf . || true
+        fi
+
+        # Copy the pool.json from the workspace root into the branch working tree
+        cp ../pool.json ./pool.json 2>/dev/null || true
+        git add pool.json
+
+        if git diff --cached --quiet; then
+          echo "No changes to commit on gh-pages"
+        else
+          git commit -m "chore: update pool.json from scrape workflow"
+          git push origin HEAD:gh-pages
+        fi

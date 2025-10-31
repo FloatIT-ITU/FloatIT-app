@@ -20,7 +20,8 @@ class NotificationsProvider extends ChangeNotifier {
   bool get hasError => _error != null;
 
   /// Get user-friendly error message
-  String? get errorMessage => _error != null ? ErrorMessageUtils.getUserFriendlyMessage(_error!) : null;
+  String? get errorMessage =>
+      _error != null ? ErrorMessageUtils.getUserFriendlyMessage(_error!) : null;
 
   /// Load global banner
   Future<void> loadGlobalBanner() async {
