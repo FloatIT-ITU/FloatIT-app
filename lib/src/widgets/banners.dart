@@ -22,7 +22,7 @@ class PageBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     // Use theme-appropriate colors for transparent banners
     final bannerTextColor = AppThemeColors.text(context);
-  // banner background colors intentionally unused; banners are transparent now
+    // banner background colors intentionally unused; banners are transparent now
 
     // Use a mostly-invisible background so the top bar is subtle in both themes.
     return PreferredSize(
@@ -32,37 +32,38 @@ class PageBanner extends StatelessWidget {
         child: SafeArea(
           top: true,
           child: ConstrainedContent(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: SizedBox(
               height: kToolbarHeight,
               child: Row(
                 children: [
-                    if (showBackArrow)
-                      IconButton(
-                        icon: Icon(Icons.arrow_back, color: bannerTextColor),
-                        onPressed:
-                            onBack ?? () => Navigator.of(context).maybePop(),
-                      ),
-                    if (!showBackArrow) const SizedBox(width: 8),
-                    Text(
-                      title,
-                      // Inherit the full titleLarge text style from the Theme so font family,
-                      // size and weight come from the app-wide textTheme (AppTextStyles).
-                      style: (Theme.of(context).textTheme.titleLarge ??
-                              const TextStyle())
-                          .copyWith(
-                        color: bannerTextColor,
-                      ),
+                  if (showBackArrow)
+                    IconButton(
+                      icon: Icon(Icons.arrow_back, color: bannerTextColor),
+                      onPressed:
+                          onBack ?? () => Navigator.of(context).maybePop(),
                     ),
-                    const Spacer(),
-                    if (actions != null)
-                      Row(mainAxisSize: MainAxisSize.min, children: actions!),
-                  ],
-                ),
+                  if (!showBackArrow) const SizedBox(width: 8),
+                  Text(
+                    title,
+                    // Inherit the full titleLarge text style from the Theme so font family,
+                    // size and weight come from the app-wide textTheme (AppTextStyles).
+                    style: (Theme.of(context).textTheme.titleLarge ??
+                            const TextStyle())
+                        .copyWith(
+                      color: bannerTextColor,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (actions != null)
+                    Row(mainAxisSize: MainAxisSize.min, children: actions!),
+                ],
               ),
             ),
           ),
         ),
+      ),
     );
   }
 }
@@ -109,30 +110,31 @@ class StandardPageBanner extends StatelessWidget {
                 ),
               // Centered content (icon + title)
               Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Custom leading widget or app icon/logo
-                  leading ?? const ThemeAwareAppIcon(
-                    width: 28,
-                    height: 28,
-                  ),
-                  const SizedBox(width: 8),
-                  // Page title
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      color: bannerTextColor,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Custom leading widget or app icon/logo
+                    leading ??
+                        const ThemeAwareAppIcon(
+                          width: 28,
+                          height: 28,
+                        ),
+                    const SizedBox(width: 8),
+                    // Page title
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        color: bannerTextColor,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

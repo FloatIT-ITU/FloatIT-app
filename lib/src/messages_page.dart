@@ -38,7 +38,8 @@ class MessagesPage extends StatelessWidget {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return LoadingWidgets.loadingIndicator(message: 'Loading messages...');
+                  return LoadingWidgets.loadingIndicator(
+                      message: 'Loading messages...');
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -54,12 +55,13 @@ class MessagesPage extends StatelessWidget {
 
                 return ConstrainedContent(
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                     itemCount: conversations.length,
                     itemBuilder: (context, index) {
                       final conversation = conversations[index];
                       final data = conversation.data() as Map<String, dynamic>;
-                      
+
                       return _ConversationTile(
                         conversationId: conversation.id,
                         data: data,
@@ -103,7 +105,9 @@ class _ConversationTile extends StatelessWidget {
 
     final lastMessage = data['lastMessage'] as String? ?? '';
     final lastMessageTime = data['lastMessageTime'] as Timestamp?;
-    final unreadCount = (data['unreadCount'] as Map<String, dynamic>?)?[currentUserId] as int? ?? 0;
+    final unreadCount = (data['unreadCount']
+            as Map<String, dynamic>?)?[currentUserId] as int? ??
+        0;
     final eventId = data['eventId'] as String?;
 
     return FutureBuilder<DocumentSnapshot>(
@@ -111,14 +115,15 @@ class _ConversationTile extends StatelessWidget {
       builder: (context, userSnapshot) {
         String otherUserName = 'Unknown User';
         Color iconColor = AppThemeColors.lightPrimary;
-        
+
         // Special handling for system messages
         if (otherUserId == 'system') {
           otherUserName = 'System Message';
           iconColor = AppThemeColors.systemMessageColor;
         } else if (userSnapshot.hasData && userSnapshot.data!.exists) {
           final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
-          otherUserName = userData?['displayName'] ?? userData?['email'] ?? 'Unknown User';
+          otherUserName =
+              userData?['displayName'] ?? userData?['email'] ?? 'Unknown User';
           iconColor = _colorFromDynamic(userData?['iconColor']);
         }
 
@@ -133,7 +138,8 @@ class _ConversationTile extends StatelessWidget {
                   Expanded(child: Text(otherUserName)),
                   if (unreadCount > 0)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(12),
@@ -157,24 +163,27 @@ class _ConversationTile extends StatelessWidget {
                     FutureBuilder<DocumentSnapshot>(
                       future: FirebaseService.eventDoc(eventId).get(),
                       builder: (context, eventSnapshot) {
-                        if (eventSnapshot.hasData && eventSnapshot.data!.exists) {
-                          final eventData = eventSnapshot.data!.data() as Map<String, dynamic>?;
+                        if (eventSnapshot.hasData &&
+                            eventSnapshot.data!.exists) {
+                          final eventData = eventSnapshot.data!.data()
+                              as Map<String, dynamic>?;
                           final eventName = eventData?['name'] ?? 'Event';
                           final eventDate = eventData?['startTime'];
                           String dateString = '';
                           if (eventDate != null) {
                             try {
-                              final dateTime = eventDate is String 
-                                ? DateTime.parse(eventDate) 
-                                : (eventDate as Timestamp).toDate();
-                              dateString = DateFormat('MMMM d, y').format(dateTime.toLocal());
+                              final dateTime = eventDate is String
+                                  ? DateTime.parse(eventDate)
+                                  : (eventDate as Timestamp).toDate();
+                              dateString = DateFormat('MMMM d, y')
+                                  .format(dateTime.toLocal());
                             } catch (_) {
                               // Ignore date parsing errors
                             }
                           }
-                          final displayText = dateString.isNotEmpty 
-                            ? 'Re: $eventName - $dateString'
-                            : 'Re: $eventName';
+                          final displayText = dateString.isNotEmpty
+                              ? 'Re: $eventName - $dateString'
+                              : 'Re: $eventName';
                           return Text(
                             displayText,
                             style: TextStyle(
@@ -194,7 +203,8 @@ class _ConversationTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                   if (lastMessageTime != null) ...[
@@ -314,7 +324,8 @@ class _ConversationPageState extends State<ConversationPage> {
     // Prevent sending a message to yourself
     if (widget.otherUserId == currentUser.uid) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot send a message to yourself')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cannot send a message to yourself')));
       }
       _messageController.clear();
       _messageFocusNode.requestFocus();
@@ -328,8 +339,9 @@ class _ConversationPageState extends State<ConversationPage> {
 
     try {
       // Generate unique message ID
-      final messageId = FirebaseFirestore.instance.collection('messages').doc().id;
-      
+      final messageId =
+          FirebaseFirestore.instance.collection('messages').doc().id;
+
       // Update thread with new message
       await FirebaseFirestore.instance
           .collection('messages')
@@ -343,9 +355,9 @@ class _ConversationPageState extends State<ConversationPage> {
         'lastMessage': messageText,
         'lastMessageTime': FieldValue.serverTimestamp(),
         'unreadCount.${widget.otherUserId}': FieldValue.increment(1),
-        'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+        'deleteAt':
+            Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
       });
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -384,13 +396,18 @@ class _ConversationPageState extends State<ConversationPage> {
                 }
 
                 final data = snapshot.data!.data() as Map<String, dynamic>;
-                final messagesMap = data['messages'] as Map<String, dynamic>? ?? {};
-                final messages = messagesMap.values.map((msg) => msg as Map<String, dynamic>).toList();
+                final messagesMap =
+                    data['messages'] as Map<String, dynamic>? ?? {};
+                final messages = messagesMap.values
+                    .map((msg) => msg as Map<String, dynamic>)
+                    .toList();
 
                 // Sort messages by timestamp descending (most recent first)
                 messages.sort((a, b) {
-                  final aTime = (a['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
-                  final bTime = (b['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
+                  final aTime = (a['timestamp'] as Timestamp?)?.toDate() ??
+                      DateTime.now();
+                  final bTime = (b['timestamp'] as Timestamp?)?.toDate() ??
+                      DateTime.now();
                   return bTime.compareTo(aTime);
                 });
 
@@ -401,12 +418,15 @@ class _ConversationPageState extends State<ConversationPage> {
                   children: [
                     if (eventId != null)
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         child: FutureBuilder<DocumentSnapshot>(
                           future: FirebaseService.eventDoc(eventId).get(),
                           builder: (context, eventSnapshot) {
-                            if (eventSnapshot.hasData && eventSnapshot.data!.exists) {
-                              final eventData = eventSnapshot.data!.data() as Map<String, dynamic>?;
+                            if (eventSnapshot.hasData &&
+                                eventSnapshot.data!.exists) {
+                              final eventData = eventSnapshot.data!.data()
+                                  as Map<String, dynamic>?;
                               final eventName = eventData?['name'] ?? 'Event';
                               final eventDate = eventData?['startTime'];
                               String dateString = '';
@@ -415,7 +435,8 @@ class _ConversationPageState extends State<ConversationPage> {
                                   final dateTime = eventDate is String
                                       ? DateTime.parse(eventDate)
                                       : (eventDate as Timestamp).toDate();
-                                  dateString = DateFormat('MMMM d, y').format(dateTime.toLocal());
+                                  dateString = DateFormat('MMMM d, y')
+                                      .format(dateTime.toLocal());
                                 } catch (_) {
                                   // Ignore date parsing errors
                                 }
@@ -465,28 +486,36 @@ class _ConversationPageState extends State<ConversationPage> {
                                       vertical: 8,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerLowest,
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     constraints: BoxConstraints(
-                                      maxWidth: MediaQuery.of(context).size.width * 0.8,
+                                      maxWidth:
+                                          MediaQuery.of(context).size.width *
+                                              0.8,
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
                                       children: [
                                         Text(
                                           text,
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontStyle: FontStyle.italic,
-                                            color: Theme.of(context).colorScheme.primary,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
                                           ),
                                           textAlign: TextAlign.center,
                                         ),
                                         if (timestamp != null) ...[
                                           const SizedBox(height: 4),
                                           Text(
-                                            DateFormat.Hm().format(timestamp.toDate()),
+                                            DateFormat.Hm()
+                                                .format(timestamp.toDate()),
                                             style: TextStyle(
                                               fontSize: 10,
                                               color: Theme.of(context)
@@ -505,7 +534,9 @@ class _ConversationPageState extends State<ConversationPage> {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: Align(
-                                alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                alignment: isMe
+                                    ? Alignment.centerRight
+                                    : Alignment.centerLeft,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 12,
@@ -513,21 +544,28 @@ class _ConversationPageState extends State<ConversationPage> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: isMe
-                                        ? Theme.of(context).colorScheme.primaryContainer
-                                        : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   constraints: BoxConstraints(
-                                    maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                    maxWidth:
+                                        MediaQuery.of(context).size.width * 0.7,
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(text),
                                       if (timestamp != null) ...[
                                         const SizedBox(height: 4),
                                         Text(
-                                          DateFormat.Hm().format(timestamp.toDate()),
+                                          DateFormat.Hm()
+                                              .format(timestamp.toDate()),
                                           style: TextStyle(
                                             fontSize: 10,
                                             color: Theme.of(context)
@@ -585,7 +623,10 @@ class _ConversationPageState extends State<ConversationPage> {
                         child: Text(
                           'This conversation is read-only.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant),
                         ),
                       ),
                   ],

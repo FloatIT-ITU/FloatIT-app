@@ -5,7 +5,9 @@ import 'package:floatit/src/shared/utils/error_message_utils.dart';
 /// Error boundary widget that catches and handles errors gracefully
 class FloatITErrorBoundary extends StatefulWidget {
   final Widget child;
-  final Widget Function(BuildContext context, dynamic error, StackTrace? stackTrace)? errorBuilder;
+  final Widget Function(
+          BuildContext context, dynamic error, StackTrace? stackTrace)?
+      errorBuilder;
   final void Function(dynamic error, StackTrace? stackTrace)? onError;
 
   const FloatITErrorBoundary({

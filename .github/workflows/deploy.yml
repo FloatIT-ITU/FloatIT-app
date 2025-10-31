@@ -43,6 +43,7 @@ jobs:
         run: flutter analyze
 
       - name: Build web
+        # Use secret VAPID_KEY for client-side VAPID key (kept secret per preference).
         run: flutter build web --release --base-href="/${{ github.event.repository.name }}/" --dart-define=VAPID_KEY=${{ secrets.VAPID_KEY }}
 
       - name: Fix service worker for subdirectory

@@ -67,21 +67,27 @@ class AdminServerLogsPage extends StatelessWidget {
                       final details = data['details'] ?? {};
 
                       return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         child: ExpansionTile(
                           title: Text(action),
-                          subtitle: Text('Admin: ${adminUid.substring(0, 8)}... • $timestamp'),
+                          subtitle: Text(
+                              'Admin: ${adminUid.substring(0, 8)}... • $timestamp'),
                           children: [
                             Padding(
                               padding: const EdgeInsets.all(16),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Action: $action', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('Action: $action',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                   Text('Admin UID: $adminUid'),
                                   Text('Timestamp: $timestamp'),
                                   const SizedBox(height: 8),
-                                  const Text('Details:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  const Text('Details:',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                   Text(details.toString()),
                                 ],
                               ),

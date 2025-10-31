@@ -46,7 +46,8 @@ class UserProfileProvider extends ChangeNotifier {
       final publicData = publicDoc.data();
       displayName = publicData?['displayName'] as String?;
       occupation = publicData?['occupation'] as String?;
-  notificationsEnabled = publicData?['notificationsEnabled'] as bool? ?? true;
+      notificationsEnabled =
+          publicData?['notificationsEnabled'] as bool? ?? true;
       final iconColorField = publicData?['iconColor'];
       if (iconColorField is int) {
         iconColor = Color(iconColorField);
@@ -86,13 +87,14 @@ class UserProfileProvider extends ChangeNotifier {
     if (!user.email!.endsWith('@itu.dk')) {
       throw Exception('Email must end with @itu.dk to update profile');
     }
-    
+
     // Rate limiting check
     final rateLimitService = RateLimitService.instance;
-    if (!rateLimitService.isActionAllowed(user.uid, RateLimitAction.updateIconColor)) {
+    if (!rateLimitService.isActionAllowed(
+        user.uid, RateLimitAction.updateIconColor)) {
       return; // Silently ignore rate-limited requests
     }
-    
+
     final int a = newColor.alpha;
     final int r = newColor.red;
     final int g = newColor.green;
@@ -102,10 +104,10 @@ class UserProfileProvider extends ChangeNotifier {
     await _firestore.collection('public_users').doc(user.uid).set({
       'iconColor': hex,
     }, SetOptions(merge: true));
-    
+
     // Record action after successful update
     rateLimitService.recordAction(user.uid, RateLimitAction.updateIconColor);
-    
+
     iconColor = newColor;
     notifyListeners();
   }
@@ -116,13 +118,14 @@ class UserProfileProvider extends ChangeNotifier {
     if (!user.email!.endsWith('@itu.dk')) {
       throw Exception('Email must end with @itu.dk to update profile');
     }
-    
+
     // Rate limiting check
     final rateLimitService = RateLimitService.instance;
-    if (!rateLimitService.isActionAllowed(user.uid, RateLimitAction.updateDisplayName)) {
+    if (!rateLimitService.isActionAllowed(
+        user.uid, RateLimitAction.updateDisplayName)) {
       return; // Silently ignore rate-limited requests
     }
-    
+
     final name = newName.trim();
     if (name.isEmpty ||
         name.length < 2 ||
@@ -134,10 +137,10 @@ class UserProfileProvider extends ChangeNotifier {
     await _firestore.collection('public_users').doc(user.uid).set({
       'displayName': name,
     }, SetOptions(merge: true));
-    
+
     // Record action after successful update
     rateLimitService.recordAction(user.uid, RateLimitAction.updateDisplayName);
-    
+
     displayName = name;
     notifyListeners();
   }
@@ -148,13 +151,14 @@ class UserProfileProvider extends ChangeNotifier {
     if (!user.email!.endsWith('@itu.dk')) {
       throw Exception('Email must end with @itu.dk to update profile');
     }
-    
+
     // Rate limiting check
     final rateLimitService = RateLimitService.instance;
-    if (!rateLimitService.isActionAllowed(user.uid, RateLimitAction.updateOccupation)) {
+    if (!rateLimitService.isActionAllowed(
+        user.uid, RateLimitAction.updateOccupation)) {
       return; // Silently ignore rate-limited requests
     }
-    
+
     // Only allow known occupations
     const allowed = [
       'SWU',
@@ -180,10 +184,10 @@ class UserProfileProvider extends ChangeNotifier {
     await _firestore.collection('public_users').doc(user.uid).set({
       'occupation': newOccupation,
     }, SetOptions(merge: true));
-    
+
     // Record action after successful update
     rateLimitService.recordAction(user.uid, RateLimitAction.updateOccupation);
-    
+
     occupation = newOccupation;
     notifyListeners();
   }
@@ -204,7 +208,8 @@ class UserProfileProvider extends ChangeNotifier {
   Future<void> _loadUserStatistics(String userId) async {
     try {
       // Get events joined count from event history (only past events)
-      eventsJoinedCount = await UserStatisticsService.getUserEventsJoinedCount(userId);
+      eventsJoinedCount =
+          await UserStatisticsService.getUserEventsJoinedCount(userId);
     } catch (e) {
       // If statistics loading fails, keep defaults (0)
       eventsJoinedCount = 0;

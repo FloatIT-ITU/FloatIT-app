@@ -4,7 +4,8 @@ class UserStatisticsService {
   static const String collectionName = 'user_event_history';
 
   /// Record when a user joins an event
-  static Future<void> recordEventJoin(String userId, String eventId, DateTime eventDate) async {
+  static Future<void> recordEventJoin(
+      String userId, String eventId, DateTime eventDate) async {
     final fs = FirebaseFirestore.instance;
     final docId = '${userId}_$eventId';
 
@@ -25,42 +26,47 @@ class UserStatisticsService {
   }
 
   /// Get user's joined events count (only past events, excluding events where user was host)
-  static Future<int> getUserEventsJoinedCount(String userId, {DateTime? since, DateTime? until}) async {
+  static Future<int> getUserEventsJoinedCount(String userId,
+      {DateTime? since, DateTime? until}) async {
     final fs = FirebaseFirestore.instance;
     final now = DateTime.now();
 
-    Query query = fs.collection(collectionName)
+    Query query = fs
+        .collection(collectionName)
         .where('userId', isEqualTo: userId)
-        .where('eventDate', isLessThanOrEqualTo: Timestamp.fromDate(now)); // Only past events
+        .where('eventDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(now)); // Only past events
 
     if (since != null) {
-      query = query.where('eventDate', isGreaterThanOrEqualTo: Timestamp.fromDate(since));
+      query = query.where('eventDate',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(since));
     }
     if (until != null) {
-      query = query.where('eventDate', isLessThanOrEqualTo: Timestamp.fromDate(until));
+      query = query.where('eventDate',
+          isLessThanOrEqualTo: Timestamp.fromDate(until));
     }
 
     final snapshot = await query.get();
-    
+
     // Filter out events where the user was the host
     int count = 0;
     for (final doc in snapshot.docs) {
       final data = doc.data() as Map<String, dynamic>;
       final eventId = data['eventId'] as String;
-      
+
       // Check if user was the host of this event
       final eventDoc = await fs.collection('events').doc(eventId).get();
       if (eventDoc.exists) {
         final eventData = eventDoc.data() as Map<String, dynamic>;
         final hostId = eventData['host'] as String?;
-        
+
         // Only count if user was NOT the host
         if (hostId != userId) {
           count++;
         }
       }
     }
-    
+
     return count;
   }
 
@@ -135,7 +141,8 @@ class UserStatisticsService {
   }
 
   /// Get leaderboard data for a specific period
-  static Future<List<Map<String, dynamic>>> getLeaderboard(String period, {String? currentUserId}) async {
+  static Future<List<Map<String, dynamic>>> getLeaderboard(String period,
+      {String? currentUserId}) async {
     final fs = FirebaseFirestore.instance;
     final now = DateTime.now();
     final currentYear = now.year;
@@ -186,11 +193,12 @@ class UserStatisticsService {
         if (eventDoc.exists) {
           final eventData = eventDoc.data() as Map<String, dynamic>;
           final hostId = eventData['host'] as String?;
-          
+
           // Only count if user was NOT the host
           if (hostId != docUserId) {
             userCounts[docUserId] = (userCounts[docUserId] ?? 0) + 1;
-            userEventDates[docUserId] = (userEventDates[docUserId] ?? [])..add(eventDate);
+            userEventDates[docUserId] = (userEventDates[docUserId] ?? [])
+              ..add(eventDate);
           }
         }
       }
@@ -203,14 +211,14 @@ class UserStatisticsService {
       ..sort((a, b) {
         final countCompare = b.value.compareTo(a.value);
         if (countCompare != 0) return countCompare;
-        
+
         // If counts are equal, sort by most recent event
         final aDates = userEventDates[a.key] ?? [];
         final bDates = userEventDates[b.key] ?? [];
         if (aDates.isEmpty && bDates.isEmpty) return 0;
         if (aDates.isEmpty) return 1;
         if (bDates.isEmpty) return -1;
-        
+
         final aLatest = aDates.reduce((a, b) => a.isAfter(b) ? a : b);
         final bLatest = bDates.reduce((a, b) => a.isAfter(b) ? a : b);
         return bLatest.compareTo(aLatest);
@@ -223,7 +231,7 @@ class UserStatisticsService {
       final userDoc = await fs.collection('public_users').doc(entry.key).get();
       final userData = userDoc.data();
       final displayName = userData?['displayName'] as String? ?? 'Unknown User';
-      
+
       leaderboard.add({
         'userId': entry.key,
         'displayName': displayName,
@@ -235,18 +243,23 @@ class UserStatisticsService {
 
     // If current user is not in top 10, add them with their rank
     if (currentUserId != null) {
-      final currentUserIndex = sortedUsers.indexWhere((entry) => entry.key == currentUserId);
+      final currentUserIndex =
+          sortedUsers.indexWhere((entry) => entry.key == currentUserId);
       if (currentUserIndex >= 10 || currentUserIndex == -1) {
         final currentUserCount = userCounts[currentUserId] ?? 0;
-        final userDoc = await fs.collection('public_users').doc(currentUserId).get();
+        final userDoc =
+            await fs.collection('public_users').doc(currentUserId).get();
         final userData = userDoc.data();
-        final displayName = userData?['displayName'] as String? ?? 'Unknown User';
-        
+        final displayName =
+            userData?['displayName'] as String? ?? 'Unknown User';
+
         leaderboard.add({
           'userId': currentUserId,
           'displayName': displayName,
           'eventCount': currentUserCount,
-          'rank': currentUserIndex != -1 ? currentUserIndex + 1 : sortedUsers.length + 1,
+          'rank': currentUserIndex != -1
+              ? currentUserIndex + 1
+              : sortedUsers.length + 1,
           'isCurrentUser': true,
         });
       }
@@ -266,7 +279,8 @@ class UserStatisticsService {
       final userId = userDoc.id;
 
       // Get user's joined events
-      final eventsSnapshot = await fs.collection('events')
+      final eventsSnapshot = await fs
+          .collection('events')
           .where('attendees', arrayContains: userId)
           .get();
 

@@ -29,7 +29,8 @@ class OccupationSelectionPageState extends State<OccupationSelectionPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Banner with back arrow (use SubpageBanner which applies theming)
-          const StandardPageBanner(title: 'Change occupation', showBackArrow: true),
+          const StandardPageBanner(
+              title: 'Change occupation', showBackArrow: true),
           Expanded(
             child: ConstrainedContent(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -49,7 +50,8 @@ class OccupationSelectionPageState extends State<OccupationSelectionPage> {
                       child: ListView.separated(
                         padding: EdgeInsets.zero,
                         itemCount: widget.occupations.length,
-                        separatorBuilder: (context, i) => const Divider(height: 1),
+                        separatorBuilder: (context, i) =>
+                            const Divider(height: 1),
                         itemBuilder: (context, i) {
                           final occ = widget.occupations[i];
                           return ListTile(

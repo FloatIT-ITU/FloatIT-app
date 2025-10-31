@@ -43,7 +43,8 @@ class AttendanceBadge extends StatelessWidget {
             child: CircleAvatar(
               radius: 14,
               backgroundColor: AppThemeColors.hostingBadge(context),
-              child: Icon(Icons.star, size: 16, color: AppThemeColors.badgeIcon(context)),
+              child: Icon(Icons.star,
+                  size: 16, color: AppThemeColors.badgeIcon(context)),
             ),
           ),
         );
@@ -56,7 +57,8 @@ class AttendanceBadge extends StatelessWidget {
             child: CircleAvatar(
               radius: 14,
               backgroundColor: AppThemeColors.attendingBadge(context),
-              child: Icon(Icons.check, size: 16, color: AppThemeColors.badgeIcon(context)),
+              child: Icon(Icons.check,
+                  size: 16, color: AppThemeColors.badgeIcon(context)),
             ),
           ),
         );
@@ -69,7 +71,8 @@ class AttendanceBadge extends StatelessWidget {
           child: CircleAvatar(
             radius: 14,
             backgroundColor: AppThemeColors.waitingBadge(context),
-            child: Icon(Icons.hourglass_bottom, size: 16, color: AppThemeColors.badgeIcon(context)),
+            child: Icon(Icons.hourglass_bottom,
+                size: 16, color: AppThemeColors.badgeIcon(context)),
           ),
         ),
       );
@@ -87,7 +90,8 @@ class AttendanceBadge extends StatelessWidget {
               child: CircleAvatar(
                 radius: 14,
                 backgroundColor: AppThemeColors.hostingBadge(context),
-                child: Icon(Icons.star, size: 16, color: AppThemeColors.badgeIcon(context)),
+                child: Icon(Icons.star,
+                    size: 16, color: AppThemeColors.badgeIcon(context)),
               ),
             ),
           ),
@@ -108,7 +112,8 @@ class AttendanceBadge extends StatelessWidget {
               child: CircleAvatar(
                 radius: 14,
                 backgroundColor: AppThemeColors.attendingBadge(context),
-                child: Icon(Icons.check, size: 16, color: AppThemeColors.badgeIcon(context)),
+                child: Icon(Icons.check,
+                    size: 16, color: AppThemeColors.badgeIcon(context)),
               ),
             ),
           ),
@@ -129,7 +134,8 @@ class AttendanceBadge extends StatelessWidget {
             child: CircleAvatar(
               radius: 14,
               backgroundColor: AppThemeColors.waitingBadge(context),
-              child: Icon(Icons.hourglass_bottom, size: 16, color: AppThemeColors.badgeIcon(context)),
+              child: Icon(Icons.hourglass_bottom,
+                  size: 16, color: AppThemeColors.badgeIcon(context)),
             ),
           ),
         ),

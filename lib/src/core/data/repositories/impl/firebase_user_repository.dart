@@ -20,7 +20,8 @@ class FirebaseUserRepository implements UserRepository {
       final userDoc = await FirebaseService.userDoc(firebaseUser.uid).get();
       if (!userDoc.exists) return Result.right(null);
 
-      final user = User.fromJson(firebaseUser.uid, userDoc.data()! as Map<String, dynamic>);
+      final user = User.fromJson(
+          firebaseUser.uid, userDoc.data()! as Map<String, dynamic>);
       return Result.right(user);
     } catch (e) {
       return Result.left(DatabaseFailure.unknown());
@@ -35,7 +36,8 @@ class FirebaseUserRepository implements UserRepository {
         return Result.left(DatabaseFailure.notFound());
       }
 
-      final user = User.fromJson(userId, userDoc.data()! as Map<String, dynamic>);
+      final user =
+          User.fromJson(userId, userDoc.data()! as Map<String, dynamic>);
       return Result.right(user);
     } catch (e) {
       return Result.left(DatabaseFailure.unknown());
@@ -50,7 +52,8 @@ class FirebaseUserRepository implements UserRepository {
         return Result.left(DatabaseFailure.notFound());
       }
 
-      final user = User.fromJson(userId, publicUserDoc.data()! as Map<String, dynamic>);
+      final user =
+          User.fromJson(userId, publicUserDoc.data()! as Map<String, dynamic>);
       return Result.right(user);
     } catch (e) {
       return Result.left(DatabaseFailure.unknown());
@@ -109,7 +112,8 @@ class FirebaseUserRepository implements UserRepository {
         final userDoc = await FirebaseService.userDoc(firebaseUser.uid).get();
         if (!userDoc.exists) return Result.right(null);
 
-        final user = User.fromJson(firebaseUser.uid, userDoc.data()! as Map<String, dynamic>);
+        final user = User.fromJson(
+            firebaseUser.uid, userDoc.data()! as Map<String, dynamic>);
         return Result.right(user);
       } catch (e) {
         return Result.left(DatabaseFailure.unknown());
@@ -125,7 +129,8 @@ class FirebaseUserRepository implements UserRepository {
           return Result.left(DatabaseFailure.notFound());
         }
 
-        final user = User.fromJson(userId, snapshot.data()! as Map<String, dynamic>);
+        final user =
+            User.fromJson(userId, snapshot.data()! as Map<String, dynamic>);
         return Result.right(user);
       } catch (e) {
         return Result.left(DatabaseFailure.unknown());

@@ -10,7 +10,7 @@ class NotificationProvider extends ChangeNotifier {
   Map<String, dynamic>? _globalBanner;
   final Map<String, Map<String, dynamic>?> _eventBanners = {};
   final Map<String, StreamSubscription<DocumentSnapshot>> _eventSubs = {};
-  
+
   // Stream subscriptions that need to be disposed
   StreamSubscription<DocumentSnapshot>? _globalBannerSub;
   StreamSubscription<QuerySnapshot>? _notificationsSub;
@@ -59,7 +59,7 @@ class NotificationProvider extends ChangeNotifier {
         'id': id,
         'title': message.notification?.title ?? 'Notification',
         'body': message.notification?.body ?? '',
-  'data': message.data,
+        'data': message.data,
         'createdAt': DateTime.now().toUtc().toIso8601String(),
         'read': false,
       };
@@ -94,22 +94,23 @@ class NotificationProvider extends ChangeNotifier {
 
   void _init() {
     // Listen to global banner
-    _globalBannerSub = _fs.collection('app').doc('global_banner').snapshots().listen((snap) {
+    _globalBannerSub =
+        _fs.collection('app').doc('global_banner').snapshots().listen((snap) {
       _globalBanner = snap.exists ? snap.data() : null;
       notifyListeners();
     });
-    
+
     // Listen to user notifications when signed in (real-time updates).
     _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
       // Cancel previous notifications subscription if any
       _notificationsSub?.cancel();
-      
+
       if (user == null) {
         _notifications = [];
         notifyListeners();
         return;
       }
-      
+
       _notificationsSub = _fs
           .collection('notifications')
           .where('recipientUid', isEqualTo: user.uid)
@@ -181,19 +182,19 @@ class NotificationProvider extends ChangeNotifier {
     await _fs.collection('notifications').doc(id).update(
         {'read': true, 'readAt': DateTime.now().toUtc().toIso8601String()});
   }
-  
+
   @override
   void dispose() {
     // Cancel all stream subscriptions to prevent memory leaks
     _globalBannerSub?.cancel();
     _notificationsSub?.cancel();
     _authSub?.cancel();
-    
+
     for (var sub in _eventSubs.values) {
       sub.cancel();
     }
     _eventSubs.clear();
-    
+
     super.dispose();
   }
 }

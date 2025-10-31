@@ -104,7 +104,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
       // Semester: Current semester
       if (currentMonth >= 8 || currentMonth <= 1) {
         // Autumn Semester: Aug 1 to Jan 31
-        semesterSince = DateTime(currentYear - (currentMonth <= 1 ? 1 : 0), 8, 1);
+        semesterSince =
+            DateTime(currentYear - (currentMonth <= 1 ? 1 : 0), 8, 1);
       } else {
         // Spring Semester: Feb 1 to Jul 31
         semesterSince = DateTime(currentYear, 2, 1);
@@ -113,8 +114,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
       // Calculate all event counts in parallel
       final results = await Future.wait([
         UserStatisticsService.getUserEventsJoinedCount(user.uid), // All time
-        UserStatisticsService.getUserEventsJoinedCount(user.uid, since: monthlySince), // Monthly
-        UserStatisticsService.getUserEventsJoinedCount(user.uid, since: semesterSince), // Semester
+        UserStatisticsService.getUserEventsJoinedCount(user.uid,
+            since: monthlySince), // Monthly
+        UserStatisticsService.getUserEventsJoinedCount(user.uid,
+            since: semesterSince), // Semester
       ]);
 
       setState(() {
@@ -143,8 +146,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      final leaderboard = await UserStatisticsService.getLeaderboard(_leaderboardPeriod, currentUserId: user?.uid);
-      
+      final leaderboard = await UserStatisticsService.getLeaderboard(
+          _leaderboardPeriod,
+          currentUserId: user?.uid);
+
       setState(() {
         _leaderboard = leaderboard;
       });
@@ -168,7 +173,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const StandardPageBanner(title: 'Statistics', showBackArrow: true),
+              const StandardPageBanner(
+                  title: 'Statistics', showBackArrow: true),
               Expanded(
                 child: SingleChildScrollView(
                   child: ConstrainedContent(
@@ -182,10 +188,16 @@ class _StatisticsPageState extends State<StatisticsPage> {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withOpacity(0.5),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withOpacity(0.3),
                                 width: 1,
                               ),
                             ),
@@ -194,16 +206,23 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                 Icon(
                                   Icons.info_outline,
                                   size: 16,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     'This feature is currently being tested. Your feedback is appreciated!',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      fontStyle: FontStyle.italic,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                          fontStyle: FontStyle.italic,
+                                        ),
                                   ),
                                 ),
                               ],
@@ -221,28 +240,55 @@ class _StatisticsPageState extends State<StatisticsPage> {
                               children: [
                                 Text(
                                   'Events Joined',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: Theme.of(context).colorScheme.onSurface,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
                                 ),
                                 const SizedBox(height: 20),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    _buildEventCard('This Month', _loadingEvents ? '...' : _monthlyEvents.toString(), Icons.calendar_today),
+                                    _buildEventCard(
+                                        'This Month',
+                                        _loadingEvents
+                                            ? '...'
+                                            : _monthlyEvents.toString(),
+                                        Icons.calendar_today),
                                     Container(
                                       height: 60,
                                       width: 1,
-                                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline
+                                          .withOpacity(0.3),
                                     ),
-                                    _buildEventCard('This Semester', _loadingEvents ? '...' : _semesterEvents.toString(), Icons.school),
+                                    _buildEventCard(
+                                        'This Semester',
+                                        _loadingEvents
+                                            ? '...'
+                                            : _semesterEvents.toString(),
+                                        Icons.school),
                                     Container(
                                       height: 60,
                                       width: 1,
-                                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline
+                                          .withOpacity(0.3),
                                     ),
-                                    _buildEventCard('All Time', _loadingEvents ? '...' : _allTimeEvents.toString(), Icons.timeline),
+                                    _buildEventCard(
+                                        'All Time',
+                                        _loadingEvents
+                                            ? '...'
+                                            : _allTimeEvents.toString(),
+                                        Icons.timeline),
                                   ],
                                 ),
                               ],
@@ -260,28 +306,49 @@ class _StatisticsPageState extends State<StatisticsPage> {
                               children: [
                                 Text(
                                   'Your Rankings',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: Theme.of(context).colorScheme.onSurface,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
                                 ),
                                 const SizedBox(height: 20),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    _buildRankCard('This Month', _loadingRanks ? '...' : _monthlyRank, Icons.calendar_today),
+                                    _buildRankCard(
+                                        'This Month',
+                                        _loadingRanks ? '...' : _monthlyRank,
+                                        Icons.calendar_today),
                                     Container(
                                       height: 60,
                                       width: 1,
-                                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline
+                                          .withOpacity(0.3),
                                     ),
-                                    _buildRankCard('This Semester', _loadingRanks ? '...' : _semesterRank, Icons.school),
+                                    _buildRankCard(
+                                        'This Semester',
+                                        _loadingRanks ? '...' : _semesterRank,
+                                        Icons.school),
                                     Container(
                                       height: 60,
                                       width: 1,
-                                      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline
+                                          .withOpacity(0.3),
                                     ),
-                                    _buildRankCard('All Time', _loadingRanks ? '...' : _allTimeRank, Icons.timeline),
+                                    _buildRankCard(
+                                        'All Time',
+                                        _loadingRanks ? '...' : _allTimeRank,
+                                        Icons.timeline),
                                   ],
                                 ),
                               ],
@@ -297,22 +364,34 @@ class _StatisticsPageState extends State<StatisticsPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       'Leaderboard',
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: Theme.of(context).colorScheme.onSurface,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface,
+                                          ),
                                     ),
                                     // Period filter dropdown
                                     DropdownButton<String>(
                                       value: _leaderboardPeriod,
                                       items: const [
-                                        DropdownMenuItem(value: 'monthly', child: Text('This Month')),
-                                        DropdownMenuItem(value: 'semester', child: Text('This Semester')),
-                                        DropdownMenuItem(value: 'allTime', child: Text('All Time')),
+                                        DropdownMenuItem(
+                                            value: 'monthly',
+                                            child: Text('This Month')),
+                                        DropdownMenuItem(
+                                            value: 'semester',
+                                            child: Text('This Semester')),
+                                        DropdownMenuItem(
+                                            value: 'allTime',
+                                            child: Text('All Time')),
                                       ],
                                       onChanged: (value) {
                                         if (value != null) {
@@ -323,48 +402,74 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                         }
                                       },
                                       underline: const SizedBox(),
-                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                       icon: Icon(
                                         Icons.keyboard_arrow_down,
                                         size: 16,
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 16),
                                 if (_loadingLeaderboard)
-                                  const Center(child: CircularProgressIndicator())
+                                  const Center(
+                                      child: CircularProgressIndicator())
                                 else if (_leaderboard.isEmpty)
                                   Center(
                                     child: Text(
                                       'No data available',
-                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                     ),
                                   )
                                 else
                                   Column(
                                     children: _leaderboard.map((entry) {
-                                      final isCurrentUser = entry['isCurrentUser'] as bool;
+                                      final isCurrentUser =
+                                          entry['isCurrentUser'] as bool;
                                       final rank = entry['rank'] as int;
-                                      final displayName = entry['displayName'] as String;
-                                      final eventCount = entry['eventCount'] as int;
-                                      
+                                      final displayName =
+                                          entry['displayName'] as String;
+                                      final eventCount =
+                                          entry['eventCount'] as int;
+
                                       return Container(
-                                        margin: const EdgeInsets.only(bottom: 8),
+                                        margin:
+                                            const EdgeInsets.only(bottom: 8),
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: isCurrentUser 
-                                            ? Theme.of(context).colorScheme.primaryContainer
-                                            : Theme.of(context).colorScheme.surfaceContainerHighest,
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: isCurrentUser 
-                                            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
-                                            : null,
+                                          color: isCurrentUser
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primaryContainer
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .surfaceContainerHighest,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: isCurrentUser
+                                              ? Border.all(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary,
+                                                  width: 2)
+                                              : null,
                                         ),
                                         child: Row(
                                           children: [
@@ -373,20 +478,32 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                               width: 32,
                                               height: 32,
                                               decoration: BoxDecoration(
-                                                color: rank <= 3 
-                                                  ? Theme.of(context).colorScheme.primary
-                                                  : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                                color: rank <= 3
+                                                    ? Theme.of(context)
+                                                        .colorScheme
+                                                        .primary
+                                                    : Theme.of(context)
+                                                        .colorScheme
+                                                        .surfaceContainerHighest,
                                                 shape: BoxShape.circle,
                                               ),
                                               child: Center(
                                                 child: Text(
                                                   '#$rank',
-                                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                    color: rank <= 3 
-                                                      ? Theme.of(context).colorScheme.onPrimary
-                                                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodySmall
+                                                      ?.copyWith(
+                                                        color: rank <= 3
+                                                            ? Theme.of(context)
+                                                                .colorScheme
+                                                                .onPrimary
+                                                            : Theme.of(context)
+                                                                .colorScheme
+                                                                .onSurfaceVariant,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
                                                 ),
                                               ),
                                             ),
@@ -394,21 +511,37 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                             // User info
                                             Expanded(
                                               child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
                                                     displayName,
-                                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                      fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
-                                                    ),
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.copyWith(
+                                                          fontWeight:
+                                                              isCurrentUser
+                                                                  ? FontWeight
+                                                                      .bold
+                                                                  : FontWeight
+                                                                      .normal,
+                                                        ),
                                                     maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
                                                   Text(
                                                     '$eventCount event${eventCount != 1 ? 's' : ''} joined',
-                                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                                    ),
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.copyWith(
+                                                          color: Theme.of(
+                                                                  context)
+                                                              .colorScheme
+                                                              .onSurfaceVariant,
+                                                        ),
                                                   ),
                                                 ],
                                               ),
@@ -416,10 +549,15 @@ class _StatisticsPageState extends State<StatisticsPage> {
                                             // Trophy icon for top 3
                                             if (rank <= 3)
                                               Icon(
-                                                rank == 1 ? Icons.emoji_events : 
-                                                rank == 2 ? Icons.emoji_events_outlined : 
-                                                Icons.military_tech,
-                                                color: Theme.of(context).colorScheme.primary,
+                                                rank == 1
+                                                    ? Icons.emoji_events
+                                                    : rank == 2
+                                                        ? Icons
+                                                            .emoji_events_outlined
+                                                        : Icons.military_tech,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary,
                                                 size: 24,
                                               ),
                                           ],
@@ -450,7 +588,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         child: Card(
           elevation: 0,
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          color: Theme.of(context)
+              .colorScheme
+              .surfaceContainerHighest
+              .withOpacity(0.3),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -459,27 +600,31 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 Text(
                   period,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: rank != '--' && rank != '...'
                         ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                        : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                        : Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest
+                            .withOpacity(0.5),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     rank,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: rank != '--' && rank != '...'
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                          fontWeight: FontWeight.bold,
+                          color: rank != '--' && rank != '...'
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -497,7 +642,10 @@ class _StatisticsPageState extends State<StatisticsPage> {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         child: Card(
           elevation: 0,
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          color: Theme.of(context)
+              .colorScheme
+              .surfaceContainerHighest
+              .withOpacity(0.3),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -506,23 +654,27 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 Text(
                   period,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .secondary
+                        .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     count,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
                     textAlign: TextAlign.center,
                   ),
                 ),

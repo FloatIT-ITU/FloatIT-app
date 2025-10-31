@@ -4,51 +4,53 @@ import '../theme/theme_constants.dart';
 /// Theme utilities and helper functions for consistent theming across the app
 class ThemeUtils {
   ThemeUtils._();
-  
+
   /// Get text color based on theme brightness
   static Color getTextColor(BuildContext context, {bool onSurface = false}) {
     final theme = Theme.of(context);
-    return onSurface 
-        ? theme.colorScheme.onSurface 
+    return onSurface
+        ? theme.colorScheme.onSurface
         : theme.colorScheme.onSurface;
   }
-  
+
   /// Get appropriate banner text color
-  static Color getBannerTextColor(BuildContext context, {bool isGlobal = false}) {
+  static Color getBannerTextColor(BuildContext context,
+      {bool isGlobal = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     if (isGlobal) {
-      return isDark 
-          ? AppThemeColors.bannerGlobalTextDark 
+      return isDark
+          ? AppThemeColors.bannerGlobalTextDark
           : AppThemeColors.bannerGlobalTextLight;
     } else {
-      return isDark 
-          ? AppThemeColors.bannerEventTextDark 
+      return isDark
+          ? AppThemeColors.bannerEventTextDark
           : AppThemeColors.bannerEventTextLight;
     }
   }
-  
+
   /// Get appropriate banner background color
-  static Color getBannerBackgroundColor(BuildContext context, {bool isGlobal = false}) {
+  static Color getBannerBackgroundColor(BuildContext context,
+      {bool isGlobal = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     if (isGlobal) {
-      return isDark 
-          ? AppThemeColors.bannerGlobalDark 
+      return isDark
+          ? AppThemeColors.bannerGlobalDark
           : AppThemeColors.bannerGlobalLight;
     } else {
-      return isDark 
-          ? AppThemeColors.bannerEventDark 
+      return isDark
+          ? AppThemeColors.bannerEventDark
           : AppThemeColors.bannerEventLight;
     }
   }
-  
+
   /// Get card color based on theme
   static Color getCardColor(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return isDark ? AppThemeColors.cardDark : AppThemeColors.cardLight;
   }
-  
+
   /// Create a consistent button style
   static ButtonStyle getButtonStyle(
     BuildContext context, {
@@ -56,10 +58,10 @@ class ThemeUtils {
     ButtonSize size = ButtonSize.medium,
   }) {
     final theme = Theme.of(context);
-    
+
     Color backgroundColor;
     Color foregroundColor;
-    
+
     switch (type) {
       case ButtonType.primary:
         backgroundColor = theme.colorScheme.primary;
@@ -78,10 +80,10 @@ class ThemeUtils {
         foregroundColor = theme.colorScheme.onSurface;
         break;
     }
-    
+
     double fontSize;
     EdgeInsets padding;
-    
+
     switch (size) {
       case ButtonSize.small:
         fontSize = 12;
@@ -96,7 +98,7 @@ class ThemeUtils {
         padding = const EdgeInsets.symmetric(horizontal: 20, vertical: 16);
         break;
     }
-    
+
     return ElevatedButton.styleFrom(
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
@@ -107,7 +109,7 @@ class ThemeUtils {
       ),
     );
   }
-  
+
   /// Create consistent input decoration
   static InputDecoration getInputDecoration({
     required String label,
@@ -133,7 +135,8 @@ class ThemeUtils {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(ThemeBorderRadii.md),
-        borderSide: const BorderSide(color: AppThemeColors.lightPrimary, width: 2),
+        borderSide:
+            const BorderSide(color: AppThemeColors.lightPrimary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(ThemeBorderRadii.md),
@@ -141,27 +144,33 @@ class ThemeUtils {
       ),
     );
   }
-  
+
   /// Get text style variants
   static TextStyle getTextStyle(
-    BuildContext context, 
+    BuildContext context,
     TextStyleVariant variant,
   ) {
     final theme = Theme.of(context);
-    
+
     switch (variant) {
       case TextStyleVariant.displayLarge:
-        return theme.textTheme.displayLarge ?? const TextStyle(fontSize: 32, fontWeight: FontWeight.bold);
+        return theme.textTheme.displayLarge ??
+            const TextStyle(fontSize: 32, fontWeight: FontWeight.bold);
       case TextStyleVariant.displayMedium:
-        return theme.textTheme.displayMedium ?? const TextStyle(fontSize: 28, fontWeight: FontWeight.bold);
+        return theme.textTheme.displayMedium ??
+            const TextStyle(fontSize: 28, fontWeight: FontWeight.bold);
       case TextStyleVariant.headlineLarge:
-        return theme.textTheme.headlineLarge ?? const TextStyle(fontSize: 24, fontWeight: FontWeight.w600);
+        return theme.textTheme.headlineLarge ??
+            const TextStyle(fontSize: 24, fontWeight: FontWeight.w600);
       case TextStyleVariant.headlineMedium:
-        return theme.textTheme.headlineMedium ?? const TextStyle(fontSize: 20, fontWeight: FontWeight.w600);
+        return theme.textTheme.headlineMedium ??
+            const TextStyle(fontSize: 20, fontWeight: FontWeight.w600);
       case TextStyleVariant.titleLarge:
-        return theme.textTheme.titleLarge ?? const TextStyle(fontSize: 18, fontWeight: FontWeight.w500);
+        return theme.textTheme.titleLarge ??
+            const TextStyle(fontSize: 18, fontWeight: FontWeight.w500);
       case TextStyleVariant.titleMedium:
-        return theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16, fontWeight: FontWeight.w500);
+        return theme.textTheme.titleMedium ??
+            const TextStyle(fontSize: 16, fontWeight: FontWeight.w500);
       case TextStyleVariant.bodyLarge:
         return theme.textTheme.bodyLarge ?? const TextStyle(fontSize: 16);
       case TextStyleVariant.bodyMedium:
@@ -169,14 +178,17 @@ class ThemeUtils {
       case TextStyleVariant.bodySmall:
         return theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
       case TextStyleVariant.labelLarge:
-        return theme.textTheme.labelLarge ?? const TextStyle(fontSize: 14, fontWeight: FontWeight.w500);
+        return theme.textTheme.labelLarge ??
+            const TextStyle(fontSize: 14, fontWeight: FontWeight.w500);
       case TextStyleVariant.labelMedium:
-        return theme.textTheme.labelMedium ?? const TextStyle(fontSize: 12, fontWeight: FontWeight.w500);
+        return theme.textTheme.labelMedium ??
+            const TextStyle(fontSize: 12, fontWeight: FontWeight.w500);
       case TextStyleVariant.labelSmall:
-        return theme.textTheme.labelSmall ?? const TextStyle(fontSize: 10, fontWeight: FontWeight.w500);
+        return theme.textTheme.labelSmall ??
+            const TextStyle(fontSize: 10, fontWeight: FontWeight.w500);
     }
   }
-  
+
   /// Create shadow styles
   static List<BoxShadow> getShadow(ShadowType type) {
     switch (type) {
@@ -208,12 +220,12 @@ class ThemeUtils {
         ];
     }
   }
-  
+
   /// Check if current theme is dark
   static bool isDark(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark;
   }
-  
+
   /// Get elevation for cards/surfaces
   static double getElevation(ElevationType type) {
     switch (type) {
@@ -260,21 +272,21 @@ enum ElevationType { none, subtle, medium, high }
 extension ThemeExtensions on BuildContext {
   /// Quick access to theme
   ThemeData get theme => Theme.of(this);
-  
+
   /// Quick access to color scheme
   ColorScheme get colors => Theme.of(this).colorScheme;
-  
+
   /// Quick access to text theme
   TextTheme get textTheme => Theme.of(this).textTheme;
-  
+
   /// Check if theme is dark
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
-  
+
   /// Get appropriate text color
   Color get onBackground => colors.onSurface;
   Color get onSurface => colors.onSurface;
   Color get onPrimary => colors.onPrimary;
-  
+
   /// Quick access to common colors
   Color get primary => colors.primary;
   Color get secondary => colors.secondary;

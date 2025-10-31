@@ -34,7 +34,8 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
     return Scaffold(
       body: Column(
         children: [
-          const StandardPageBanner(title: 'Privacy Policy', showBackArrow: true),
+          const StandardPageBanner(
+              title: 'Privacy Policy', showBackArrow: true),
           Expanded(
             child: ConstrainedContent(
               child: _loading

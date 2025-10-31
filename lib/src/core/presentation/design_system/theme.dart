@@ -124,7 +124,8 @@ class FloatITTheme {
       color: FloatITColors.surface,
       elevation: FloatITSpacing.cardElevation,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusLg)),
+        borderRadius:
+            BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusLg)),
       ),
       margin: EdgeInsets.zero,
     ),
@@ -247,19 +248,23 @@ class FloatITTheme {
       filled: true,
       fillColor: Color(0xFF2D2D2D),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusMd)),
+        borderRadius:
+            BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusMd)),
         borderSide: BorderSide(color: Color(0xFF5D5D5D)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusMd)),
+        borderRadius:
+            BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusMd)),
         borderSide: BorderSide(color: Color(0xFF5D5D5D)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusMd)),
+        borderRadius:
+            BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusMd)),
         borderSide: BorderSide(color: FloatITColors.primary),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusMd)),
+        borderRadius:
+            BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusMd)),
         borderSide: BorderSide(color: FloatITColors.error),
       ),
       contentPadding: EdgeInsets.symmetric(
@@ -286,7 +291,8 @@ class FloatITTheme {
       color: Color(0xFF1E1E1E),
       elevation: FloatITSpacing.cardElevation,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusLg)),
+        borderRadius:
+            BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusLg)),
       ),
       margin: EdgeInsets.zero,
     ),
@@ -297,7 +303,8 @@ class FloatITTheme {
       checkmarkColor: Colors.white,
       labelStyle: FloatITTypography.labelMedium,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusFull)),
+        borderRadius:
+            BorderRadius.all(Radius.circular(FloatITSpacing.borderRadiusFull)),
       ),
     ),
 

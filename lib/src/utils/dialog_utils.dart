@@ -4,7 +4,7 @@ import '../utils/validation_utils.dart';
 /// Utility class for creating common dialogs with consistent styling and reduced boilerplate
 class DialogUtils {
   DialogUtils._();
-  
+
   /// Show a simple confirmation dialog
   static Future<bool> showConfirmationDialog(
     BuildContext context, {
@@ -26,7 +26,7 @@ class DialogUtils {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: destructive 
+            style: destructive
                 ? ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.error,
                     foregroundColor: Theme.of(context).colorScheme.onError,
@@ -39,7 +39,7 @@ class DialogUtils {
     );
     return result ?? false;
   }
-  
+
   /// Show a simple info dialog
   static Future<void> showInfoDialog(
     BuildContext context, {
@@ -61,7 +61,7 @@ class DialogUtils {
       ),
     );
   }
-  
+
   /// Show an error dialog
   static Future<void> showErrorDialog(
     BuildContext context, {
@@ -89,7 +89,7 @@ class DialogUtils {
       ),
     );
   }
-  
+
   /// Show a loading dialog
   static Future<void> showLoadingDialog(
     BuildContext context, {
@@ -110,7 +110,7 @@ class DialogUtils {
       ),
     );
   }
-  
+
   /// Show a text input dialog
   static Future<String?> showTextInputDialog(
     BuildContext context, {
@@ -126,7 +126,7 @@ class DialogUtils {
   }) async {
     final controller = TextEditingController(text: initialValue);
     final formKey = GlobalKey<FormState>();
-    
+
     final result = await showDialog<String>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -160,11 +160,11 @@ class DialogUtils {
         ),
       ),
     );
-    
+
     controller.dispose();
     return result;
   }
-  
+
   /// Show a selection dialog from a list of options
   static Future<T?> showSelectionDialog<T>(
     BuildContext context, {
@@ -185,12 +185,12 @@ class DialogUtils {
             itemBuilder: (context, index) {
               final option = options[index];
               final isSelected = option == initialSelection;
-              
+
               return ListTile(
                 title: Text(getDisplayText(option)),
-                leading: isSelected 
-                    ? Icon(Icons.radio_button_checked, 
-                          color: Theme.of(context).colorScheme.primary)
+                leading: isSelected
+                    ? Icon(Icons.radio_button_checked,
+                        color: Theme.of(context).colorScheme.primary)
                     : const Icon(Icons.radio_button_off),
                 onTap: () => Navigator.of(context).pop(option),
               );
@@ -206,7 +206,7 @@ class DialogUtils {
       ),
     );
   }
-  
+
   /// Show a color picker dialog (if needed for swimmer icon picker)
   static Future<Color?> showColorPickerDialog(
     BuildContext context, {
@@ -222,7 +222,7 @@ class DialogUtils {
       ),
     );
   }
-  
+
   /// Show a form dialog with multiple fields
   static Future<Map<String, dynamic>?> showFormDialog(
     BuildContext context, {
@@ -233,12 +233,12 @@ class DialogUtils {
   }) async {
     final formKey = GlobalKey<FormState>();
     final controllers = <String, TextEditingController>{};
-    
+
     // Initialize controllers
     for (final field in fields) {
       controllers[field.key] = TextEditingController(text: field.initialValue);
     }
-    
+
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AlertDialog(
@@ -249,17 +249,19 @@ class DialogUtils {
             key: formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: fields.map((field) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: ValidationUtils.buildTextFormField(
-                  label: field.label,
-                  controller: controllers[field.key]!,
-                  validator: field.validator,
-                  hintText: field.hintText,
-                  maxLength: field.maxLength,
-                  obscureText: field.obscureText,
-                ),
-              )).toList(),
+              children: fields
+                  .map((field) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: ValidationUtils.buildTextFormField(
+                          label: field.label,
+                          controller: controllers[field.key]!,
+                          validator: field.validator,
+                          hintText: field.hintText,
+                          maxLength: field.maxLength,
+                          obscureText: field.obscureText,
+                        ),
+                      ))
+                  .toList(),
             ),
           ),
         ),
@@ -283,12 +285,12 @@ class DialogUtils {
         ],
       ),
     );
-    
+
     // Dispose controllers
     for (final controller in controllers.values) {
       controller.dispose();
     }
-    
+
     return result;
   }
 }
@@ -302,7 +304,7 @@ class FormField {
   final String? Function(String?)? validator;
   final int? maxLength;
   final bool obscureText;
-  
+
   const FormField({
     required this.key,
     required this.label,

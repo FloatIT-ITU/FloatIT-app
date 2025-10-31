@@ -35,7 +35,8 @@ class _EditEventPageState extends State<EditEventPage> {
   final TextEditingController _eventNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _attendeeLimitController = TextEditingController();
+  final TextEditingController _attendeeLimitController =
+      TextEditingController();
 
   Future<QuerySnapshot>? _adminsFuture;
 
@@ -224,7 +225,8 @@ class _EditEventPageState extends State<EditEventPage> {
                       SwitchListTile(
                         title: const Text('Enable Waiting List'),
                         value: waitingList,
-                        onChanged: (value) => setState(() => waitingList = value),
+                        onChanged: (value) =>
+                            setState(() => waitingList = value),
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
@@ -234,13 +236,19 @@ class _EditEventPageState extends State<EditEventPage> {
                           border: OutlineInputBorder(),
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'practice', child: Text('Practice')),
-                          DropdownMenuItem(value: 'competition', child: Text('Competition')),
-                          DropdownMenuItem(value: 'social', child: Text('Social')),
-                          DropdownMenuItem(value: 'meeting', child: Text('Meeting')),
-                          DropdownMenuItem(value: 'other', child: Text('Other')),
+                          DropdownMenuItem(
+                              value: 'practice', child: Text('Practice')),
+                          DropdownMenuItem(
+                              value: 'competition', child: Text('Competition')),
+                          DropdownMenuItem(
+                              value: 'social', child: Text('Social')),
+                          DropdownMenuItem(
+                              value: 'meeting', child: Text('Meeting')),
+                          DropdownMenuItem(
+                              value: 'other', child: Text('Other')),
                         ],
-                        onChanged: (value) => setState(() => type = value ?? 'practice'),
+                        onChanged: (value) =>
+                            setState(() => type = value ?? 'practice'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please select an event type';

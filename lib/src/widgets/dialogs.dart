@@ -20,7 +20,9 @@ class PasswordResetDialog extends StatelessWidget {
           onPressed: () async {
             if (AuthUtils.isForbiddenEmail(email)) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('This email address cannot be used for password reset.')),
+                const SnackBar(
+                    content: Text(
+                        'This email address cannot be used for password reset.')),
               );
               return;
             }

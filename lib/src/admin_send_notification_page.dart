@@ -53,8 +53,7 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                         }
                         final data = snap.data!.data()!;
                         return Card(
-                          color:
-                              Theme.of(context).colorScheme.primaryContainer,
+                          color: Theme.of(context).colorScheme.primaryContainer,
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: Row(
@@ -98,8 +97,8 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                                     final confirm = await showDialog<bool>(
                                       context: context,
                                       builder: (ctx) => AlertDialog(
-                                        title: const Text(
-                                            'Remove Global Banner?'),
+                                        title:
+                                            const Text('Remove Global Banner?'),
                                         content: const Text(
                                             'This will remove the current global banner for all users.'),
                                         actions: [
@@ -122,8 +121,8 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                                     if (!mounted) return;
                                     scaffoldMessenger.showSnackBar(
                                         const SnackBar(
-                                            content: Text(
-                                                'Global banner removed')));
+                                            content:
+                                                Text('Global banner removed')));
                                   },
                                 ),
                               ],
@@ -157,10 +156,13 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                     ),
                     const SizedBox(height: 12),
                     CheckboxListTile(
-                      title: const Text('Also send as system message to all users'),
-                      subtitle: const Text('Send this notification as a personal message to all app users'),
+                      title: const Text(
+                          'Also send as system message to all users'),
+                      subtitle: const Text(
+                          'Send this notification as a personal message to all app users'),
                       value: _sendAsSystemMessage,
-                      onChanged: (value) => setState(() => _sendAsSystemMessage = value ?? true),
+                      onChanged: (value) =>
+                          setState(() => _sendAsSystemMessage = value ?? true),
                     ),
                     // Live preview
                     Card(
@@ -171,8 +173,7 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(_title.isEmpty ? 'Preview Title' : _title,
-                                style:
-                                    Theme.of(context).textTheme.titleMedium),
+                                style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(height: 8),
                             Text(
                                 _body.isEmpty
@@ -190,7 +191,7 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                           return;
                         }
                         final messenger = ScaffoldMessenger.of(context);
-                        
+
                         // Send banner notification
                         await FirebaseFirestore.instance
                             .collection('app')
@@ -198,24 +199,26 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                             .set({
                           'title': _title,
                           'body': _body,
-                          'createdAt':
-                              DateTime.now().toUtc().toIso8601String(),
+                          'createdAt': DateTime.now().toUtc().toIso8601String(),
                         });
 
                         // Send system messages to all users if requested
                         if (_sendAsSystemMessage) {
                           try {
-                            final usersSnapshot = await FirebaseFirestore.instance
+                            final usersSnapshot = await FirebaseFirestore
+                                .instance
                                 .collection('public_users')
                                 .get();
-                            
-                            final message = 'Global Notification: ${_title.trim()}\n\n${_body.trim()}';
+
+                            final message =
+                                'Global Notification: ${_title.trim()}\n\n${_body.trim()}';
                             for (final userDoc in usersSnapshot.docs) {
                               final userId = userDoc.id;
                               await EventService.sendSystemMessage(
                                 userId: userId,
                                 message: message,
-                                eventId: 'global', // Use 'global' as eventId for global notifications
+                                eventId:
+                                    'global', // Use 'global' as eventId for global notifications
                               );
                             }
                           } catch (e) {
@@ -235,7 +238,8 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                                 'Content-Type': 'application/json',
                                 'Authorization': 'Bearer $idToken',
                               },
-                              body: '{"topic":"all-users","title":"$_title","body":"$_body"}',
+                              body:
+                                  '{"topic":"all-users","title":"$_title","body":"$_body"}',
                             );
                             if (response.statusCode != 200) {
                               // Handle error, but don't fail the whole operation

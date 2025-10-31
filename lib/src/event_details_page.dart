@@ -51,18 +51,24 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         // Add actions row for admin editing if needed
         if (isAdmin && !editing)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             alignment: Alignment.centerRight,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseService.eventBanner(widget.eventId).snapshots(),
+                  stream:
+                      FirebaseService.eventBanner(widget.eventId).snapshots(),
                   builder: (context, snap) {
                     final hasBanner = snap.hasData && snap.data!.exists;
                     return IconButton(
-                      icon: Icon(hasBanner ? Icons.notifications_off : Icons.notifications),
-                      tooltip: hasBanner ? 'Remove Notification' : 'Send Notification',
+                      icon: Icon(hasBanner
+                          ? Icons.notifications_off
+                          : Icons.notifications),
+                      tooltip: hasBanner
+                          ? 'Remove Notification'
+                          : 'Send Notification',
                       onPressed: hasBanner
                           ? () => _showRemoveNotificationDialog(context)
                           : () => _showSendNotificationDialog(context),
@@ -122,18 +128,18 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
             : () async {
                 // Rate limiting check
                 final rateLimitService = RateLimitService.instance;
-                final actionType = isAttendee || isWaiting 
-                    ? RateLimitAction.leaveEvent 
+                final actionType = isAttendee || isWaiting
+                    ? RateLimitAction.leaveEvent
                     : RateLimitAction.joinEvent;
-                
+
                 if (!rateLimitService.isActionAllowed(uid, actionType)) {
                   return;
                 }
-                
+
                 try {
                   // Record the action before processing
                   rateLimitService.recordAction(uid, actionType);
-                  
+
                   await FirebaseService.runTransaction((txn) async {
                     final eventRef = FirebaseService.eventDoc(widget.eventId);
                     final eventSnap = await txn.get(eventRef);
@@ -168,7 +174,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                       newAttendeeCount += 1;
                     }
                     if (leftAttendee &&
-                        (maxAttendees == 0 || newAttendeeCount < maxAttendees) &&
+                        (maxAttendees == 0 ||
+                            newAttendeeCount < maxAttendees) &&
                         waitingList.isNotEmpty) {
                       // Promote first user in waiting list
                       attendees.add(waitingList.first);
@@ -179,34 +186,40 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                       'waitingListUids': waitingList,
                     });
                   });
-                  
+
                   // Record statistics for join/leave actions
                   try {
-                    final eventData = await FirebaseService.eventDoc(widget.eventId).get();
+                    final eventData =
+                        await FirebaseService.eventDoc(widget.eventId).get();
                     final eventMap = eventData.data() as Map<String, dynamic>?;
                     final startTimeStr = eventMap?['startTime'] as String?;
-                    final eventDate = startTimeStr != null ? DateTime.tryParse(startTimeStr)?.toLocal() : null;
-                    
+                    final eventDate = startTimeStr != null
+                        ? DateTime.tryParse(startTimeStr)?.toLocal()
+                        : null;
+
                     if (eventDate != null) {
                       if (actionType == RateLimitAction.leaveEvent) {
                         // User left the event (either attendee or waiting list)
-                        await UserStatisticsService.removeEventJoin(uid, widget.eventId);
+                        await UserStatisticsService.removeEventJoin(
+                            uid, widget.eventId);
                       } else if (actionType == RateLimitAction.joinEvent) {
                         // User joined the event (either as attendee or waiting)
-                        await UserStatisticsService.recordEventJoin(uid, widget.eventId, eventDate);
+                        await UserStatisticsService.recordEventJoin(
+                            uid, widget.eventId, eventDate);
                       }
                     }
                   } catch (e) {
                     // Statistics recording failed - non-critical, don't show error
                   }
-                  
+
                   if (!mounted) return;
                   String actionMsg;
                   if (isAttendee) {
                     actionMsg = 'Left event';
                   } else if (isWaiting) {
                     actionMsg = 'Left waiting list';
-                  } else if (maxAttendees == 0 || attendeeUidsRaw.length < maxAttendees) {
+                  } else if (maxAttendees == 0 ||
+                      attendeeUidsRaw.length < maxAttendees) {
                     actionMsg = 'Joined event';
                   } else {
                     actionMsg = 'Joined waiting list';
@@ -322,7 +335,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
             // private doc (allowed since it's the owner's doc). If they're an
             // admin, they may read other private user docs per rules.
             try {
-              final myPrivate = await FirebaseService.userDoc(authUser.uid).get();
+              final myPrivate =
+                  await FirebaseService.userDoc(authUser.uid).get();
               final myData = myPrivate.data() as Map<String, dynamic>?;
               if (myData != null && myData['admin'] == true) {
                 canReadPrivateHost = true;
@@ -410,7 +424,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
     }
 
     final messageController = TextEditingController();
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -448,25 +462,29 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
     if (confirmed == true && messageController.text.trim().isNotEmpty) {
       try {
         final messageText = messageController.text.trim();
-        
+
         // Prevent sending a message to yourself
         if (hostId == currentUser.uid) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot send a message to yourself')));
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Cannot send a message to yourself')));
           }
           return;
         }
 
         // Create or get thread ID (sorted user IDs to ensure consistency)
         final participants = [currentUser.uid, hostId]..sort();
-        final threadId = '${participants[0]}_${participants[1]}_${widget.eventId}';
-        
-        final threadRef = FirebaseFirestore.instance.collection('messages').doc(threadId);
+        final threadId =
+            '${participants[0]}_${participants[1]}_${widget.eventId}';
+
+        final threadRef =
+            FirebaseFirestore.instance.collection('messages').doc(threadId);
         final threadDoc = await threadRef.get();
-        
+
         // Generate unique message ID
-        final messageId = FirebaseFirestore.instance.collection('messages').doc().id;
-        
+        final messageId =
+            FirebaseFirestore.instance.collection('messages').doc().id;
+
         if (!threadDoc.exists) {
           // Create new thread with first message
           await threadRef.set({
@@ -485,7 +503,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
             },
             'lastMessage': messageText,
             'lastMessageTime': FieldValue.serverTimestamp(),
-            'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+            'deleteAt': Timestamp.fromDate(
+                DateTime.now().add(const Duration(days: 15))),
           });
         } else {
           // Update existing thread with new message
@@ -498,10 +517,11 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
             'unreadCount.$hostId': FieldValue.increment(1),
             'lastMessage': messageText,
             'lastMessageTime': FieldValue.serverTimestamp(),
-            'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+            'deleteAt': Timestamp.fromDate(
+                DateTime.now().add(const Duration(days: 15))),
           });
         }
-        
+
         // Send push notification
         // final pushService = PushService();
         // await pushService.sendNotificationToUsers(
@@ -510,7 +530,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         //   body: messageText,
         //   eventId: widget.eventId,
         // );
-        
+
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Message sent to host')),
@@ -522,7 +542,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         );
       }
     }
-    
+
     messageController.dispose();
   }
 
@@ -574,7 +594,9 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
           // Main content constrained
           Expanded(
             child: ConstrainedContent(
-              child: _editing ? _buildEditForm(isAdmin) : _buildDetailsView(isAdmin),
+              child: _editing
+                  ? _buildEditForm(isAdmin)
+                  : _buildDetailsView(isAdmin),
             ),
           ),
         ],
@@ -678,12 +700,16 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(maxAttendees == 0 ? 'Attendees ($attendeeCount)' : 'Attendees ($attendeeCount/$maxAttendees)',
+                      Text(
+                          maxAttendees == 0
+                              ? 'Attendees ($attendeeCount)'
+                              : 'Attendees ($attendeeCount/$maxAttendees)',
                           style: Theme.of(context).textTheme.titleMedium),
                       if (isAdmin)
                         IconButton(
                           icon: const Icon(Icons.person_add),
-                          onPressed: () => _showAddUserDialog(context, eventData),
+                          onPressed: () =>
+                              _showAddUserDialog(context, eventData),
                           tooltip: 'Add attendee',
                         ),
                     ],
@@ -871,7 +897,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
     );
   }
 
-  void _showAddUserDialog(BuildContext context, Map<String, dynamic> eventData) async {
+  void _showAddUserDialog(
+      BuildContext context, Map<String, dynamic> eventData) async {
     final selectedUser = await showDialog<String>(
       context: context,
       builder: (context) => const _AddUserDialog(),
@@ -882,7 +909,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
     }
   }
 
-  Future<void> _addUserToEvent(String userId, Map<String, dynamic> eventData) async {
+  Future<void> _addUserToEvent(
+      String userId, Map<String, dynamic> eventData) async {
     try {
       await FirebaseService.runTransaction((txn) async {
         final eventRef = FirebaseService.eventDoc(widget.eventId);
@@ -942,7 +970,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Remove Event Notification'),
-        content: const Text('This will remove the current event notification. Are you sure?'),
+        content: const Text(
+            'This will remove the current event notification. Are you sure?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -968,7 +997,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                 // ignore: use_build_context_synchronously
                 final messenger = ScaffoldMessenger.of(context);
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('Failed to remove notification')),
+                  const SnackBar(
+                      content: Text('Failed to remove notification')),
                 );
               }
             },
@@ -986,7 +1016,8 @@ class _SendNotificationDialog extends StatefulWidget {
   const _SendNotificationDialog({required this.eventId});
 
   @override
-  State<_SendNotificationDialog> createState() => _SendNotificationDialogState();
+  State<_SendNotificationDialog> createState() =>
+      _SendNotificationDialogState();
 }
 
 class _SendNotificationDialogState extends State<_SendNotificationDialog> {
@@ -1007,9 +1038,8 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
             TextFormField(
               decoration: const InputDecoration(labelText: 'Title'),
               onChanged: (v) => setState(() => _title = v),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Title is required'
-                  : null,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Title is required' : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -1023,9 +1053,11 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
             const SizedBox(height: 12),
             CheckboxListTile(
               title: const Text('Also send as system message to attendees'),
-              subtitle: const Text('Send this notification as a personal message to all event attendees and waiting list members'),
+              subtitle: const Text(
+                  'Send this notification as a personal message to all event attendees and waiting list members'),
               value: _sendAsSystemMessage,
-              onChanged: (value) => setState(() => _sendAsSystemMessage = value ?? true),
+              onChanged: (value) =>
+                  setState(() => _sendAsSystemMessage = value ?? true),
               dense: true,
             ),
           ],
@@ -1050,17 +1082,22 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
               // Send system messages to attendees if requested
               if (_sendAsSystemMessage) {
                 try {
-                  final eventDoc = await FirebaseService.eventDoc(widget.eventId).get();
+                  final eventDoc =
+                      await FirebaseService.eventDoc(widget.eventId).get();
                   if (eventDoc.exists) {
                     final eventData = eventDoc.data() as Map<String, dynamic>;
-                    final attendees = List<String>.from(eventData['attendees'] ?? []);
-                    final waitingList = List<String>.from(eventData['waitingListUids'] ?? []);
-                    
+                    final attendees =
+                        List<String>.from(eventData['attendees'] ?? []);
+                    final waitingList =
+                        List<String>.from(eventData['waitingListUids'] ?? []);
+
                     // Combine attendees and waiting list
-                    final allRecipients = {...attendees, ...waitingList}.toList();
-                    
+                    final allRecipients =
+                        {...attendees, ...waitingList}.toList();
+
                     // Send system message to each recipient
-                    final message = 'Event Notification: ${_title.trim()}\n\n${_body.trim()}';
+                    final message =
+                        'Event Notification: ${_title.trim()}\n\n${_body.trim()}';
                     for (final userId in allRecipients) {
                       await EventService.sendSystemMessage(
                         userId: userId,
@@ -1129,16 +1166,20 @@ class _AddUserDialogState extends State<_AddUserDialog> {
   Future<void> _loadUsers() async {
     try {
       final usersSnap = await FirebaseService.publicUsers.get();
-      final users = usersSnap.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>?;
-        if (data == null) return null;
-        return {
-          'uid': doc.id,
-          'name': data['displayName'] ?? 'Unknown',
-          'occupation': data['occupation'] ?? '',
-          'color': data['iconColor'],
-        };
-      }).where((user) => user != null).cast<Map<String, dynamic>>().toList();
+      final users = usersSnap.docs
+          .map((doc) {
+            final data = doc.data() as Map<String, dynamic>?;
+            if (data == null) return null;
+            return {
+              'uid': doc.id,
+              'name': data['displayName'] ?? 'Unknown',
+              'occupation': data['occupation'] ?? '',
+              'color': data['iconColor'],
+            };
+          })
+          .where((user) => user != null)
+          .cast<Map<String, dynamic>>()
+          .toList();
 
       setState(() {
         _users = users;
@@ -1218,7 +1259,8 @@ class _AddUserDialogState extends State<_AddUserDialog> {
                               subtitle: user['occupation'].isNotEmpty
                                   ? Text(user['occupation'])
                                   : null,
-                              onTap: () => Navigator.of(context).pop(user['uid']),
+                              onTap: () =>
+                                  Navigator.of(context).pop(user['uid']),
                             );
                           },
                         ),

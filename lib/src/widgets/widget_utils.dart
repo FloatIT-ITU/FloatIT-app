@@ -5,7 +5,7 @@ import '../constants/app_constants.dart';
 /// Common widget patterns and utilities to reduce repetitive code and widget nesting
 class WidgetUtils {
   WidgetUtils._();
-  
+
   /// Create a standard card with consistent styling
   static Widget card({
     required Widget child,
@@ -16,21 +16,22 @@ class WidgetUtils {
     VoidCallback? onTap,
   }) {
     Widget cardChild = child;
-    
+
     if (padding != null) {
       cardChild = Padding(padding: padding, child: cardChild);
     }
-    
+
     final card = Card(
       elevation: elevation ?? 1,
       color: color,
-      margin: margin ?? const EdgeInsets.symmetric(
-        horizontal: Paddings.sm, 
-        vertical: Paddings.xs,
-      ),
+      margin: margin ??
+          const EdgeInsets.symmetric(
+            horizontal: Paddings.sm,
+            vertical: Paddings.xs,
+          ),
       child: cardChild,
     );
-    
+
     if (onTap != null) {
       return InkWell(
         onTap: onTap,
@@ -38,10 +39,10 @@ class WidgetUtils {
         child: card,
       );
     }
-    
+
     return card;
   }
-  
+
   /// Create a section with header and content
   static Widget section({
     required String title,
@@ -73,7 +74,7 @@ class WidgetUtils {
       ],
     );
   }
-  
+
   /// Create a list tile with consistent styling
   static Widget listTile({
     Widget? leading,
@@ -92,7 +93,7 @@ class WidgetUtils {
       dense: dense,
     );
   }
-  
+
   /// Create a form section with consistent spacing
   static Widget formSection({
     required List<Widget> children,
@@ -110,7 +111,7 @@ class WidgetUtils {
       ),
     );
   }
-  
+
   /// Create a button bar with consistent spacing
   static Widget buttonBar({
     required List<Widget> children,
@@ -128,7 +129,7 @@ class WidgetUtils {
       ),
     );
   }
-  
+
   /// Create an info banner with icon and message
   static Widget infoBanner({
     required BuildContext context,
@@ -142,26 +143,31 @@ class WidgetUtils {
       margin: margin ?? const EdgeInsets.all(Paddings.md),
       padding: const EdgeInsets.all(Paddings.md),
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppThemeColors.primary(context).withOpacity(0.1),
+        color:
+            backgroundColor ?? AppThemeColors.primary(context).withOpacity(0.1),
         borderRadius: BorderRadius.circular(BorderRadii.md),
-        border: Border.all(color: AppThemeColors.primary(context).withOpacity(0.3)),
+        border:
+            Border.all(color: AppThemeColors.primary(context).withOpacity(0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: textColor ?? AppThemeColors.primary(context), size: IconSizes.md),
+          Icon(icon,
+              color: textColor ?? AppThemeColors.primary(context),
+              size: IconSizes.md),
           const SizedBox(width: Spacing.md),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(color: textColor ?? AppThemeColors.primary(context)),
+              style: TextStyle(
+                  color: textColor ?? AppThemeColors.primary(context)),
             ),
           ),
         ],
       ),
     );
   }
-  
+
   /// Create a status badge
   static Widget statusBadge(
     BuildContext context, {
@@ -171,11 +177,10 @@ class WidgetUtils {
     IconData? icon,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final defaultBgColor = isDark 
-        ? AppThemeColors.darkSurface 
-        : AppThemeColors.lightSurface;
+    final defaultBgColor =
+        isDark ? AppThemeColors.darkSurface : AppThemeColors.lightSurface;
     final defaultTextColor = AppThemeColors.text(context);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: Paddings.sm,
@@ -189,7 +194,8 @@ class WidgetUtils {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: IconSizes.sm, color: textColor ?? defaultTextColor),
+            Icon(icon,
+                size: IconSizes.sm, color: textColor ?? defaultTextColor),
             const SizedBox(width: Spacing.xs),
           ],
           Text(
@@ -204,7 +210,7 @@ class WidgetUtils {
       ),
     );
   }
-  
+
   /// Create a responsive layout that switches between column and row
   static Widget responsiveLayout({
     required List<Widget> children,
@@ -230,7 +236,7 @@ class WidgetUtils {
       },
     );
   }
-  
+
   /// Create a safe area wrapper with consistent padding
   static Widget safeWrapper({
     required Widget child,
@@ -262,7 +268,7 @@ extension WidgetExtensions on Widget {
       child: this,
     );
   }
-  
+
   /// Add horizontal padding
   Widget paddingHorizontal(double padding) {
     return Padding(
@@ -270,7 +276,7 @@ extension WidgetExtensions on Widget {
       child: this,
     );
   }
-  
+
   /// Add vertical padding
   Widget paddingVertical(double padding) {
     return Padding(
@@ -278,7 +284,7 @@ extension WidgetExtensions on Widget {
       child: this,
     );
   }
-  
+
   /// Add margin using Container
   Widget marginAll(double margin) {
     return Container(
@@ -286,22 +292,22 @@ extension WidgetExtensions on Widget {
       child: this,
     );
   }
-  
+
   /// Wrap in Expanded widget
   Widget expanded({int flex = 1}) {
     return Expanded(flex: flex, child: this);
   }
-  
+
   /// Wrap in Flexible widget
   Widget flexible({int flex = 1, FlexFit fit = FlexFit.loose}) {
     return Flexible(flex: flex, fit: fit, child: this);
   }
-  
+
   /// Center the widget
   Widget centered() {
     return Center(child: this);
   }
-  
+
   /// Add a tap handler
   Widget onTap(VoidCallback? onTap) {
     return InkWell(onTap: onTap, child: this);
@@ -317,7 +323,7 @@ class SpacingUtils {
   static Widget get lg => const SizedBox(height: Spacing.lg);
   static Widget get xl => const SizedBox(height: Spacing.xl);
   static Widget get xxl => const SizedBox(height: Spacing.xxl);
-  
+
   /// Horizontal spacing widgets
   static Widget get hXs => const SizedBox(width: Spacing.xs);
   static Widget get hSm => const SizedBox(width: Spacing.sm);
@@ -325,7 +331,7 @@ class SpacingUtils {
   static Widget get hLg => const SizedBox(width: Spacing.lg);
   static Widget get hXl => const SizedBox(width: Spacing.xl);
   static Widget get hXxl => const SizedBox(width: Spacing.xxl);
-  
+
   /// Custom spacing
   static Widget vertical(double height) => SizedBox(height: height);
   static Widget horizontal(double width) => SizedBox(width: width);

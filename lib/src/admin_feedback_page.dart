@@ -54,12 +54,15 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const StandardPageBanner(title: 'Feedback Messages', showBackArrow: true),
+          const StandardPageBanner(
+              title: 'Feedback Messages', showBackArrow: true),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('feedback')
-                  .orderBy('status', descending: true) // unread first (unread > read alphabetically)
+                  .orderBy('status',
+                      descending:
+                          true) // unread first (unread > read alphabetically)
                   .orderBy('createdAt', descending: true)
                   .snapshots(),
               builder: (context, snapshot) {
@@ -99,16 +102,24 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                         const SizedBox(height: 16),
                         Text(
                           'No feedback messages yet',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'User feedback will appear here',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                         ),
                       ],
                     ),
@@ -125,9 +136,14 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text(
                             '${feedbackDocs.length} feedback message${feedbackDocs.length != 1 ? 's' : ''}',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -137,10 +153,14 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: Text(
                               'Unread Messages',
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -158,10 +178,15 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: Text(
                               'Read Messages',
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -204,12 +229,18 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
               // User info with profile
               FutureBuilder<DocumentSnapshot>(
                 future: userId != null
-                    ? FirebaseFirestore.instance.collection('public_users').doc(userId).get()
+                    ? FirebaseFirestore.instance
+                        .collection('public_users')
+                        .doc(userId)
+                        .get()
                     : null,
                 builder: (context, profileSnapshot) {
-                  final profileData = profileSnapshot.data?.data() as Map<String, dynamic>?;
-                  final displayName = profileData?['displayName'] as String? ?? 'Unknown';
-                  final occupation = profileData?['occupation'] as String? ?? 'Not set';
+                  final profileData =
+                      profileSnapshot.data?.data() as Map<String, dynamic>?;
+                  final displayName =
+                      profileData?['displayName'] as String? ?? 'Unknown';
+                  final occupation =
+                      profileData?['occupation'] as String? ?? 'Not set';
 
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -220,44 +251,65 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                           children: [
                             Text(
                               displayName,
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               occupation,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                             ),
                             Text(
                               userEmail,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: status == 'unread'
                               ? Theme.of(context).colorScheme.primaryContainer
-                              : Theme.of(context).colorScheme.surfaceContainerHighest,
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           status.toUpperCase(),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: status == 'unread'
-                                ? Theme.of(context).colorScheme.onPrimaryContainer
-                                : Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: status == 'unread'
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .onPrimaryContainer
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
                         ),
                       ),
                     ],
@@ -268,8 +320,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
               Text(
                 formattedDate,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
               const SizedBox(height: 12),
               Text(
@@ -281,7 +333,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton.icon(
-                    onPressed: () => _respondToUser(doc.id, userId, userEmail, message),
+                    onPressed: () =>
+                        _respondToUser(doc.id, userId, userEmail, message),
                     icon: const Icon(Icons.reply, size: 16),
                     label: const Text('Respond'),
                     style: TextButton.styleFrom(
@@ -315,7 +368,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     );
   }
 
-  Future<void> _respondToUser(String feedbackId, String? userId, String userEmail, String feedbackMessage) async {
+  Future<void> _respondToUser(String feedbackId, String? userId,
+      String userEmail, String feedbackMessage) async {
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Cannot respond: user ID not found')),
@@ -329,7 +383,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
       if (currentUser == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('You must be logged in as admin to respond')),
+            const SnackBar(
+                content: Text('You must be logged in as admin to respond')),
           );
         }
         return;
@@ -337,15 +392,19 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
 
       final firestore = FirebaseFirestore.instance;
       final conversationId = 'feedback_$feedbackId';
-      final conversationRef = firestore.collection('messages').doc(conversationId);
+      final conversationRef =
+          firestore.collection('messages').doc(conversationId);
       final messageId = firestore.collection('messages').doc().id;
 
       final adminUid = currentUser.uid;
       if (adminUid == userId) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot send a message to yourself')));
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Cannot send a message to yourself')));
         return;
       }
-  final initialText = 'Regarding your feedback: "$feedbackMessage"\n\n[Admin will respond]';
+      final initialText =
+          'Regarding your feedback: "$feedbackMessage"\n\n[Admin will respond]';
 
       final conversationSnap = await conversationRef.get();
       if (!conversationSnap.exists) {
@@ -358,7 +417,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
           'lastMessageTime': FieldValue.serverTimestamp(),
           'unreadCount': {userId: 1},
           'createdAt': FieldValue.serverTimestamp(),
-          'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+          'deleteAt':
+              Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
           'messages': {
             messageId: {
               'senderId': adminUid,
@@ -397,7 +457,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to create conversation for feedback')),
+          const SnackBar(
+              content: Text('Failed to create conversation for feedback')),
         );
       }
     }
@@ -429,7 +490,8 @@ class _AdminFeedbackPageState extends State<AdminFeedbackPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Feedback'),
-        content: const Text('Are you sure you want to delete this feedback message?'),
+        content: const Text(
+            'Are you sure you want to delete this feedback message?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

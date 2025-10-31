@@ -13,7 +13,8 @@ abstract class NotificationRepository {
   Future<Result<void>> setGlobalBanner(NotificationBanner banner);
 
   /// Create or update event banner
-  Future<Result<void>> setEventBanner(String eventId, NotificationBanner banner);
+  Future<Result<void>> setEventBanner(
+      String eventId, NotificationBanner banner);
 
   /// Delete global banner
   Future<Result<void>> deleteGlobalBanner();

@@ -46,9 +46,18 @@ class AttendeeList extends StatelessWidget {
                   if (title.isNotEmpty) const SizedBox(width: 8),
                   Text('(${attendees.length})',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: Theme.of(context).textTheme.titleMedium?.fontWeight,
-                      ) ?? TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                                fontWeight: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.fontWeight,
+                              ) ??
+                          TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant)),
                 ],
               ],
             ),
@@ -63,12 +72,14 @@ class AttendeeList extends StatelessWidget {
           child: Wrap(
             spacing: 4,
             runSpacing: 4,
-            children: attendees.map((a) => _AttendeeChip(
-              attendee: a,
-              isAdmin: isAdmin,
-              eventId: eventId,
-              onAttendeeRemoved: onAttendeeRemoved,
-            )).toList(),
+            children: attendees
+                .map((a) => _AttendeeChip(
+                      attendee: a,
+                      isAdmin: isAdmin,
+                      eventId: eventId,
+                      onAttendeeRemoved: onAttendeeRemoved,
+                    ))
+                .toList(),
           ),
         ),
       ],
@@ -83,8 +94,8 @@ class Attendee {
   final String? avatarUrl;
   final Color? color;
   final bool isAdmin;
-  const Attendee({
-      required this.uid,
+  const Attendee(
+      {required this.uid,
       required this.name,
       this.occupation,
       this.avatarUrl,
@@ -165,7 +176,7 @@ class _AttendeeChip extends StatelessWidget {
 
     if (confirmed == true && eventId != null) {
       String? promotedUserId;
-      
+
       try {
         await FirebaseService.runTransaction((txn) async {
           final eventRef = FirebaseService.eventDoc(eventId!);
@@ -195,13 +206,17 @@ class _AttendeeChip extends StatelessWidget {
         // Send system message to promoted user
         if (promotedUserId != null) {
           try {
-            final eventSnap = await FirebaseFirestore.instance.collection('events').doc(eventId).get();
+            final eventSnap = await FirebaseFirestore.instance
+                .collection('events')
+                .doc(eventId)
+                .get();
             final eventData = eventSnap.data();
             final eventName = eventData?['name'] ?? 'Event';
-            
+
             await EventService.sendSystemMessage(
               userId: promotedUserId!,
-              message: 'Great news! You\'ve been promoted from the waiting list to attendee for "$eventName".',
+              message:
+                  'Great news! You\'ve been promoted from the waiting list to attendee for "$eventName".',
               eventId: eventId!,
             );
           } catch (e) {

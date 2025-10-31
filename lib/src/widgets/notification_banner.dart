@@ -79,8 +79,12 @@ class _NotificationBannerState extends State<NotificationBanner>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = widget.isGlobal
-        ? (isDark ? AppThemeColors.bannerGlobalTextDark : AppThemeColors.bannerGlobalTextLight)
-        : (isDark ? AppThemeColors.bannerEventTextDark : AppThemeColors.bannerEventTextLight);
+        ? (isDark
+            ? AppThemeColors.bannerGlobalTextDark
+            : AppThemeColors.bannerGlobalTextLight)
+        : (isDark
+            ? AppThemeColors.bannerEventTextDark
+            : AppThemeColors.bannerEventTextLight);
 
     return SlideTransition(
       position: _slideAnimation,
@@ -88,134 +92,143 @@ class _NotificationBannerState extends State<NotificationBanner>
         opacity: _fadeAnimation,
         child: Material(
           color: widget.backgroundColor,
-          child: widget.useSafeArea ? SafeArea(
-            top: true,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              child: ConstrainedContent(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: widget.onTap,
-                        child: Row(
-                          children: [
-                            Icon(
-                              widget.isGlobal ? Icons.campaign : Icons.event_note,
-                              color: textColor,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+          child: widget.useSafeArea
+              ? SafeArea(
+                  top: true,
+                  child: Container(
+                    width: double.infinity,
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    child: ConstrainedContent(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: widget.onTap,
+                              child: Row(
                                 children: [
-                                  Text(
-                                    widget.title,
-                                    style: TextStyle(
-                                      color: textColor,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
+                                  Icon(
+                                    widget.isGlobal
+                                        ? Icons.campaign
+                                        : Icons.event_note,
+                                    color: textColor,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          widget.title,
+                                          style: TextStyle(
+                                            color: textColor,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        if ((widget.body ?? '').isNotEmpty)
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 4.0),
+                                            child: Text(
+                                              widget.body ?? '',
+                                              style: TextStyle(
+                                                color:
+                                                    textColor.withOpacity(0.8),
+                                                fontSize: 12,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   ),
-                                  if ((widget.body ?? '').isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4.0),
-                                      child: Text(
-                                        widget.body ?? '',
-                                        style: TextStyle(
-                                          color: textColor.withOpacity(0.8),
-                                          fontSize: 12,
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (widget.onDismiss != null)
-                      IconButton(
-                        icon: Icon(
-                          Icons.close,
-                          color: textColor.withOpacity(0.7),
-                          size: 18,
-                        ),
-                        onPressed: _handleDismiss,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 32,
-                          minHeight: 32,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ) : Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            child: Row(
-              children: [
-                Icon(
-                  widget.isGlobal ? Icons.campaign : Icons.event_note,
-                  color: textColor,
-                  size: 16,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: InkWell(
-                    onTap: widget.onTap,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.title,
-                          style: TextStyle(
-                            color: textColor,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
                           ),
-                        ),
-                        if ((widget.body ?? '').isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2.0),
-                            child: Text(
-                              widget.body ?? '',
-                              style: TextStyle(
-                                color: textColor.withOpacity(0.8),
-                                fontSize: 10,
+                          if (widget.onDismiss != null)
+                            IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                color: textColor.withOpacity(0.7),
+                                size: 18,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              onPressed: _handleDismiss,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
+                  ),
+                )
+              : Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.isGlobal ? Icons.campaign : Icons.event_note,
+                        color: textColor,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: InkWell(
+                          onTap: widget.onTap,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.title,
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              if ((widget.body ?? '').isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2.0),
+                                  child: Text(
+                                    widget.body ?? '',
+                                    style: TextStyle(
+                                      color: textColor.withOpacity(0.8),
+                                      fontSize: 10,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (widget.onDismiss != null)
+                        IconButton(
+                          icon: Icon(
+                            Icons.close,
+                            color: textColor.withOpacity(0.7),
+                            size: 16,
+                          ),
+                          onPressed: _handleDismiss,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 24,
+                            minHeight: 24,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                if (widget.onDismiss != null)
-                  IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: textColor.withOpacity(0.7),
-                      size: 16,
-                    ),
-                    onPressed: _handleDismiss,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 24,
-                      minHeight: 24,
-                    ),
-                  ),
-              ],
-            ),
-          ),
         ),
       ),
     );

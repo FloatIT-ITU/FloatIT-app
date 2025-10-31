@@ -6,7 +6,8 @@ abstract class Failure {
   const Failure(this.message, {this.code});
 
   @override
-  String toString() => 'Failure: $message${code != null ? ' (code: $code)' : ''}';
+  String toString() =>
+      'Failure: $message${code != null ? ' (code: $code)' : ''}';
 }
 
 /// Authentication failures
@@ -65,7 +66,8 @@ class ValidationFailure extends Failure {
   const ValidationFailure(super.message, {this.field, super.code});
 
   @override
-  String toString() => 'ValidationFailure${field != null ? ' in $field' : ''}: $message${code != null ? ' (code: $code)' : ''}';
+  String toString() =>
+      'ValidationFailure${field != null ? ' in $field' : ''}: $message${code != null ? ' (code: $code)' : ''}';
 }
 
 /// Network failures
@@ -90,5 +92,6 @@ class AppFailure extends Failure {
       const AppFailure('An unexpected error occurred');
 
   factory AppFailure.invalidState() =>
-      const AppFailure('Application is in an invalid state', code: 'invalid-state');
+      const AppFailure('Application is in an invalid state',
+          code: 'invalid-state');
 }

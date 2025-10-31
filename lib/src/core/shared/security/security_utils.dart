@@ -31,14 +31,19 @@ class SecurityUtils {
     var sanitized = input.trim();
 
     // Remove script tags
-    sanitized = sanitized.replaceAll(RegExp(r'<script[^>]*>.*?</script>', caseSensitive: false), '');
-    sanitized = sanitized.replaceAll(RegExp(r'<script[^>]*>', caseSensitive: false), '');
+    sanitized = sanitized.replaceAll(
+        RegExp(r'<script[^>]*>.*?</script>', caseSensitive: false), '');
+    sanitized = sanitized.replaceAll(
+        RegExp(r'<script[^>]*>', caseSensitive: false), '');
 
     // Remove other potentially dangerous tags
-    sanitized = sanitized.replaceAll(RegExp(r'<(iframe|object|embed)[^>]*>.*?</\1>', caseSensitive: false), '');
+    sanitized = sanitized.replaceAll(
+        RegExp(r'<(iframe|object|embed)[^>]*>.*?</\1>', caseSensitive: false),
+        '');
 
     // Remove javascript: URLs
-    sanitized = sanitized.replaceAll(RegExp(r'javascript:', caseSensitive: false), '');
+    sanitized =
+        sanitized.replaceAll(RegExp(r'javascript:', caseSensitive: false), '');
 
     return sanitized;
   }
@@ -67,13 +72,15 @@ class SecurityUtils {
   }
 
   /// Validate file extension
-  static bool isValidFileExtension(String filename, List<String> allowedExtensions) {
+  static bool isValidFileExtension(
+      String filename, List<String> allowedExtensions) {
     final extension = filename.split('.').last.toLowerCase();
     return allowedExtensions.contains(extension);
   }
 
   /// Rate limiting helper (simple in-memory implementation)
-  static bool shouldAllowAction(String actionKey, Duration window, int maxAttempts) {
+  static bool shouldAllowAction(
+      String actionKey, Duration window, int maxAttempts) {
     // This is a simple implementation. In production, use Redis or similar.
     // For now, we'll just return true as this is a client-side app.
     return true;
@@ -81,7 +88,8 @@ class SecurityUtils {
 
   /// Generate secure random string
   static String generateSecureToken([int length = 32]) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     final random = DateTime.now().millisecondsSinceEpoch;
     var result = '';
 
@@ -109,7 +117,8 @@ class SecurityUtils {
       if (RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(c)) hasSpecial = true;
     }
 
-    final criteria = [hasUpper, hasLower, hasDigit, hasSpecial].where((c) => c).length;
+    final criteria =
+        [hasUpper, hasLower, hasDigit, hasSpecial].where((c) => c).length;
 
     if (password.length >= 12 && criteria >= 3) return PasswordStrength.strong;
     if (password.length >= 10 && criteria >= 2) return PasswordStrength.medium;
@@ -132,7 +141,8 @@ extension SecurityExtensions on String {
 
   bool get isValidItuEmail => SecurityUtils.isValidItuEmail(this);
 
-  PasswordStrength get passwordStrength => SecurityUtils.checkPasswordStrength(this);
+  PasswordStrength get passwordStrength =>
+      SecurityUtils.checkPasswordStrength(this);
 }
 
 /// Extension methods for security validation on nullable strings

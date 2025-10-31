@@ -6,18 +6,18 @@ class MicrosoftSignInButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final String text;
-  
+
   const MicrosoftSignInButton({
     super.key,
     this.onPressed,
     this.isLoading = false,
     this.text = 'Sign in with Microsoft',
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return SizedBox(
       width: 300,
       height: 56,
@@ -37,7 +37,8 @@ class MicrosoftSignInButton extends StatelessWidget {
             ? SizedBox(
                 height: 24,
                 width: 24,
-                child: LoadingWidgets.inlineLoading(size: 20, color: theme.colorScheme.onPrimary),
+                child: LoadingWidgets.inlineLoading(
+                    size: 20, color: theme.colorScheme.onPrimary),
               )
             : Row(
                 mainAxisSize: MainAxisSize.min,

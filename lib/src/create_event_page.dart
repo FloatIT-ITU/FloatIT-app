@@ -102,10 +102,11 @@ class _CreateEventPageState extends State<CreateEventPage> {
 
                           attendeeLimit = (data['attendeeLimit'] is int)
                               ? data['attendeeLimit'] as int
-                              : int.tryParse(
-                                      (data['attendeeLimit'] ?? '').toString())
-                                  ?? 10;
-                          _attendeeLimitController.text = attendeeLimit.toString();
+                              : int.tryParse((data['attendeeLimit'] ?? '')
+                                      .toString()) ??
+                                  10;
+                          _attendeeLimitController.text =
+                              attendeeLimit.toString();
 
                           waitingList = data['waitingList'] == true;
                           type = data['type'] as String? ?? 'practice';
@@ -188,15 +189,21 @@ class _CreateEventPageState extends State<CreateEventPage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             OutlinedButton.icon(
-                              icon: Icon(Icons.copy_all, color: Theme.of(context).colorScheme.onSurface),
-                              label: Text('Copy From Event', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                              icon: Icon(Icons.copy_all,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface),
+                              label: Text('Copy From Event',
+                                  style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface)),
                               onPressed: _showCopyFromEventDialog,
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
                               controller: _eventNameController,
-                              decoration:
-                                  const InputDecoration(labelText: 'Event Name'),
+                              decoration: const InputDecoration(
+                                  labelText: 'Event Name'),
                               onChanged: (v) => setState(() => eventName = v),
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'Required' : null,
@@ -204,8 +211,8 @@ class _CreateEventPageState extends State<CreateEventPage> {
                             const SizedBox(height: 12),
                             TextFormField(
                               controller: _descriptionController,
-                              decoration:
-                                  const InputDecoration(labelText: 'Description'),
+                              decoration: const InputDecoration(
+                                  labelText: 'Description'),
                               minLines: 1,
                               maxLines: null,
                               keyboardType: TextInputType.multiline,
@@ -222,10 +229,9 @@ class _CreateEventPageState extends State<CreateEventPage> {
                                         labelText: 'Location'),
                                     onChanged: (v) =>
                                         setState(() => location = v),
-                                    validator: (v) =>
-                                        v == null || v.isEmpty
-                                            ? 'Required'
-                                            : null,
+                                    validator: (v) => v == null || v.isEmpty
+                                        ? 'Required'
+                                        : null,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -255,8 +261,8 @@ class _CreateEventPageState extends State<CreateEventPage> {
                                   : startTime.toString()),
                               leading: const Icon(Icons.access_time),
                               onTap: () async {
-                                final picked =
-                                    await pickDateTime(context, startTime ?? DateTime.now());
+                                final picked = await pickDateTime(
+                                    context, startTime ?? DateTime.now());
                                 if (!mounted) return;
                                 if (picked != null) {
                                   setState(() => startTime = picked);
@@ -271,19 +277,21 @@ class _CreateEventPageState extends State<CreateEventPage> {
                               onTap: () async {
                                 final initial =
                                     endTime ?? startTime ?? DateTime.now();
-                                final picked = await pickDateTime(context, initial);
+                                final picked =
+                                    await pickDateTime(context, initial);
                                 if (!mounted) return;
-                                if (picked != null) setState(() => endTime = picked);
+                                if (picked != null)
+                                  setState(() => endTime = picked);
                               },
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
                               controller: _attendeeLimitController,
-                              decoration:
-                                  const InputDecoration(labelText: 'Attendee Limit'),
+                              decoration: const InputDecoration(
+                                  labelText: 'Attendee Limit'),
                               keyboardType: TextInputType.number,
-                              onChanged: (v) =>
-                                  setState(() => attendeeLimit = int.tryParse(v) ?? 10),
+                              onChanged: (v) => setState(
+                                  () => attendeeLimit = int.tryParse(v) ?? 10),
                               validator: (v) =>
                                   (int.tryParse(v ?? '') ?? 0) >= 0
                                       ? null
@@ -298,62 +306,107 @@ class _CreateEventPageState extends State<CreateEventPage> {
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
                               value: type,
-                              decoration: const InputDecoration(labelText: 'Type'),
+                              decoration:
+                                  const InputDecoration(labelText: 'Type'),
                               items: const [
-                                DropdownMenuItem(value: 'practice', child: Text('Practice')),
-                                DropdownMenuItem(value: 'competition', child: Text('Competition')),
-                                DropdownMenuItem(value: 'other', child: Text('Other')),
+                                DropdownMenuItem(
+                                    value: 'practice', child: Text('Practice')),
+                                DropdownMenuItem(
+                                    value: 'competition',
+                                    child: Text('Competition')),
+                                DropdownMenuItem(
+                                    value: 'other', child: Text('Other')),
                               ],
-                              onChanged: (v) => setState(() => type = v ?? 'practice'),
+                              onChanged: (v) =>
+                                  setState(() => type = v ?? 'practice'),
                             ),
                             const SizedBox(height: 12),
                             FutureBuilder<QuerySnapshot>(
                               future: _adminsFuture,
                               builder: (context, adminSnap) {
-                                if (adminSnap.connectionState == ConnectionState.waiting) {
+                                if (adminSnap.connectionState ==
+                                    ConnectionState.waiting) {
                                   return const CircularProgressIndicator();
                                 } else if (adminSnap.hasError) {
                                   return const Text('Error loading admins');
-                                } else if (!adminSnap.hasData || adminSnap.data!.docs.isEmpty) {
+                                } else if (!adminSnap.hasData ||
+                                    adminSnap.data!.docs.isEmpty) {
                                   return const Text('No admins found');
                                 }
                                 final adminDocs = adminSnap.data!.docs;
-                                final adminUids = adminDocs.map((doc) => doc.id).toList();
+                                final adminUids =
+                                    adminDocs.map((doc) => doc.id).toList();
                                 if (adminUids.isEmpty) {
                                   return DropdownButtonFormField<String>(
                                     value: host,
-                                    decoration: const InputDecoration(labelText: 'Host'),
-                                    items: const [DropdownMenuItem(value: null, child: Text('No admins found'))],
+                                    decoration: const InputDecoration(
+                                        labelText: 'Host'),
+                                    items: const [
+                                      DropdownMenuItem(
+                                          value: null,
+                                          child: Text('No admins found'))
+                                    ],
                                     onChanged: (v) => setState(() => host = v),
-                                    validator: (v) => v == null ? 'Please select an admin' : null,
+                                    validator: (v) => v == null
+                                        ? 'Please select an admin'
+                                        : null,
                                   );
                                 }
                                 final key = adminUids.join(',');
-                                final future = _publicUsersFutureCache[key] ??= FirebaseFirestore.instance.collection('public_users').where(FieldPath.documentId, whereIn: adminUids).get();
+                                final future = _publicUsersFutureCache[key] ??=
+                                    FirebaseFirestore.instance
+                                        .collection('public_users')
+                                        .where(FieldPath.documentId,
+                                            whereIn: adminUids)
+                                        .get();
 
                                 return FutureBuilder<QuerySnapshot>(
                                   future: future,
                                   builder: (context, publicSnap) {
-                                    if (publicSnap.connectionState == ConnectionState.waiting) {
+                                    if (publicSnap.connectionState ==
+                                        ConnectionState.waiting) {
                                       return const CircularProgressIndicator();
                                     } else if (publicSnap.hasError) {
-                                      return const Text('Error loading admin names');
+                                      return const Text(
+                                          'Error loading admin names');
                                     }
-                                    final publicDocs = publicSnap.data?.docs ?? [];
-                                    final publicMap = {for (var doc in publicDocs) doc.id: doc.data()};
+                                    final publicDocs =
+                                        publicSnap.data?.docs ?? [];
+                                    final publicMap = {
+                                      for (var doc in publicDocs)
+                                        doc.id: doc.data()
+                                    };
                                     return DropdownButtonFormField<String>(
                                       value: host,
-                                      decoration: const InputDecoration(labelText: 'Host'),
+                                      decoration: const InputDecoration(
+                                          labelText: 'Host'),
                                       items: [
-                                        const DropdownMenuItem(value: null, child: Text('Select host')),
+                                        const DropdownMenuItem(
+                                            value: null,
+                                            child: Text('Select host')),
                                         ...adminDocs.map((admin) {
-                                          final public = publicMap[admin.id] as Map<String, dynamic>? ?? {};
-                                          final displayName = (public['displayName'] is String && (public['displayName'] as String).trim().isNotEmpty) ? public['displayName'] as String : (public['email'] ?? admin.id);
-                                          return DropdownMenuItem<String>(value: admin.id, child: Text(displayName));
+                                          final public = publicMap[admin.id]
+                                                  as Map<String, dynamic>? ??
+                                              {};
+                                          final displayName = (public[
+                                                          'displayName']
+                                                      is String &&
+                                                  (public['displayName']
+                                                          as String)
+                                                      .trim()
+                                                      .isNotEmpty)
+                                              ? public['displayName'] as String
+                                              : (public['email'] ?? admin.id);
+                                          return DropdownMenuItem<String>(
+                                              value: admin.id,
+                                              child: Text(displayName));
                                         }),
                                       ],
-                                      onChanged: (v) => setState(() => host = v),
-                                      validator: (v) => v == null ? 'Please select an admin' : null,
+                                      onChanged: (v) =>
+                                          setState(() => host = v),
+                                      validator: (v) => v == null
+                                          ? 'Please select an admin'
+                                          : null,
                                     );
                                   },
                                 );
@@ -386,12 +439,18 @@ class _CreateEventPageState extends State<CreateEventPage> {
                                 };
 
                                 final ev = Map<String, dynamic>.from(baseData);
-                                if (startTime != null) ev['startTime'] = startTime!.toUtc().toIso8601String();
-                                if (endTime != null) ev['endTime'] = endTime!.toUtc().toIso8601String();
+                                if (startTime != null)
+                                  ev['startTime'] =
+                                      startTime!.toUtc().toIso8601String();
+                                if (endTime != null)
+                                  ev['endTime'] =
+                                      endTime!.toUtc().toIso8601String();
                                 await FirebaseService.events.add(ev);
 
                                 if (!context.mounted) return;
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Event created!')));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Event created!')));
                                 Navigator.of(context).pop();
                               },
                               child: const Text('Create Event'),

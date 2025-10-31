@@ -20,7 +20,8 @@ class EventsProvider extends ChangeNotifier {
   bool get hasError => _error != null;
 
   /// Get user-friendly error message
-  String? get errorMessage => _error != null ? ErrorMessageUtils.getUserFriendlyMessage(_error!) : null;
+  String? get errorMessage =>
+      _error != null ? ErrorMessageUtils.getUserFriendlyMessage(_error!) : null;
   String? get selectedEventId => _selectedEventId;
 
   Event? get selectedEvent {
@@ -201,17 +202,20 @@ class EventsProvider extends ChangeNotifier {
   /// Get upcoming events
   List<Event> get upcomingEvents {
     final now = DateTime.now();
-    return _events.where((event) =>
-        event.startTime != null &&
-        event.startTime!.isAfter(now) &&
-        !event.isPast).toList()
+    return _events
+        .where((event) =>
+            event.startTime != null &&
+            event.startTime!.isAfter(now) &&
+            !event.isPast)
+        .toList()
       ..sort((a, b) => a.startTime!.compareTo(b.startTime!));
   }
 
   /// Get past events
   List<Event> get pastEvents {
     return _events.where((event) => event.isPast).toList()
-      ..sort((a, b) => (b.endTime ?? b.startTime)!.compareTo(a.endTime ?? a.startTime!));
+      ..sort((a, b) =>
+          (b.endTime ?? b.startTime)!.compareTo(a.endTime ?? a.startTime!));
   }
 
   /// Clear all events

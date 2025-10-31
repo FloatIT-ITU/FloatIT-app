@@ -116,8 +116,8 @@ class _AdminPageState extends State<AdminPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           ListTile(
-                            leading: const Icon(
-                                Icons.notifications_active_outlined),
+                            leading:
+                                const Icon(Icons.notifications_active_outlined),
                             title: const Text('Notifications (Global)'),
                             onTap: () {
                               NavigationUtils.pushWithoutAnimation(
@@ -130,7 +130,9 @@ class _AdminPageState extends State<AdminPage> {
                           ListTile(
                             leading: const Icon(Icons.feedback_outlined),
                             title: const Text('Feedback Messages'),
-                            trailing: _hasUnreadFeedback ? const UnreadIndicator() : null,
+                            trailing: _hasUnreadFeedback
+                                ? const UnreadIndicator()
+                                : null,
                             onTap: () {
                               NavigationUtils.pushWithoutAnimation(
                                 context,

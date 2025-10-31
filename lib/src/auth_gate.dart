@@ -32,7 +32,8 @@ class AuthGate extends StatelessWidget {
           future: AuthGate._prepareUser(user),
           builder: (context, docSnapshot) {
             if (docSnapshot.connectionState == ConnectionState.waiting) {
-              return LoadingWidgets.loadingScaffold(message: 'Preparing user...');
+              return LoadingWidgets.loadingScaffold(
+                  message: 'Preparing user...');
             }
             if (docSnapshot.hasError) {
               FirebaseAuth.instance.signOut();
@@ -70,7 +71,8 @@ class AuthGate extends StatelessWidget {
   /// Runs cleanup for admin users
   static Future<void> _prepareUser(User user) async {
     try {
-      final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final docRef =
+          FirebaseFirestore.instance.collection('users').doc(user.uid);
       final doc = await docRef.get();
       if (!doc.exists) {
         // Create user document with default values
@@ -100,16 +102,16 @@ class AuthGate extends StatelessWidget {
     try {
       final cutoff = DateTime.now().subtract(const Duration(days: 15));
       final cutoffTimestamp = Timestamp.fromDate(cutoff);
-      
+
       // Query messages where deleteAt timestamp has passed
       // Note: This query requires an index in Firestore
       final query = FirebaseFirestore.instance
           .collection('messages')
           .where('deleteAt', isLessThan: cutoffTimestamp)
           .limit(50); // Limit batch size to avoid timeout
-      
+
       final snapshot = await query.get();
-      
+
       // Delete old threads in batch
       if (snapshot.docs.isNotEmpty) {
         final batch = FirebaseFirestore.instance.batch();
@@ -145,7 +147,7 @@ class _ProfileCompletionGateState extends State<_ProfileCompletionGate> {
         if (!profile.loading && !_hasLoadedOnce) {
           _hasLoadedOnce = true;
         }
-        
+
         // Show loading indicator until we've loaded at least once
         if (profile.loading || !_hasLoadedOnce) {
           // If loading has been happening for too long, offer a retry and sign out option.
@@ -170,7 +172,8 @@ class _ProfileCompletionGateState extends State<_ProfileCompletionGate> {
                       const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: () async {
-                          await PushService.instance.unregisterAllTokensForCurrentUser();
+                          await PushService.instance
+                              .unregisterAllTokensForCurrentUser();
                           await FirebaseAuth.instance.signOut();
                         },
                         child: const Text('Sign out'),
@@ -181,9 +184,9 @@ class _ProfileCompletionGateState extends State<_ProfileCompletionGate> {
               ),
             );
           }
-      return LoadingWidgets.loadingScaffold(message: 'Loading profile...');
+          return LoadingWidgets.loadingScaffold(message: 'Loading profile...');
         }
-        
+
         // Profile setup is now optional with auto-populated defaults
         // Users can edit their profile from settings if desired
         return widget.child;
@@ -210,19 +213,19 @@ class _EmailPasswordLoginScreenState extends State<EmailPasswordLoginScreen> {
       _microsoftLoading = true;
       _emailError = null;
     });
-    
+
     try {
       // Sign in with Microsoft
       final userCredential = await _microsoftAuthService.signInWithMicrosoft();
       final user = userCredential.user;
-      
+
       if (user == null) {
         throw Exception('Sign-in failed: No user returned');
       }
-      
+
       // Validate @itu.dk email
       final isValid = await _microsoftAuthService.validateItuEmail(user);
-      
+
       if (!isValid) {
         if (mounted) {
           setState(() {
@@ -231,78 +234,72 @@ class _EmailPasswordLoginScreenState extends State<EmailPasswordLoginScreen> {
         }
         return;
       }
-      
+
       // Microsoft accounts are automatically verified
       // Create user docs if missing
       final usersDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
-          
+
       if (!usersDoc.exists) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .set({
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'email': user.email,
           'admin': false,
           'lastLogin': FieldValue.serverTimestamp(),
           'authProvider': 'microsoft',
         });
       } else {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .set({
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'lastLogin': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
-      
+
       final publicDoc = await FirebaseFirestore.instance
           .collection('public_users')
           .doc(user.uid)
           .get();
-      
+
       // Check if we need to create or update the display name
       final needsProfileCreation = !publicDoc.exists;
       String? currentDisplayName;
       if (publicDoc.exists) {
         currentDisplayName = publicDoc.data()?['displayName'] as String?;
       }
-      
-      final needsNameUpdate = currentDisplayName == null || 
-                               currentDisplayName.isEmpty || 
-                               currentDisplayName == 'User' ||
-                               currentDisplayName == 'not set';
-      
+
+      final needsNameUpdate = currentDisplayName == null ||
+          currentDisplayName.isEmpty ||
+          currentDisplayName == 'User' ||
+          currentDisplayName == 'not set';
+
       if (needsProfileCreation || needsNameUpdate) {
-        
         // Extract first name from Microsoft account display name
         // Priority 1: Try credential's additional user info (most reliable on first login)
         String fullName = '';
-        
+
         if (userCredential.additionalUserInfo?.profile != null) {
           final profile = userCredential.additionalUserInfo!.profile!;
-          fullName = profile['name'] as String? ?? 
-                     profile['displayName'] as String? ?? 
-                     profile['given_name'] as String? ?? '';
+          fullName = profile['name'] as String? ??
+              profile['displayName'] as String? ??
+              profile['given_name'] as String? ??
+              '';
         }
-        
+
         // Priority 2: Try user object (may be null on first login)
         if (fullName.isEmpty) {
           fullName = user.displayName ?? '';
         }
-        
+
         // Priority 3: Try reloading user and checking again
         if (fullName.isEmpty) {
           await user.reload();
           final updatedUser = FirebaseAuth.instance.currentUser;
           fullName = updatedUser?.displayName ?? '';
         }
-        
+
         final firstName = fullName.split(' ').first.trim();
         final displayName = firstName.isNotEmpty ? firstName : 'User';
-        
+
         if (needsProfileCreation) {
           // Create new profile with all fields
           await FirebaseFirestore.instance
@@ -323,17 +320,18 @@ class _EmailPasswordLoginScreenState extends State<EmailPasswordLoginScreen> {
           }, SetOptions(merge: true));
         }
       }
-      
+
       // Success! The StreamBuilder will handle navigation
     } on FirebaseAuthException catch (e) {
       final code = e.code.toLowerCase();
-      
+
       if (mounted) {
         setState(() {
           if (code == 'popup-closed-by-user' || code == 'cancelled') {
             _emailError = 'Sign-in cancelled.';
           } else if (code == 'account-exists-with-different-credential') {
-            _emailError = 'An account already exists with this email using a different sign-in method.';
+            _emailError =
+                'An account already exists with this email using a different sign-in method.';
           } else {
             _emailError = 'Microsoft sign-in failed: ${e.message}';
           }
@@ -358,7 +356,9 @@ class _EmailPasswordLoginScreenState extends State<EmailPasswordLoginScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.transparent, // Dark background in dark mode
+      backgroundColor: isDark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : Colors.transparent, // Dark background in dark mode
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -371,7 +371,8 @@ class _EmailPasswordLoginScreenState extends State<EmailPasswordLoginScreen> {
               // Transparent banner
               Container(
                 height: kToolbarHeight,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
                 decoration: const BoxDecoration(
                   color: Colors.transparent,
                 ),
@@ -410,9 +411,9 @@ class _EmailPasswordLoginScreenState extends State<EmailPasswordLoginScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             // Microsoft Sign-In button
-              _microsoftLoading
-                ? LoadingWidgets.inlineLoading()
-                : MicrosoftSignInButton(
+                            _microsoftLoading
+                                ? LoadingWidgets.inlineLoading()
+                                : MicrosoftSignInButton(
                                     onPressed: () => _signInWithMicrosoft(),
                                     isLoading: _microsoftLoading,
                                     text: 'ITU Login',
@@ -425,17 +426,20 @@ class _EmailPasswordLoginScreenState extends State<EmailPasswordLoginScreen> {
                                 decoration: BoxDecoration(
                                   color: Colors.red.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.red.withOpacity(0.3)),
+                                  border: Border.all(
+                                      color: Colors.red.withOpacity(0.3)),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.error_outline, color: Colors.red[700], size: 20),
+                                    Icon(Icons.error_outline,
+                                        color: Colors.red[700], size: 20),
                                     const SizedBox(width: 8),
                                     Flexible(
                                       child: Text(
                                         _emailError!,
-                                        style: TextStyle(color: Colors.red[700]),
+                                        style:
+                                            TextStyle(color: Colors.red[700]),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),

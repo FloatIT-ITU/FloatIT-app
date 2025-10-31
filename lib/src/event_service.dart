@@ -6,7 +6,7 @@ class EventService {
 
   /// Atomically join an event: if space available the user is added to
   /// `attendees`, otherwise appended to `waitingListUids`.
-  /// 
+  ///
   /// Throws ArgumentError if inputs are invalid
   /// Throws Exception if event doesn't exist
   static Future<void> joinEvent({
@@ -21,20 +21,22 @@ class EventService {
     if (userId.isEmpty) {
       throw ArgumentError('userId cannot be empty');
     }
-    
+
     final fs = firestore ?? FirebaseFirestore.instance;
     final eventRef = fs.collection('events').doc(eventId);
-    
+
     // Get event date before joining
     final eventSnap = await fs.collection('events').doc(eventId).get();
     if (!eventSnap.exists) {
       throw Exception('Event not found');
     }
-    
+
     final eventData = eventSnap.data();
     final startTimeStr = eventData?['startTime'] as String?;
-    final eventDate = startTimeStr != null ? DateTime.tryParse(startTimeStr)?.toLocal() : null;
-    
+    final eventDate = startTimeStr != null
+        ? DateTime.tryParse(startTimeStr)?.toLocal()
+        : null;
+
     await fs.runTransaction((tx) async {
       final snap = await tx.get(eventRef);
       if (!snap.exists) throw Exception('Event not found');
@@ -71,7 +73,7 @@ class EventService {
 
   /// Atomically leave an event: removes the user from attendees/waiting list
   /// and promotes the first waiting user (FIFO) into attendees if applicable.
-  /// 
+  ///
   /// Throws ArgumentError if inputs are invalid
   /// Throws Exception if event doesn't exist
   static Future<void> leaveEvent({
@@ -85,22 +87,24 @@ class EventService {
     if (userId.isEmpty) {
       throw ArgumentError('userId cannot be empty');
     }
-    
+
     final fs = firestore ?? FirebaseFirestore.instance;
     final eventRef = fs.collection('events').doc(eventId);
-    
+
     // Get event date before leaving
     final eventSnap = await fs.collection('events').doc(eventId).get();
     if (!eventSnap.exists) {
       throw Exception('Event not found');
     }
-    
+
     final eventData = eventSnap.data();
     final startTimeStr = eventData?['startTime'] as String?;
-    final eventDate = startTimeStr != null ? DateTime.tryParse(startTimeStr)?.toLocal() : null;
-    
+    final eventDate = startTimeStr != null
+        ? DateTime.tryParse(startTimeStr)?.toLocal()
+        : null;
+
     String? promotedUserId;
-    
+
     await fs.runTransaction((tx) async {
       final snap = await tx.get(eventRef);
       if (!snap.exists) throw Exception('Event not found');
@@ -137,10 +141,11 @@ class EventService {
         final eventSnap = await fs.collection('events').doc(eventId).get();
         final eventData = eventSnap.data();
         final eventName = eventData?['name'] ?? 'Event';
-        
+
         await sendSystemMessage(
           userId: promotedUserId!,
-          message: 'Great news! You\'ve been promoted from the waiting list to attendee for "$eventName".',
+          message:
+              'Great news! You\'ve been promoted from the waiting list to attendee for "$eventName".',
           eventId: eventId,
           firestore: fs,
         );
@@ -151,7 +156,7 @@ class EventService {
   }
 
   /// Send a system message to a user (used for event notifications)
-  /// 
+  ///
   /// Throws ArgumentError if inputs are invalid
   static Future<void> sendSystemMessage({
     required String userId,
@@ -168,20 +173,20 @@ class EventService {
     if (eventId.isEmpty) {
       throw ArgumentError('eventId cannot be empty');
     }
-    
+
     final fs = firestore ?? FirebaseFirestore.instance;
-    
+
     // Create a unique conversation ID for system-user communication
     final conversationId = 'system_$userId';
-    
+
     try {
       await fs.runTransaction((tx) async {
         final messageRef = fs.collection('messages').doc(conversationId);
         final messageSnap = await tx.get(messageRef);
-        
+
         // Generate unique message ID
         final messageId = fs.collection('messages').doc().id;
-        
+
         if (!messageSnap.exists) {
           // Create new conversation thread
           tx.set(messageRef, {
@@ -193,7 +198,8 @@ class EventService {
             'createdAt': FieldValue.serverTimestamp(),
             // System conversations should not be replyable by users
             'replyable': false,
-            'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+            'deleteAt': Timestamp.fromDate(
+                DateTime.now().add(const Duration(days: 15))),
             'messages': {
               messageId: {
                 'senderId': 'system',
@@ -215,7 +221,8 @@ class EventService {
             'unreadCount.$userId': FieldValue.increment(1),
             // Ensure replyable stays false for system conversations
             'replyable': false,
-            'deleteAt': Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
+            'deleteAt': Timestamp.fromDate(
+                DateTime.now().add(const Duration(days: 15))),
           });
         }
       });

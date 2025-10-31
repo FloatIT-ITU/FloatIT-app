@@ -107,16 +107,11 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        // Register Firebase Messaging Service Worker for push notifications
-        // Let Flutter load its service worker first
-        setTimeout(function() {
-          navigator.serviceWorker.register('firebase-messaging-sw.js', { scope: '/FloatIT-app/firebase-cloud-messaging-push-scope' })
-            .then(function(registration) {
-              console.log('FCM ServiceWorker registration successful with scope: ', registration.scope);
-            }, function(err) {
-              console.log('FCM ServiceWorker registration failed: ', err);
-            });
-        }, 1000); // Wait 1 second for Flutter SW to load first
+        const swScript = '/FloatIT-app/firebase-messaging-sw.js';
+        const swScope = '/FloatIT-app/firebase-cloud-messaging-push-scope';
+        navigator.serviceWorker.register(swScript, { scope: swScope })
+          .then(reg => console.log('FCM ServiceWorker registration successful with scope:', reg.scope))
+          .catch(err => console.error('FCM SW registration failed:', err));
       });
     }
   </script>
