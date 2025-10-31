@@ -209,7 +209,7 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
 
                         // Send push notifications immediately via Vercel function
                         try {
-                                                    final vercelUrl = '${ExternalConfig.vercelFunctionsUrl}/api/send-notification';
+                                                    const vercelUrl = '${ExternalConfig.vercelFunctionsUrl}/api/send-notification';
                           final response = await http.post(
                             Uri.parse(vercelUrl),
                             headers: {'Content-Type': 'application/json'},
