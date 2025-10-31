@@ -10,6 +10,7 @@ import 'package:floatit/src/widgets/loading_widgets.dart';
 import 'package:floatit/src/widgets/swimmer_icon_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'external_config.dart';
 
 class MessagesPage extends StatelessWidget {
   const MessagesPage({super.key});
@@ -377,7 +378,7 @@ class _ConversationPageState extends State<ConversationPage> {
 
         // Send push notification immediately via Vercel function
         try {
-          const vercelUrl = 'https://vercel-functions-pheadars-projects.vercel.app/api/send-notification';
+          final vercelUrl = '${ExternalConfig.vercelFunctionsUrl}/api/send-notification';
           await http.post(
             Uri.parse(vercelUrl),
             headers: {'Content-Type': 'application/json'},

@@ -23,6 +23,7 @@ import 'package:floatit/src/utils/navigation_utils.dart';
 import 'package:floatit/src/widgets/loading_widgets.dart';
 import 'admin_feedback_page.dart';
 import 'push_service.dart';
+import 'external_config.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -230,7 +231,7 @@ class _SettingsPageState extends State<SettingsPage> {
       // Immediately trigger notification sending via Vercel function
       try {
         await http.post(
-          Uri.parse('https://vercel-functions-pheadars-projects.vercel.app/api/send-notification'),
+          Uri.parse('${ExternalConfig.vercelFunctionsUrl}/api/send-notification'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'type': 'feedback'}),
         );
@@ -348,6 +349,16 @@ class _SettingsPageState extends State<SettingsPage> {
                                               return;
                                             }
 
+                                            // Check if we can get a token (VAPID key configured)
+                                            final testToken = await PushService.instance.getToken();
+                                            if (testToken == null) {
+                                              messenger.showSnackBar(const SnackBar(
+                                                  content: Text(
+                                                      'Notifications not configured for this environment')));
+                                              await profile.setNotificationsEnabled(false);
+                                              return;
+                                            }
+
                                             // Persist preference and register token
                                             await profile
                                                 .setNotificationsEnabled(true);
@@ -362,6 +373,10 @@ class _SettingsPageState extends State<SettingsPage> {
                                               await profile
                                                   .setNotificationsEnabled(
                                                       false);
+                                            } else {
+                                              messenger.showSnackBar(const SnackBar(
+                                                  content: Text(
+                                                      'Notifications enabled successfully')));
                                             }
                                           } catch (e) {
                                             messenger.showSnackBar(const SnackBar(
@@ -379,6 +394,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                           try {
                                             await profile
                                                 .setNotificationsEnabled(false);
+                                            messenger.showSnackBar(const SnackBar(
+                                                content: Text(
+                                                    'Notifications disabled')));
                                           } catch (_) {
                                             messenger.showSnackBar(const SnackBar(
                                                 content: Text(

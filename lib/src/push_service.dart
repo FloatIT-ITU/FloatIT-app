@@ -34,9 +34,12 @@ class PushService {
 
   Future<String?> getToken() async {
     try {
-      return await _messaging.getToken(
-        vapidKey: kIsWeb ? const String.fromEnvironment('VAPID_KEY') : null,
-      );
+      final vapidKey = kIsWeb ? const String.fromEnvironment('VAPID_KEY') : null;
+      if (kIsWeb && (vapidKey == null || vapidKey.isEmpty)) {
+        // VAPID key not configured - this is expected in development
+        return null;
+      }
+      return await _messaging.getToken(vapidKey: vapidKey);
     } catch (e) {
       return null;
     }
@@ -65,6 +68,7 @@ class PushService {
         'lastSeen': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
+      // Firestore write failed
       return false;
     }
 
@@ -72,7 +76,7 @@ class PushService {
     try {
       await _messaging.subscribeToTopic('all-users');
     } catch (e) {
-      // Subscription failed, but don't fail registration
+      // Topic subscription failed, but don't fail registration
     }
 
     // Start listening for token refresh and foreground messages for this user

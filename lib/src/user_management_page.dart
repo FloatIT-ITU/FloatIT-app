@@ -13,6 +13,7 @@ import 'user_service.dart';
 import 'utils/validation_utils.dart';
 import 'widgets/swimmer_icon_picker.dart';
 import 'theme_colors.dart';
+import 'external_config.dart';
 
 class UserManagementPage extends StatefulWidget {
   const UserManagementPage({super.key});
@@ -741,7 +742,7 @@ class _SendMessageDialogState extends State<_SendMessageDialog> {
 
                 // Send push notification immediately via Vercel function
                 try {
-                                    const vercelUrl = 'https://vercel-functions-pheadars-projects.vercel.app/api/send-notification';
+                                    final vercelUrl = '${ExternalConfig.vercelFunctionsUrl}/api/send-notification';
                   await http.post(
                     Uri.parse(vercelUrl),
                     headers: {'Content-Type': 'application/json'},
