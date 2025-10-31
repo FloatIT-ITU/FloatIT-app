@@ -164,12 +164,18 @@ async function sendEventNotifications() {
             .collection('tokens')
             .get();
 
-          userTokens.forEach(tokenDoc => {
-            const tokenData = tokenDoc.data();
-            if (tokenData.token) {
-              tokens.push(tokenData.token);
-            }
-          });
+          // Check if user has notifications enabled
+          const publicUserDoc = await db.collection('public_users').doc(userId).get();
+          const notificationsEnabled = publicUserDoc.exists ? (publicUserDoc.data().notificationsEnabled !== false) : true;
+
+          if (notificationsEnabled) {
+            userTokens.forEach(tokenDoc => {
+              const tokenData = tokenDoc.data();
+              if (tokenData.token) {
+                tokens.push(tokenData.token);
+              }
+            });
+          }
         }
 
         if (tokens.length === 0) {
@@ -262,13 +268,19 @@ async function sendMessageNotifications() {
           .collection('tokens')
           .get();
 
+        // Check if user has notifications enabled
+        const publicUserDoc = await db.collection('public_users').doc(recipientId).get();
+        const notificationsEnabled = publicUserDoc.exists ? (publicUserDoc.data().notificationsEnabled !== false) : true;
+
         const tokens = [];
-        userTokens.forEach(tokenDoc => {
-          const tokenData = tokenDoc.data();
-          if (tokenData.token) {
-            tokens.push(tokenData.token);
-          }
-        });
+        if (notificationsEnabled) {
+          userTokens.forEach(tokenDoc => {
+            const tokenData = tokenDoc.data();
+            if (tokenData.token) {
+              tokens.push(tokenData.token);
+            }
+          });
+        }
 
         if (tokens.length === 0) {
           console.log(`No FCM tokens found for user ${recipientId}`);
@@ -385,12 +397,18 @@ async function sendFeedbackNotifications() {
             .collection('tokens')
             .get();
 
-          userTokens.forEach(tokenDoc => {
-            const tokenData = tokenDoc.data();
-            if (tokenData.token) {
-              tokens.push(tokenData.token);
-            }
-          });
+          // Check if admin has notifications enabled
+          const publicUserDoc = await db.collection('public_users').doc(adminId).get();
+          const notificationsEnabled = publicUserDoc.exists ? (publicUserDoc.data().notificationsEnabled !== false) : true;
+
+          if (notificationsEnabled) {
+            userTokens.forEach(tokenDoc => {
+              const tokenData = tokenDoc.data();
+              if (tokenData.token) {
+                tokens.push(tokenData.token);
+              }
+            });
+          }
         }
 
         if (tokens.length === 0) {
