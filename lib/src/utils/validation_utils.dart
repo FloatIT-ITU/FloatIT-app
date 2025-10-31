@@ -35,8 +35,9 @@ class ValidationUtils {
   static String? validatePassword(String? value, {int minLength = 6}) {
     final password = value?.trim() ?? '';
     if (password.isEmpty) return 'Password cannot be empty';
-    if (password.length < minLength)
+    if (password.length < minLength) {
       return 'Password must be at least $minLength characters';
+    }
     return null;
   }
 
@@ -45,7 +46,9 @@ class ValidationUtils {
       String? value, String originalPassword) {
     final password = value?.trim() ?? '';
     if (password.isEmpty) return 'Please confirm your password';
-    if (password != originalPassword) return 'Passwords do not match';
+    if (password != originalPassword) {
+      return 'Passwords do not match';
+    }
     return null;
   }
 
@@ -53,16 +56,18 @@ class ValidationUtils {
   static String? validateEventName(String? value) {
     final name = value?.trim() ?? '';
     if (name.isEmpty) return 'Event name is required';
-    if (name.length > 100)
+    if (name.length > 100) {
       return 'Event name too long (maximum 100 characters)';
+    }
     return null;
   }
 
   /// Validate event description
   static String? validateEventDescription(String? value) {
     final description = value?.trim() ?? '';
-    if (description.length > 1000)
+    if (description.length > 1000) {
       return 'Description too long (maximum 1000 characters)';
+    }
     return null; // Description is optional
   }
 
