@@ -34,7 +34,7 @@ class PushService {
 
   Future<String?> getToken() async {
     try {
-      final vapidKey = kIsWeb ? const String.fromEnvironment('VAPID_KEY') : null;
+      const vapidKey = kIsWeb ? String.fromEnvironment('VAPID_KEY') : null;
       if (kIsWeb && (vapidKey == null || vapidKey.isEmpty)) {
         // VAPID key not configured - this is expected in development
         return null;

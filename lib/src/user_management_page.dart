@@ -742,7 +742,7 @@ class _SendMessageDialogState extends State<_SendMessageDialog> {
 
                 // Send push notification immediately via Vercel function
                 try {
-                                    final vercelUrl = '${ExternalConfig.vercelFunctionsUrl}/api/send-notification';
+                                    const vercelUrl = '${ExternalConfig.vercelFunctionsUrl}/api/send-notification';
                   await http.post(
                     Uri.parse(vercelUrl),
                     headers: {'Content-Type': 'application/json'},
