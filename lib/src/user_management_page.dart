@@ -3,6 +3,7 @@ import 'layout_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:floatit/src/widgets/banners.dart';
 import 'styles.dart';
@@ -713,6 +714,45 @@ class _SendMessageDialogState extends State<_SendMessageDialog> {
                     }
                   }
                 });
+              }
+
+              // Create pending notification document
+              try {
+                // Get sender's display name
+                final senderDoc = await firestore
+                    .collection('public_users')
+                    .doc(currentUser.uid)
+                    .get();
+                final senderName = senderDoc.exists 
+                    ? (senderDoc.data()?['displayName'] ?? 'Admin')
+                    : 'Admin';
+
+                await firestore
+                    .collection('message_notifications')
+                    .add({
+                  'recipientId': widget.recipientId,
+                  'senderId': currentUser.uid,
+                  'senderName': senderName,
+                  'message': _message.trim(),
+                  'conversationId': conversationId,
+                  'status': 'pending',
+                  'createdAt': DateTime.now().toUtc().toIso8601String(),
+                });
+
+                // Send push notification immediately via Vercel function
+                try {
+                  const vercelUrl = 'https://vercel-functions-ohmlzwgw7-pheadars-projects.vercel.app/api/send-notification';
+                  await http.post(
+                    Uri.parse(vercelUrl),
+                    headers: {'Content-Type': 'application/json'},
+                    body: jsonEncode({}),
+                  );
+                } catch (e) {
+                  // Push notification failed, but message was sent
+                }
+              } catch (e) {
+                // Error creating pending notification: $e
+                // Don't fail the message send
               }
 
               if (!mounted) return;

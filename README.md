@@ -10,12 +10,14 @@ FloatIT is a Progressive Web App (PWA) designed for managing the ITU (IT Univers
 - **Rate Limiting**: Built-in spam protection for all user actions
 - **Pool Status**: Real-time status updates for Sundby Bad swimming facility
 - **Admin Controls**: Event management, user administration, and notification system
+- **Push Notifications**: Immediate FCM notifications for events, messages, and admin announcements
 - **Responsive Design**: Works on desktop and mobile browsers
 
 ## Tech Stack
 
 - **Frontend**: Flutter 3.24.3+ (Web)
-- **Backend**: Firebase (Authentication, Firestore Database)
+- **Backend**: Firebase (Authentication, Firestore Database, Cloud Messaging)
+- **Serverless Functions**: Vercel Functions for immediate notification processing
 - **Hosting**: GitHub Pages
 - **Authentication**: Microsoft OAuth 2.0 (Azure AD)
 - **CI/CD**: GitHub Actions
@@ -106,6 +108,10 @@ lib/
 - `join_requests` - Pending event join/leave requests
 - `templates` - Recurring event templates
 - `app/global_banner` - Global notification banner
+- `admin_notifications` - Pending global admin notifications
+- `event_notifications` - Pending event-specific notifications
+- `message_notifications` - Pending personal message notifications
+- `feedback_notifications` - Pending user feedback notifications
 
 ### Authentication
 
