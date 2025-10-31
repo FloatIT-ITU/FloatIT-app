@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:floatit/src/theme_colors.dart';
 import 'package:floatit/src/widgets/loading_widgets.dart';
 import 'package:floatit/src/widgets/swimmer_icon_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class MessagesPage extends StatelessWidget {
   const MessagesPage({super.key});
@@ -358,6 +360,36 @@ class _ConversationPageState extends State<ConversationPage> {
         'deleteAt':
             Timestamp.fromDate(DateTime.now().add(const Duration(days: 15))),
       });
+
+      // Create pending notification document
+      try {
+        await FirebaseFirestore.instance
+            .collection('message_notifications')
+            .add({
+          'recipientId': widget.otherUserId,
+          'senderId': currentUser.uid,
+          'senderName': widget.otherUserName,
+          'message': messageText,
+          'conversationId': widget.conversationId,
+          'status': 'pending',
+          'createdAt': DateTime.now().toUtc().toIso8601String(),
+        });
+
+        // Send push notification immediately via Vercel function
+        try {
+          const vercelUrl = 'https://vercel-functions-ohmlzwgw7-pheadars-projects.vercel.app/api/send-notification';
+          await http.post(
+            Uri.parse(vercelUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({}),
+          );
+        } catch (e) {
+          // Push notification failed, but message was sent
+        }
+      } catch (e) {
+        // Error creating pending notification: $e
+        // Don't fail the message send
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

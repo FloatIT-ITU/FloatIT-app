@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:floatit/src/widgets/banners.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import 'layout_widgets.dart';
-import 'event_service.dart';
 
 class AdminSendNotificationPage extends StatefulWidget {
   const AdminSendNotificationPage({super.key});
@@ -19,9 +19,6 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
   final _formKey = GlobalKey<FormState>();
   String _title = '';
   String _body = '';
-  bool _sendAsSystemMessage = true; // Pre-selected by default
-
-  static const String _serverUrl = 'https://floatit-notifications.tinybo.eu';
 
   @override
   Widget build(BuildContext context) {
@@ -155,15 +152,6 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                       maxLines: 4,
                     ),
                     const SizedBox(height: 12),
-                    CheckboxListTile(
-                      title: const Text(
-                          'Also send as system message to all users'),
-                      subtitle: const Text(
-                          'Send this notification as a personal message to all app users'),
-                      value: _sendAsSystemMessage,
-                      onChanged: (value) =>
-                          setState(() => _sendAsSystemMessage = value ?? true),
-                    ),
                     // Live preview
                     Card(
                       elevation: 2,
@@ -202,59 +190,43 @@ class _AdminSendNotificationPageState extends State<AdminSendNotificationPage> {
                           'createdAt': DateTime.now().toUtc().toIso8601String(),
                         });
 
-                        // Send system messages to all users if requested
-                        if (_sendAsSystemMessage) {
-                          try {
-                            final usersSnapshot = await FirebaseFirestore
-                                .instance
-                                .collection('public_users')
-                                .get();
-
-                            final message =
-                                'Global Notification: ${_title.trim()}\n\n${_body.trim()}';
-                            for (final userDoc in usersSnapshot.docs) {
-                              final userId = userDoc.id;
-                              await EventService.sendSystemMessage(
-                                userId: userId,
-                                message: message,
-                                eventId:
-                                    'global', // Use 'global' as eventId for global notifications
-                              );
-                            }
-                          } catch (e) {
-                            // Log error but don't fail the whole operation
-                            // System messages are not critical
-                          }
+                        // Create pending notification document
+                        try {
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          await FirebaseFirestore.instance
+                              .collection('admin_notifications')
+                              .add({
+                            'title': _title,
+                            'body': _body,
+                            'status': 'pending',
+                            'createdAt': DateTime.now().toUtc().toIso8601String(),
+                            'createdBy': currentUser?.uid,
+                          });
+                        } catch (e) {
+                          // Error creating pending notification: $e
                         }
 
-                        // Send push notification via server
+                        // Send push notifications immediately via Vercel function
                         try {
-                          final user = FirebaseAuth.instance.currentUser;
-                          if (user != null) {
-                            final idToken = await user.getIdToken();
-                            final response = await http.post(
-                              Uri.parse('$_serverUrl/send/topic'),
-                              headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': 'Bearer $idToken',
-                              },
-                              body:
-                                  '{"topic":"all-users","title":"$_title","body":"$_body"}',
-                            );
-                            if (response.statusCode != 200) {
-                              // Handle error, but don't fail the whole operation
-                              // Push send failed: ${response.body}
-                            }
+                          const vercelUrl = 'https://vercel-functions-ohmlzwgw7-pheadars-projects.vercel.app/api/send-notification';
+                          final response = await http.post(
+                            Uri.parse(vercelUrl),
+                            headers: {'Content-Type': 'application/json'},
+                            body: jsonEncode({}),
+                          );
+
+                          if (response.statusCode == 200) {
+                            final result = jsonDecode(response.body);
+                            messenger.showSnackBar(SnackBar(
+                                content: Text('Global notification sent immediately! Processed ${result['results']['admin']['processed']} notifications')));
+                          } else {
+                            messenger.showSnackBar(const SnackBar(
+                                content: Text('Banner sent, but push notifications may be delayed')));
                           }
                         } catch (e) {
-                          // Error sending push: $e
+                          messenger.showSnackBar(const SnackBar(
+                              content: Text('Banner sent, but push notifications may be delayed')));
                         }
-
-                        // Note: Push notifications are now sent via server
-
-                        if (!mounted) return;
-                        messenger.showSnackBar(const SnackBar(
-                            content: Text('Global notification sent')));
                       },
                       child: const Text('Send Global Notification'),
                     ),

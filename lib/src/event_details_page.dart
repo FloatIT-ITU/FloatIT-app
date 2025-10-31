@@ -6,7 +6,6 @@ import 'package:floatit/src/widgets/notification_banner.dart';
 import 'package:floatit/src/widgets/attendee_list_builder.dart';
 import 'package:floatit/src/widgets/event_details_display.dart';
 import 'package:floatit/src/services/firebase_service.dart';
-import 'package:floatit/src/event_service.dart';
 import 'package:floatit/src/theme_colors.dart';
 import 'package:floatit/src/user_statistics_service.dart';
 import 'package:floatit/src/layout_widgets.dart';
@@ -26,6 +25,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'pending_requests_provider.dart';
 import 'package:provider/provider.dart';
 import 'services/rate_limit_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class EventDetailsPage extends StatefulWidget {
   final String eventId;
@@ -1024,7 +1025,6 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
   final _formKey = GlobalKey<FormState>();
   String _title = '';
   String _body = '';
-  bool _sendAsSystemMessage = true; // Pre-selected by default
 
   @override
   Widget build(BuildContext context) {
@@ -1051,15 +1051,6 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
               maxLines: 3,
             ),
             const SizedBox(height: 12),
-            CheckboxListTile(
-              title: const Text('Also send as system message to attendees'),
-              subtitle: const Text(
-                  'Send this notification as a personal message to all event attendees and waiting list members'),
-              value: _sendAsSystemMessage,
-              onChanged: (value) =>
-                  setState(() => _sendAsSystemMessage = value ?? true),
-              dense: true,
-            ),
           ],
         ),
       ),
@@ -1079,48 +1070,48 @@ class _SendNotificationDialogState extends State<_SendNotificationDialog> {
                 'createdAt': DateTime.now().toUtc().toIso8601String(),
               });
 
-              // Send system messages to attendees if requested
-              if (_sendAsSystemMessage) {
-                try {
-                  final eventDoc =
-                      await FirebaseService.eventDoc(widget.eventId).get();
-                  if (eventDoc.exists) {
-                    final eventData = eventDoc.data() as Map<String, dynamic>;
-                    final attendees =
-                        List<String>.from(eventData['attendees'] ?? []);
-                    final waitingList =
-                        List<String>.from(eventData['waitingListUids'] ?? []);
+              // Create pending notification document
+              try {
+                await FirebaseFirestore.instance
+                    .collection('event_notifications')
+                    .add({
+                  'eventId': widget.eventId,
+                  'title': _title.trim(),
+                  'body': _body.trim(),
+                  'status': 'pending',
+                  'createdAt': DateTime.now().toUtc().toIso8601String(),
+                });
+              } catch (e) {
+                // Error creating pending notification: $e
+              }
 
-                    // Combine attendees and waiting list
-                    final allRecipients =
-                        {...attendees, ...waitingList}.toList();
+              // Send push notifications immediately via Vercel function
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                const vercelUrl = 'https://vercel-functions-ohmlzwgw7-pheadars-projects.vercel.app/api/send-notification';
+                final response = await http.post(
+                  Uri.parse(vercelUrl),
+                  headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode({}),
+                );
 
-                    // Send system message to each recipient
-                    final message =
-                        'Event Notification: ${_title.trim()}\n\n${_body.trim()}';
-                    for (final userId in allRecipients) {
-                      await EventService.sendSystemMessage(
-                        userId: userId,
-                        message: message,
-                        eventId: widget.eventId,
-                      );
-                    }
-                  }
-                } catch (e) {
-                  // Log error but don't fail the whole operation
-                  // System messages are not critical
+                if (response.statusCode == 200) {
+                  final result = jsonDecode(response.body);
+                  messenger.showSnackBar(SnackBar(
+                      content: Text('Event notification sent immediately! Processed ${result['results']['event']['processed']} notifications')));
+                } else {
+                  messenger.showSnackBar(const SnackBar(
+                      content: Text('Banner sent, but push notifications may be delayed')));
                 }
+              } catch (e) {
+                messenger.showSnackBar(const SnackBar(
+                    content: Text('Banner sent, but push notifications may be delayed')));
               }
 
               if (!mounted) return;
               // ignore: use_build_context_synchronously
-              final messenger = ScaffoldMessenger.of(context);
-              // ignore: use_build_context_synchronously
               final navigator = Navigator.of(context);
               navigator.pop();
-              messenger.showSnackBar(
-                const SnackBar(content: Text('Event notification sent')),
-              );
             } catch (e) {
               if (!mounted) return;
               // ignore: use_build_context_synchronously

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import 'package:provider/provider.dart';
 import 'package:floatit/src/user_profile_provider.dart';
@@ -206,6 +208,40 @@ class _SettingsPageState extends State<SettingsPage> {
       'createdAt': FieldValue.serverTimestamp(),
       'status': 'unread', // unread, read, responded
     });
+
+    // Send push notification to admins via scheduled GitHub Actions workflow
+    // Create a pending notification document that the workflow will pick up
+    try {
+      // Get user's display name for the notification
+      final userDoc = await fs.collection('public_users').doc(user.uid).get();
+      final userName = userDoc.exists 
+          ? (userDoc.data()?['displayName'] ?? user.email ?? 'User')
+          : (user.email ?? 'User');
+
+      await fs.collection('feedback_notifications').add({
+        'userId': user.uid,
+        'userName': userName,
+        'userEmail': user.email,
+        'message': feedback,
+        'status': 'pending',
+        'createdAt': DateTime.now().toUtc().toIso8601String(),
+      });
+
+      // Immediately trigger notification sending via Vercel function
+      try {
+        await http.post(
+          Uri.parse('https://vercel-functions-ohmlzwgw7-pheadars-projects.vercel.app/api/send-notification'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'type': 'feedback'}),
+        );
+      } catch (e) {
+        // Error calling Vercel function: $e
+        // Don't fail the feedback submission - scheduled workflow will handle it
+      }
+    } catch (e) {
+      // Error creating pending notification: $e
+      // Don't fail the feedback submission
+    }
   }
 
   @override
